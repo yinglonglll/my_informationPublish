@@ -19,6 +19,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
+
+<!--        <activity//跳转时界面不动的主题-->
+<!--            android:name=".ImportActivity"-->
+<!--            android:theme="@style/Transparent" >-->
+<!--        </activity>-->
+
         <activity android:name=".ImportActivity"/>
         <activity android:name=".MainActivity">
             <intent-filter>

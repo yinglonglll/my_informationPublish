@@ -33,7 +33,7 @@ public class FileUtils {
         }
         return directoryPath;
     }
-    public static boolean copyFile(String source, String target){
+    public static boolean copyFile(String source, String target){//对文件进行赋值，不能直接以目录为参数进行复制目录内所有参数；
         try {
             File targetFile = new File(target);
             if(!targetFile.getParentFile().exists()){

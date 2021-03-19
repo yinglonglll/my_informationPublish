@@ -3,4 +3,10 @@
     <style name="MyProgressBar">
         <item name="android:indeterminateDrawable">@drawable/bg_progress</item>
     </style>
+
+    <style name="Transparent" parent="android:Theme.Light">
+        <!--将Activity的Theme设置成透明-->
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
 </resources>

@@ -1,6 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
     android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <ViewAnimator
+        android:layout_width="wrap_content"
+        android:layout_weight="1"
+        android:background="@color/colorAccent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:scaleType="fitXY"
+            android:id="@+id/imageView_two2_1"
+            android:layout_height="match_parent"/>
+        <VideoView
+            android:layout_width="match_parent"
+            android:id="@+id/videoView_two2_1"
+            android:layout_height="wrap_content"/>
+
+    </ViewAnimator>
+
+    <ViewAnimator
+        android:layout_width="wrap_content"
+        android:layout_weight="1"
+        android:background="@color/colorPrimary"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:scaleType="fitXY"
+            android:id="@+id/imageView_two2_2"
+            android:layout_height="match_parent"/>
+        <VideoView
+            android:layout_width="match_parent"
+            android:id="@+id/videoView_two2_2"
+            android:layout_height="wrap_content"/>
+
+    </ViewAnimator>
+</LinearLayout>

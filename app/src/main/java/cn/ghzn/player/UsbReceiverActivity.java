@@ -32,12 +32,19 @@ public class UsbReceiverActivity extends BroadcastReceiver {
                 Toast.makeText(context,"path为空，未接入U盘",Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "U盘未接入");
             }
-            Intent i = new Intent();
-            i.setClass(context, ImportActivity.class);//此处是设置，未跳转
+
+            Intent i = new Intent(context,ImportActivity.class);
             Bundle bundle = new Bundle();
             bundle.putString("extra_path", path);
             i.putExtras(bundle);
             context.startActivity(i);
+
+//            Intent i = new Intent();
+//            i.setClass(context, ImportActivity.class);//此处是设置，未跳转
+//            Bundle bundle = new Bundle();
+//            bundle.putString("extra_path", path);
+//            i.putExtras(bundle);
+//            context.startActivity(i);
 
         }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
             // doSomething

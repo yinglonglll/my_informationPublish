@@ -9,9 +9,11 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.apkfuns.logutils.LogUtils;
 
@@ -36,12 +38,18 @@ public class MainActivity extends AppCompatActivity {
 //    private TextView mInstallTime;
 //    private TextView mProbationTime;
 
-
     private boolean ConnectionState = false;
     private boolean AuthorityState = false;
     private TextClock mLocalTime;
     private AlertDialog mAlertDialogs;
     private View mView;
+
+    static ImageView sImageView_two1_1;
+    static VideoView sVideoView_two1_1;
+    static ImageView sImageView_two1_2;
+    static VideoView sVideoView_two1_2;
+    static ImageView sImageView_one1_1;
+    static VideoView sVideoView_one1_1;
 
 
     @Override
@@ -63,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
 
         initView();//找到layout控件
         initWidget(device);//设置layout控件；从上述数据库中取信息出来显示
+
+
 
 
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
@@ -92,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLongPress(MotionEvent e) {
-                Log.d(TAG,"OnDoubleTap");
+                Log.d(TAG,"OnLongPressTap");
                 mAlertDialogs.show();
             }
 
@@ -179,6 +189,13 @@ public class MainActivity extends AppCompatActivity {
         mConnectionState = (TextView) this.findViewById(R.id.ConnectionState);
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
+
+        sImageView_one1_1 = (ImageView) this.findViewById(R.id.imageView_one1_1);
+        sVideoView_one1_1 = (VideoView) this.findViewById(R.id.videoView_one1_1);
+        sImageView_two1_1 = (ImageView) this.findViewById(R.id.imageView_two1_1);
+        sVideoView_two1_1 = (VideoView) this.findViewById(R.id.videoView_two1_1);
+        sImageView_two1_2 = (ImageView) this.findViewById(R.id.imageView_two1_2);
+        sVideoView_two1_2 = (VideoView) this.findViewById(R.id.videoView_two1_2);
 //        mInstallTime = (TextView) this.findViewById(R.id.InstallTime);
 //        mProbationTime = (TextView) this.findViewById(R.id.ProbationTime);
     }
@@ -186,18 +203,19 @@ public class MainActivity extends AppCompatActivity {
     public void playBtn(View view) {
         //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
-        Toast.makeText(this,"返重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT);
+        Toast.makeText(this,"返重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
 
     }
 
     public void suspendBtn(View view) {
         Log.d(TAG,"this is suspendBtn");
+        Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();
 
     }
 
     public void stopBtn(View view) {
         Log.d(TAG,"this is stopBtn");
-        Toast.makeText(this,"返回默认页面activity",Toast.LENGTH_SHORT);
+        Toast.makeText(this,"返回默认页面activity",Toast.LENGTH_SHORT).show();
     }
 
     public void exitBtn(View view) {
@@ -207,5 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void MachineIdOutBtn(View view) {
         Log.d(TAG,"this is MachineIdOutBtn");
+        setContentView(R.layout.activity_progress);
     }
+
 }
