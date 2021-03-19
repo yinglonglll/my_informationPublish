@@ -1,6 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <ViewAnimator
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:background="@color/colorAccent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:scaleType="fitXY"
+            android:id="@+id/imageView_two1_1"
+            android:layout_height="match_parent"/>
+        <VideoView
+            android:layout_width="match_parent"
+            android:id="@+id/videoView_two1_1"
+            android:layout_height="wrap_content"/>
+
+    </ViewAnimator>
+
+    <ViewAnimator
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:background="@color/colorPrimary"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:scaleType="fitXY"
+            android:id="@+id/imageView_two1_2"
+            android:layout_height="match_parent"/>
+        <VideoView
+            android:layout_width="match_parent"
+            android:id="@+id/videoView_two1_2"
+            android:layout_height="wrap_content"/>
+
+    </ViewAnimator>
+
+<!--    <ViewAnimator-->
+<!--        android:layout_width="match_parent"-->
+
+<!--        android:layout_height="wrap_content"/>-->
+<!--    该控件也可以实现，详细可学习了解-->
+</LinearLayout>
