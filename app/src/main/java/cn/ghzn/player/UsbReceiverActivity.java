@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-public class UsbReceiverActivity extends BroadcastReceiver {
+public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误，非activity作用，请注意！！！
     private static final String TAG = "UsbReceiverActivity";
     //找到U盘的路径并打印出来
 //    private static boolean mActionFlag = false;
@@ -37,7 +37,12 @@ public class UsbReceiverActivity extends BroadcastReceiver {
             Bundle bundle = new Bundle();
             bundle.putString("extra_path", path);
             i.putExtras(bundle);
-            context.startActivity(i);
+            if (path == null) {
+                Toast.makeText(context, "path为null,无法跳转",Toast.LENGTH_SHORT).show();
+            } else {
+                context.startActivity(i);
+            }
+
 
 //            Intent i = new Intent();
 //            i.setClass(context, ImportActivity.class);//此处是设置，未跳转
