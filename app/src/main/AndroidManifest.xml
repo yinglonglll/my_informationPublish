@@ -26,6 +26,10 @@
 <!--        </activity>-->
 
         <activity android:name=".ImportActivity"/>
+        <activity android:name=".OneSplitViewActivity"/>
+        <activity android:name=".TwoSplitViewActivity"/>
+        <activity android:name=".ThreeSplitViewActivity"/>
+        <activity android:name=".FourSplitViewActivity"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

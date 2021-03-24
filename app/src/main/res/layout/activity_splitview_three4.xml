@@ -2,7 +2,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_height="match_parent">
 
     <ViewAnimator
@@ -14,11 +14,11 @@
         <ImageView
             android:layout_width="match_parent"
             android:scaleType="fitXY"
-            android:id="@+id/imageView_two1_1"
+            android:id="@+id/imageView_three4_1"
             android:layout_height="match_parent"/>
         <VideoView
             android:layout_width="match_parent"
-            android:id="@+id/videoView_two1_1"
+            android:id="@+id/videoView_three4_1"
             android:layout_height="wrap_content"/>
 
     </ViewAnimator>
@@ -32,18 +32,35 @@
         <ImageView
             android:layout_width="match_parent"
             android:scaleType="fitXY"
-            android:id="@+id/imageView_two1_2"
+            android:id="@+id/imageView_three4_2"
             android:layout_height="match_parent"/>
         <VideoView
             android:layout_width="match_parent"
-            android:id="@+id/videoView_two1_2"
+            android:id="@+id/videoView_three4_2"
+            android:layout_height="wrap_content"/>
+
+    </ViewAnimator>
+    <ViewAnimator
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:background="#00000"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:scaleType="fitXY"
+            android:id="@+id/imageView_three4_3"
+            android:layout_height="match_parent"/>
+        <VideoView
+            android:layout_width="match_parent"
+            android:id="@+id/videoView_three4_3"
             android:layout_height="wrap_content"/>
 
     </ViewAnimator>
 
-<!--    <ViewAnimator-->
-<!--        android:layout_width="match_parent"-->
+    <!--    <ViewAnimator-->
+    <!--        android:layout_width="match_parent"-->
 
-<!--        android:layout_height="wrap_content"/>-->
-<!--    该控件也可以实现，详细可学习了解-->
+    <!--        android:layout_height="wrap_content"/>-->
+    <!--    该控件也可以实现，详细可学习了解-->
 </LinearLayout>

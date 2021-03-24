@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private TextClock mLocalTime;
     private AlertDialog mAlertDialogs;
     private View mView;
+    private int playFlag = 0;//播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
 
     static ImageView sImageView_two1_1;
     static VideoView sVideoView_two1_1;
@@ -61,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         Device device = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
         if(device==null){
             device = new Device();
-            daoManager.getSession().getDeviceDao().insert(getDevice(device));
+            daoManager.getSession().getDeviceDao().insert(getDevice(device));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
         }else{
             daoManager.getSession().getDeviceDao().update(getDevice(device));
         }
@@ -203,17 +205,162 @@ public class MainActivity extends AppCompatActivity {
     public void playBtn(View view) {
         //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
-        Toast.makeText(this,"返重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
 
+        switch (ImportActivity.getFilesCount()){//可以从数据库中的mtarget绝对地址中算出来
+            case 1://一分屏时，三种状态下触发对对应控件进行操作
+                if (playFlag == 0) {//播放状态
+                    Log.d(TAG,"播放按键为无效状态");
+                }
+                if (playFlag == 1) {//暂停状态
+                    OneSplitViewActivity.getVideoView_1().resume();
+                    OneSplitViewActivity.getImageView_1().getHandler().notify();
+                }
+                if (playFlag == 2) {//停止状态
+                    //todo:实现重新运行程序，即重新执行turnActivity();
+                }
+            case 2:
+                if (playFlag == 0) {//播放状态
+                    Log.d(TAG,"播放按键为无效状态");
+                }
+                if (playFlag == 1) {//暂停状态
+                    TwoSplitViewActivity.getVideoView_1().resume();
+                    TwoSplitViewActivity.getVideoView_2().resume();
+                    TwoSplitViewActivity.getImageView_1().getHandler().notify();
+                    TwoSplitViewActivity.getImageView_2().getHandler().notify();
+                }
+                if (playFlag == 2) {//停止状态
+                    //todo:实现重新运行程序，即重新执行turnActivity();
+                }
+            case 3:
+                if (playFlag == 0) {//播放状态
+                    Log.d(TAG,"播放按键为无效状态");
+                }
+                if (playFlag == 1) {//暂停状态
+                    ThreeSplitViewActivity.getVideoView_1().resume();
+                    ThreeSplitViewActivity.getVideoView_2().resume();
+                    ThreeSplitViewActivity.getVideoView_3().resume();
+                    ThreeSplitViewActivity.getImageView_1().getHandler().notify();
+                    ThreeSplitViewActivity.getImageView_2().getHandler().notify();
+                    ThreeSplitViewActivity.getImageView_3().getHandler().notify();
+                }
+                if (playFlag == 2) {//停止状态
+                    //todo:实现重新运行程序，即重新执行turnActivity();
+                }
+            case 4:
+                if (playFlag == 0) {//播放状态
+                    Log.d(TAG,"播放按键为无效状态");
+                }
+                if (playFlag == 1) {//暂停状态
+                    FourSplitViewActivity.getVideoView_1().resume();
+                    FourSplitViewActivity.getVideoView_2().resume();
+                    FourSplitViewActivity.getVideoView_3().resume();
+                    FourSplitViewActivity.getVideoView_4().resume();
+                    FourSplitViewActivity.getImageView_1().getHandler().notify();
+                    FourSplitViewActivity.getImageView_2().getHandler().notify();
+                    FourSplitViewActivity.getImageView_3().getHandler().notify();
+                    FourSplitViewActivity.getImageView_4().getHandler().notify();
+                }
+                if (playFlag == 2) {//停止状态
+                    //实现重写运行程序
+                }
+
+        }
     }
 
-    public void suspendBtn(View view) {
+    public void suspendBtn(View view) {//在播放时才为有效按钮，其他都无效
         Log.d(TAG,"this is suspendBtn");
-        Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();//获取当前文件夹的命名格式中的分屏字符串，以此获得对应的控件，控件又分图片和视频子控件；即先判分屏名，再判类型
 
+        switch (ImportActivity.getFilesCount()){
+            case 1://一分屏
+                if (playFlag == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
+                    OneSplitViewActivity.getVideoView_1().pause();
+                    try {
+                        OneSplitViewActivity.getHandler().wait();//两个方法搭配使用，wait()使线程进入阻塞状态，调用notify()时，线程进入可执行状态。
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (playFlag == 1) {//暂停状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                } else if (playFlag ==2) {//停止状态
+                    Log.d(TAG,"暂停按键为无效状态");//或跳回主界面
+                }
+                break;
+            case 2:
+                if (playFlag == 0){
+                    TwoSplitViewActivity.getVideoView_1().pause();
+                    TwoSplitViewActivity.getVideoView_2().pause();
+                    try {
+                        TwoSplitViewActivity.getImageView_1().getHandler().wait();
+                        TwoSplitViewActivity.getImageView_2().getHandler().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (playFlag == 1) {//暂停状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                } else if (playFlag ==2) {//停止状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                }
+                break;
+            case 3:
+                if (playFlag == 0){
+                    ThreeSplitViewActivity.getVideoView_1().pause();
+                    ThreeSplitViewActivity.getVideoView_2().pause();
+                    ThreeSplitViewActivity.getVideoView_3().pause();
+                    try {
+                        ThreeSplitViewActivity.getImageView_1().getHandler().wait();
+                        ThreeSplitViewActivity.getImageView_2().getHandler().wait();
+                        ThreeSplitViewActivity.getImageView_3().getHandler().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (playFlag == 1) {//暂停状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                } else if (playFlag ==2) {//停止状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                }
+                break;
+            case 4:
+                if (playFlag == 0){
+                    FourSplitViewActivity.getVideoView_1().pause();
+                    FourSplitViewActivity.getVideoView_2().pause();
+                    FourSplitViewActivity.getVideoView_3().pause();
+                    FourSplitViewActivity.getVideoView_4().pause();
+                    try {
+                        FourSplitViewActivity.getImageView_1().getHandler().wait();
+                        FourSplitViewActivity.getImageView_2().getHandler().wait();
+                        FourSplitViewActivity.getImageView_3().getHandler().wait();
+                        FourSplitViewActivity.getImageView_4().getHandler().wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (playFlag == 1) {//暂停状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                } else if (playFlag ==2) {//停止状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                }
+                break;
+            default:
+                Log.d(TAG,"Location is switch (ImportActivity.filesCount)_default");
+                break;
+        }
     }
 
     public void stopBtn(View view) {
+        switch (ImportActivity.getFilesCount()){
+            case 1://一分屏
+                if (playFlag == 0) {
+                    OneSplitViewActivity.getImageView_1().getHandler().removeCallbacks(OneSplitViewActivity.getRunnable());//不知实际效果，待测；
+                    //todo：结束所有线程，清除所有视频状态等，再跳转回主界面；
+                } else if (playFlag == 1) {
+                    //todo：结束所有线程，清除所有视频状态等，再跳转回主界面；
+                } else if (playFlag ==2) {
+                    Log.d(TAG,"停止按键为无效状态");
+                }
+                break;
+
+        }
         Log.d(TAG,"this is stopBtn");
         Toast.makeText(this,"返回默认页面activity",Toast.LENGTH_SHORT).show();
     }
@@ -228,4 +375,81 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_progress);
     }
 
+//    public void initWidgets(int splitView, String mode){//以A-B来选择性的初始化控件
+//        if (splitView == 1) {
+//            switch (mode){
+//                case "1":
+//                    break;
+//                ImageView imageView_two1_1= (ImageView) this.findViewById(R.id.imageView_two1_1);
+//                default:
+//                    //log
+//                    break;
+//            }
+//        } else if (splitView == 2) {
+//            switch (mode){
+//                case "1":
+//                    //content
+//                    break;
+//                case "2":
+//                    //content
+//                    break;
+//                case "3":
+//                    //content
+//                    break;
+//                case "4":
+//                    //content
+//                    break;
+//                case "5":
+//                    //content
+//                    break;
+//                case "6":
+//                    //content
+//                    break;
+//                default:
+//                    //log
+//                    break;
+//
+//            }
+//        } else if (splitView == 3) {
+//            switch (mode){
+//                case "1":
+//                    //content
+//                    break;
+//                case "2":
+//                    //content
+//                    break;
+//                case "3":
+//                    //content
+//                    break;
+//                case "4":
+//                    //content
+//                    break;
+//                case "5":
+//                    //content
+//                    break;
+//                case "6":
+//                    //content
+//                    break;
+//                case "7":
+//                    //content
+//                    break;
+//                case "8":
+//                    //content
+//                    break;
+//                default:
+//                    //log
+//                    break;
+//            }
+//        } else if (splitView ==4) {
+//            switch (mode){
+//                case "1":
+//                    //content
+//                    break;
+//                default:
+//                    //log
+//                    break;
+//            }
+//        }
+//
+//    }
 }
