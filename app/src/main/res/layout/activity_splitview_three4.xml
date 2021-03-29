@@ -43,7 +43,7 @@
     <ViewAnimator
         android:layout_width="match_parent"
         android:layout_weight="1"
-        android:background="#00000"
+        android:background="#000000"
         android:layout_height="wrap_content">
 
         <ImageView

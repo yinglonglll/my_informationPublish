@@ -36,5 +36,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'org.greenrobot:greendao:3.3.0' // add library
     implementation 'com.apkfuns.logutils:library:1.0.4'
+    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+
 
 }

@@ -1,9 +1,15 @@
 package cn.ghzn.player.util;
 
+import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,9 +21,10 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 
-public class ViewImportUtils {
+public class ViewImportUtils extends Activity {
     private static final String TAG = "ViewImportUtils";
     private static DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象)
+    public static String lastSplitMode = "";
 
     /**
      *有效图片或视频资源导入的方法
@@ -56,6 +63,12 @@ public class ViewImportUtils {
         }
 
     }
+
+    public static void resetSplitMode(String lastSplitMode){
+
+    }
+
+
     private static Source getSource(Source source){
         if(source.getMtarget()==null)source.setMtarget(ImportActivity.getTarget());
         return source;
