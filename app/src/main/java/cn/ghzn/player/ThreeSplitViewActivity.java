@@ -27,9 +27,9 @@ public class ThreeSplitViewActivity extends Activity {
     private static ImageView imageView_1;
     private static ImageView imageView_2;
     private static ImageView imageView_3;
-    private static VideoView videoView_1;
-    private static VideoView videoView_2;
-    private static VideoView videoView_3;
+    private static CustomVideoView videoView_1;
+    private static CustomVideoView videoView_2;
+    private static CustomVideoView videoView_3;
     private static Handler mHandler;
 
     ArrayList arrayList1;//控件区1地址
@@ -48,15 +48,15 @@ public class ThreeSplitViewActivity extends Activity {
         return imageView_3;
     }
 
-    public static VideoView getVideoView_1() {
+    public static CustomVideoView getVideoView_1() {
         return videoView_1;
     }
 
-    public static VideoView getVideoView_2() {
+    public static CustomVideoView getVideoView_2() {
         return videoView_2;
     }
 
-    public static VideoView getVideoView_3() {
+    public static CustomVideoView getVideoView_3() {
         return videoView_3;
     }
 
@@ -123,7 +123,6 @@ public class ThreeSplitViewActivity extends Activity {
                     Log.d(TAG,"Location is switch(split_mode)_default");
                     break;
             }
-            ViewImportUtils.saveTarget();
         }else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
@@ -313,67 +312,67 @@ public class ThreeSplitViewActivity extends Activity {
         switch (split_mode){
             case "1":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three1_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three1_1);
+                videoView_1 = (CustomVideoView) this.findViewById(R.id.videoView_three1_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three1_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three1_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three1_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three1_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three1_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three1_3);
                 break;
             case "2":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three2_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three2_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three2_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three2_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three2_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three2_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three2_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three2_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three2_3);
                 break;
             case "3":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three3_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three3_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three3_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three3_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three3_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three3_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three3_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three3_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three3_3);
                 break;
             case "4":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three4_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three4_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three4_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three4_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three4_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three4_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three4_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three4_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three4_3);
                 break;
             case "5":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three5_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three5_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three5_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three5_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three5_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three5_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three5_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three5_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three5_3);
                 break;
             case "6":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three6_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three6_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three6_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three6_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three6_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three6_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three6_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three6_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three6_3);
                 break;
             case "7":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three7_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three7_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three7_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three7_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three7_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three7_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three7_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three7_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three7_3);
                 break;
             case "8":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_three8_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_three8_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_three8_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_three8_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_three8_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_three8_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_three8_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_three8_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_three8_3);
                 break;
             default:
                 Log.d(TAG,"default");

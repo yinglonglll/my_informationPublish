@@ -21,6 +21,7 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.FileUtils;
+import cn.ghzn.player.util.ViewImportUtils;
 
 public class ImportActivity extends Activity {
     private static final String TAG = "ImportActivity";
@@ -97,20 +98,6 @@ public class ImportActivity extends Activity {
     private void turnActivity(String mTarget) {
         Log.d(TAG,"this is turnActivity");
         File target = new File(mTarget);//创建复制后的ghznPlayer的对象
-        if (target.isFile()) {//文件直接删
-            target.delete();
-            return;
-        } else if (target.isDirectory()) {//文件夹
-            File[] targets = target.listFiles();
-            if (targets == null || targets.length == 0) {//空文件夹直接删
-                target.delete();
-                return;
-            }
-            for (int i = 0; i < targets.length; i++) {//非空文件夹展开逐个删除，再删文件夹
-                deleteFile(targets[i].getName());
-            }
-            target.delete();
-        }
 
         if (!target.exists()) {
             target.mkdir();
@@ -143,10 +130,6 @@ public class ImportActivity extends Activity {
                         }
                         if (turnFlag == filesCount) {//根据累加的文件数，判断ghznPlayer内的文件是否都符合分屏格式名的格式；
                             Intent intent = new Intent(this, OneSplitViewActivity.class);
-//                            Bundle bundle = new Bundle();
-//                            bundle.putInt("splitView", filesCount);
-//                            bundle.putString("filesParent", mTarget);
-
                             intent.putExtra("splitView", filesCount);//分屏样式传递
                             intent.putExtra("filesParent", mTarget);//直接将ghzn文件夹地址传递过去，以获取父类file类型
                             Log.d(TAG,"this is if (turnFlag == filesCount)");
@@ -168,6 +151,7 @@ public class ImportActivity extends Activity {
                             Intent intent = new Intent(this, TwoSplitViewActivity.class);
                             intent.putExtra("splitView", filesCount);//将分屏样式传输过去
                             intent.putExtra("filesParent", mTarget);
+                            Log.d(TAG,"this is if (turnFlag == filesCount)");
                             startActivity(intent);
                         }
                         break;
@@ -217,9 +201,13 @@ public class ImportActivity extends Activity {
 
     private boolean copyFiles(String source,String target){//通过单个文件copyFile()来逐个复制以实现复制目录内所有内容；
         File root = new File(source);//要复制的目录
-        if (!root.exists()) {
+        if (!root.exists()) {//确定U盘中ghznPlayer文件是存在的
             root.mkdir();
         }
+
+        File file = new File(target);//先删除，再复制，即若存在目标文件，则删除，再执行赋值操作
+        ViewImportUtils.deleteFile(file);
+
         File[] currentFiles = root.listFiles();
 //        File targetDir = new File(target);
         Log.d(TAG, source);
@@ -247,7 +235,7 @@ public class ImportActivity extends Activity {
         String extraPath = path.replace("file://", "");//去除uri前缀，得到文件路径(绝对路径)
         Log.d(TAG,"extraPath去除url前缀的值为：" + extraPath);
 
-        File extraDirectory = new File(extraPath);//
+        File extraDirectory = new File(extraPath);//找到U盘的对象
         if (!extraDirectory.exists()) {
             extraDirectory.mkdir();
         }
@@ -259,10 +247,10 @@ public class ImportActivity extends Activity {
             mTarget = "";
             if (files != null&& files.length != 0) {
                 for(File file : files){
-                    if (file.getName().equals("ghznPlayer")) {//从U盘路径中找到我们放入的文件夹，以找到文件夹的路径
+                    if (file.getName().equals("ghznPlayer")) {//从U盘路径中找到我们放入的文件夹ghznPlayer，以找到文件夹的路径
                         Log.d(TAG, "find extra program:" + file.getAbsolutePath());
                         match = true;//标志找到
-                        source = file.getAbsolutePath();//含有盘名的全目录，U盘存放目标文件
+                        source = file.getAbsolutePath();//U盘存放目标文件ghznPlayer的绝对路径
                         Log.d(TAG,"source的值为：" + source);
                         mTarget = FileUtils.getFilePath(this, Constants.STOREPATH) + "/" + file.getName();//方法返回String类型，拼起来就是完整的复制目标地址,创建目标文件夹
                         Log.d(TAG,"mTarget的值为：" + mTarget);
@@ -273,7 +261,7 @@ public class ImportActivity extends Activity {
                     }
                 }
             }
-            if(match){//标志找到后需复制的动作
+            if(match){//标志找到后需复制的动作,复制之前先把原有的删除了
                 boolean success = false;
                 success = copyFiles(source, mTarget);//通过打开输入/出通道，执行读写复制
                 if(success){//复制的动作执行成功

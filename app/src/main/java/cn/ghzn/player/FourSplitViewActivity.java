@@ -27,10 +27,10 @@ public class FourSplitViewActivity extends Activity {
     private static ImageView imageView_2;
     private static ImageView imageView_3;
     private static ImageView imageView_4;
-    private static VideoView videoView_1;
-    private static VideoView videoView_2;
-    private static VideoView videoView_3;
-    private static VideoView videoView_4;
+    private static CustomVideoView videoView_1;
+    private static CustomVideoView videoView_2;
+    private static CustomVideoView videoView_3;
+    private static CustomVideoView videoView_4;
     private static Handler mHandler;
 
     ArrayList arrayList1;//控件区1地址
@@ -54,19 +54,19 @@ public class FourSplitViewActivity extends Activity {
         return imageView_4;
     }
 
-    public static VideoView getVideoView_1() {
+    public static CustomVideoView getVideoView_1() {
         return videoView_1;
     }
 
-    public static VideoView getVideoView_2() {
+    public static CustomVideoView getVideoView_2() {
         return videoView_2;
     }
 
-    public static VideoView getVideoView_3() {
+    public static CustomVideoView getVideoView_3() {
         return videoView_3;
     }
 
-    public static VideoView getVideoView_4() {
+    public static CustomVideoView getVideoView_4() {
         return videoView_4;
     }
 
@@ -105,16 +105,7 @@ public class FourSplitViewActivity extends Activity {
             playSonImage2(arrayList2);//对控件2进行赋值
             playSonImage3(arrayList3);//对控件3进行赋值
             playSonImage4(arrayList3);//对控件3进行赋值
-            switch (split_mode){
-                case "1":
-                    imageView_1 = (ImageView) this.findViewById(R.id.imageView_one1_1);
-                    videoView_1 = (VideoView) this.findViewById(R.id.videoView_one1_1);
-                    break;
-                default:
-                    Log.d(TAG,"Location is switch(split_mode)_default");
-                    break;
-            }
-            ViewImportUtils.saveTarget();
+
         }
 
 
@@ -355,13 +346,13 @@ public class FourSplitViewActivity extends Activity {
         switch (split_mode){
             case "1":
                 imageView_1 = (ImageView)this.findViewById(R.id.imageView_four1_1);
-                videoView_1 = (VideoView)this.findViewById(R.id.videoView_four1_1);
+                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_four1_1);
                 imageView_2 = (ImageView)this.findViewById(R.id.imageView_four1_2);
-                videoView_2 = (VideoView)this.findViewById(R.id.videoView_four1_2);
+                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_four1_2);
                 imageView_3 = (ImageView)this.findViewById(R.id.imageView_four1_3);
-                videoView_3 = (VideoView)this.findViewById(R.id.videoView_four1_3);
+                videoView_3 = (CustomVideoView)this.findViewById(R.id.videoView_four1_3);
                 imageView_4 = (ImageView)this.findViewById(R.id.imageView_four1_4);
-                videoView_4 = (VideoView)this.findViewById(R.id.videoView_four1_4);
+                videoView_4 = (CustomVideoView)this.findViewById(R.id.videoView_four1_4);
                 break;
             default:
                 Log.d(TAG,"default");

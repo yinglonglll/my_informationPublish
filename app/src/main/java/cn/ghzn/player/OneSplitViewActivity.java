@@ -42,7 +42,6 @@ public class OneSplitViewActivity extends Activity {
     private static Handler mHandler;
     private static Runnable mRunnable;
     GestureDetector mGestureDetector;
-    ImageLoader imageLoader =  ImageLoader.getInstance(); //获取单例实例
 
     public static Runnable getRunnable() {
         return mRunnable;
@@ -64,10 +63,7 @@ public class OneSplitViewActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_splitview_one1);//先设置布局，才能有效找到控件
-
-
-        Log.d(TAG,"this is setContentView(R.layout.activity_progress");
+        Log.d(TAG,"this is 跳转成功");
         Intent intent = getIntent();
 
         int splitView = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
@@ -81,14 +77,14 @@ public class OneSplitViewActivity extends Activity {
         }
         File[] files = f.listFiles();
 
-        String[] splits = files[0].getName().split("\\-");//A-B-C
+        String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
         Log.d(TAG,"this is files[0].getName()" + files[0].getName());
         String split_view = splits[0];//A，存储于数据库
         String split_mode = splits[1];//B
         String split_widget = splits[2];//c
         Log.d(TAG,"this is split_view,split_mode,split_widget" + split_view +"***"+ split_mode + "***" + split_widget);
 
-//        setContentView(R.layout.activity_splitview_one1);//区分之一：先布局，才能找控件
+//        setContentView(R.layout.activity_splitview_one1);//先布局，才能找控件
         initWidget(split_mode);
         Log.d(TAG,"this is initWidget(split_mode)");
 
@@ -109,9 +105,9 @@ public class OneSplitViewActivity extends Activity {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
-
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void initWidget(String split_mode) {
 
         switch (split_mode){//该步骤可以简写，这样写仅为了和其他activity代码相似
@@ -137,11 +133,10 @@ public class OneSplitViewActivity extends Activity {
                         return false;
                     }
                 });
-
                 Log.d(TAG,"this is case \"1\":");
                 break;
             default:
-                Log.d(TAG,"Location is switch(split_mode)_default");
+                Log.d(TAG,"this is switch(split_mode)_default");
                 break;
         }
     }
@@ -156,19 +151,12 @@ public class OneSplitViewActivity extends Activity {
             Log.d(TAG,"开始执行执行播放程序");
 
             final File f = new File(arrayList.get(listNum).toString());
-
             if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
                 Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+
                 videoView_1.setVisibility(View.GONE);
                 imageView_1.setVisibility(View.VISIBLE);
-                videoView_1.setVisibility(View.GONE);
-                    //控件1
-                Log.d(TAG,"this is f" + f.getName());
                 Log.d(TAG,"this is Uri.fromFile(f)" + Uri.fromFile(f));
-                if(f.exists()){
-                    Log.d(TAG, "file exist");
-                }
-
                 LogUtils.e(imageView_1);
                 imageView_1.setImageURI(Uri.fromFile(f));
 //                imageView_1.setImageURI(Uri.fromFile(f.getAbsoluteFile()));
@@ -203,7 +191,6 @@ public class OneSplitViewActivity extends Activity {
                         @Override
                         public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
                             Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-
                             listNum++;
                             playSonImage();
                         }

@@ -16,7 +16,7 @@
             android:scaleType="fitXY"
             android:id="@+id/imageView_two5_1"
             android:layout_height="match_parent"/>
-        <VideoView
+        <CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two5_1"
             android:layout_height="wrap_content"/>
@@ -34,7 +34,7 @@
             android:scaleType="fitXY"
             android:id="@+id/imageView_two5_2"
             android:layout_height="match_parent"/>
-        <VideoView
+        <CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two5_2"
             android:layout_height="wrap_content"/>
