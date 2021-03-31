@@ -8,7 +8,6 @@
     <ViewAnimator
         android:layout_width="wrap_content"
         android:layout_weight="2"
-        android:background="@color/colorAccent"
         android:layout_height="match_parent">
 
         <ImageView
@@ -16,7 +15,7 @@
             android:scaleType="fitXY"
             android:id="@+id/imageView_two2_1"
             android:layout_height="match_parent"/>
-        <CustomVideoView
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two2_1"
             android:layout_height="wrap_content"/>
@@ -26,7 +25,6 @@
     <ViewAnimator
         android:layout_width="wrap_content"
         android:layout_weight="1"
-        android:background="@color/colorPrimary"
         android:layout_height="match_parent">
 
         <ImageView
@@ -34,7 +32,7 @@
             android:scaleType="fitXY"
             android:id="@+id/imageView_two2_2"
             android:layout_height="match_parent"/>
-        <CustomVideoView
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two2_2"
             android:layout_height="wrap_content"/>

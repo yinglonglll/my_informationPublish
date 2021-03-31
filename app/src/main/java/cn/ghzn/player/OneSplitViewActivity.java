@@ -130,7 +130,7 @@ public class OneSplitViewActivity extends Activity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
-                        return false;
+                        return true;
                     }
                 });
                 Log.d(TAG,"this is case \"1\":");
@@ -154,11 +154,11 @@ public class OneSplitViewActivity extends Activity {
             if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
                 Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
 
-                videoView_1.setVisibility(View.GONE);
+                imageView_1.setImageURI(Uri.fromFile(f));
                 imageView_1.setVisibility(View.VISIBLE);
+                videoView_1.setVisibility(View.GONE);
                 Log.d(TAG,"this is Uri.fromFile(f)" + Uri.fromFile(f));
                 LogUtils.e(imageView_1);
-                imageView_1.setImageURI(Uri.fromFile(f));
 //                imageView_1.setImageURI(Uri.fromFile(f.getAbsoluteFile()));
 
                 mHandler = new Handler();
@@ -177,15 +177,12 @@ public class OneSplitViewActivity extends Activity {
                 Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
 
                     //控件1
+                videoView_1.setVideoURI(Uri.fromFile(f));
                 imageView_1.setVisibility(View.GONE);
                 videoView_1.setVisibility(View.VISIBLE);
-                videoView_1.setVideoURI(Uri.fromFile(f));
-//                videoView_1.setVideoURI(Uri.parse("android.resource://cn.ghzn.player/" + R.raw.test));
+                videoView_1.start();
 
-                    Log.d(TAG,"this is Uri.fromFile(f) ：" + Uri.fromFile(f));
-                    LogUtils.e(videoView_1);
 
-                    videoView_1.start();
                     Log.d(TAG,"this is videoView_1.start()");
                     videoView_1.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
@@ -195,8 +192,6 @@ public class OneSplitViewActivity extends Activity {
                             playSonImage();
                         }
                     });
-
-
             }
         }
     }

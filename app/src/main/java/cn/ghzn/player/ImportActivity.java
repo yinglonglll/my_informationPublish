@@ -168,7 +168,9 @@ public class ImportActivity extends Activity {
                         }
                         if (turnFlag == filesCount) {//全部都是true才能跳转
                             Intent intent = new Intent(this,ThreeSplitViewActivity.class);
-                            intent.putExtra("splitView",filesCount);//将分屏样式传输过去
+                            intent.putExtra("splitView", filesCount);//将分屏样式传输过去
+                            intent.putExtra("filesParent", mTarget);
+                            Log.d(TAG,"this is if (turnFlag == filesCount)");
                             startActivity(intent);
                         }
                         break;
@@ -186,6 +188,8 @@ public class ImportActivity extends Activity {
                         if (turnFlag == filesCount) {//全部都是true才能跳转
                             Intent intent = new Intent(this, FourSplitViewActivity.class);
                             intent.putExtra("splitView", filesCount);//将分屏样式传输过去
+                            intent.putExtra("filesParent", mTarget);
+                            Log.d(TAG,"this is if (turnFlag == filesCount)");
                             startActivity(intent);
                         }
                         break;

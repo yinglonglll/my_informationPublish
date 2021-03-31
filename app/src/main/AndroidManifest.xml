@@ -26,7 +26,8 @@
         android:hardwareAccelerated="false"
         android:theme="@style/Theme.AppCompat.NoActionBar">
 
-<!--        <activity//跳转时界面不动的主题-->
+<!--&lt;!&ndash;        //跳转时界面不动的主题&ndash;&gt;-->
+<!--        <activity-->
 <!--            android:name=".ImportActivity"-->
 <!--            android:theme="@style/Transparent" >-->
 <!--        </activity>-->

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:orientation="horizontal"
     android:layout_height="match_parent">
@@ -14,15 +15,14 @@
         <ViewAnimator
             android:layout_width="match_parent"
             android:layout_weight="1"
-            android:background="@color/colorPrimary"
-            android:layout_height="match_parent">
-
+            android:layout_height="match_parent"
+            tools:ignore="NestedWeights">
             <ImageView
                 android:layout_width="match_parent"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three2_1"
                 android:layout_height="match_parent"/>
-            <CustomVideoView
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three2_1"
                 android:layout_height="match_parent"/>
@@ -30,14 +30,13 @@
         <ViewAnimator
             android:layout_width="match_parent"
             android:layout_weight="1"
-            android:background="#000000"
             android:layout_height="match_parent">
             <ImageView
                 android:layout_width="match_parent"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three2_2"
                 android:layout_height="match_parent"/>
-            <CustomVideoView
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three2_2"
                 android:layout_height="match_parent"/>
@@ -46,7 +45,6 @@
 
     </LinearLayout>
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_weight="1"
@@ -54,15 +52,14 @@
 
         <ViewAnimator
             android:layout_width="match_parent"
-            android:background="@color/colorAccent"
             android:layout_height="match_parent">
-
             <ImageView
                 android:layout_width="match_parent"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three2_3"
                 android:layout_height="match_parent"/>
-            <CustomVideoView
+
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three2_3"
                 android:layout_height="match_parent"/>
@@ -70,6 +67,8 @@
         </ViewAnimator>
 
     </LinearLayout>
+
+
 
 
     <!--    <ViewAnimator-->
