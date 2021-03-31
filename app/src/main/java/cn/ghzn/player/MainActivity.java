@@ -2,8 +2,14 @@ package cn.ghzn.player;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -22,42 +28,60 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.InfoUtils;
+import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    GestureDetector mGestureDetector;
     private TextView mDeviceName;
     private TextView mDeviceId;
     private TextView mConnectionState;
     private TextView mAuthorityState;
-    GestureDetector mGestureDetector;
 
     private DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象)
+
     private MyApplication application;
 //    private TextView mInstallTime;
 //    private TextView mProbationTime;
-
     private boolean ConnectionState = false;
+
     private boolean AuthorityState = false;
     private TextClock mLocalTime;
     private AlertDialog mAlertDialogs;
     private View mView;
     private int playFlag = 0;//播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
 
-    static ImageView sImageView_two1_1;
-    static VideoView sVideoView_two1_1;
-    static ImageView sImageView_two1_2;
-    static VideoView sVideoView_two1_2;
-    static ImageView sImageView_one1_1;
-    static VideoView sVideoView_one1_1;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWritePermission();//动态获取写入权限，如果静态获取失败的话
         setContentView(R.layout.activity_main);
+
+//        Log.d(TAG,"this is test");
+//
+//        final CustomVideoView customVideoView = this.findViewById(R.id.videoView_one1_1);
+//        customVideoView.setVideoURI(Uri.parse("android.resource://cn.ghzn.player/" + R.raw.test));
+//
+//        customVideoView.setVisibility(View.VISIBLE);
+//        customVideoView.start();
+//        customVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+//            @Override
+//            public boolean onError(MediaPlayer mp, int what, int extra) {
+//                Log.i("tag","视频播放失败");
+//                return false;
+//            }
+//        });
+//        customVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//            @Override
+//            public void onCompletion(MediaPlayer mp) {
+//                Log.i("tag","可以播放了");
+//                customVideoView.start();
+//            }
+//        });
+
         daoManager.getSession().getDeviceDao();
         //开机检查数据库中设备信息:数据库有则取出设置为当前值
         Device device = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
@@ -69,18 +93,20 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d(TAG,"--------设备信息---------");
         LogUtils.e(device);//利用第三方插件打印出对象的属性和方法值；
-//        application.setDevice(device);//设置全局缓存作用：
 
         initView();//找到layout控件
         initWidget(device);//设置layout控件；从上述数据库中取信息出来显示
 
 
+        setDialog();
 
 
+    }
+    public void setDialog() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        mView = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
-        alertDialog.setView(mView);
-        mAlertDialogs = alertDialog.create();
+        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
+        alertDialog.setView(View);
+        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
@@ -105,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLongPress(MotionEvent e) {
                 Log.d(TAG,"OnLongPressTap");
-                mAlertDialogs.show();
+                AlertDialogs.show();
             }
 
             @Override
@@ -113,14 +139,13 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-
-
     }
+
 
 
     @SuppressLint("ClickableViewAccessibility")
     private void initWidget(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
-//        mDeviceName.setText("设备名字:ghzn_" + System.currentTimeMillis());
+
         mDeviceName.setText("设备名字:" + device.getDevice_name());//从数据库中取已存的名字，而不是从方法中取；
         mDeviceName.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -159,12 +184,17 @@ public class MainActivity extends AppCompatActivity {
         mLocalTime.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                mGestureDetector.onTouchEvent(event);
+                mGestureDetector.onTouchEvent(event);//设置好mGes后，此行为调用mGes的触屏事件
                 return true;
             }
         });
 
 
+    }
+    private void requestWritePermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
     }
     private Device getDevice(Device device){
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
@@ -192,12 +222,7 @@ public class MainActivity extends AppCompatActivity {
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
 
-        sImageView_one1_1 = (ImageView) this.findViewById(R.id.imageView_one1_1);
-        sVideoView_one1_1 = (VideoView) this.findViewById(R.id.videoView_one1_1);
-        sImageView_two1_1 = (ImageView) this.findViewById(R.id.imageView_two1_1);
-        sVideoView_two1_1 = (VideoView) this.findViewById(R.id.videoView_two1_1);
-        sImageView_two1_2 = (ImageView) this.findViewById(R.id.imageView_two1_2);
-        sVideoView_two1_2 = (VideoView) this.findViewById(R.id.videoView_two1_2);
+
 //        mInstallTime = (TextView) this.findViewById(R.id.InstallTime);
 //        mProbationTime = (TextView) this.findViewById(R.id.ProbationTime);
     }

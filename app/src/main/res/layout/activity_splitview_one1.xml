@@ -2,12 +2,12 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent">
 
     <ViewAnimator
         android:layout_width="match_parent"
         android:layout_weight="1"
-        android:background="@color/colorAccent"
         android:layout_height="match_parent">
 
         <ImageView
@@ -15,11 +15,11 @@
             android:scaleType="fitXY"
             android:id="@+id/imageView_one1_1"
             android:layout_height="match_parent"/>
-        <VideoView
+
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_one1_1"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
 
     </ViewAnimator>
-
 </LinearLayout>

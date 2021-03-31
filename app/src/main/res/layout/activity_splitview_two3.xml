@@ -8,36 +8,35 @@
     <ViewAnimator
         android:layout_width="match_parent"
         android:layout_weight="1"
-        android:background="@color/colorAccent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <ImageView
             android:layout_width="match_parent"
             android:scaleType="fitXY"
             android:id="@+id/imageView_two3_1"
             android:layout_height="match_parent"/>
-        <VideoView
+
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two3_1"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
 
     </ViewAnimator>
 
     <ViewAnimator
         android:layout_width="match_parent"
         android:layout_weight="2"
-        android:background="@color/colorPrimary"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <ImageView
             android:layout_width="match_parent"
             android:scaleType="fitXY"
             android:id="@+id/imageView_two3_2"
             android:layout_height="match_parent"/>
-        <VideoView
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two3_2"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
 
     </ViewAnimator>
 

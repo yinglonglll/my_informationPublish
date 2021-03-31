@@ -5,39 +5,37 @@
     android:orientation="horizontal"
     android:layout_height="match_parent">
 
+        <ViewAnimator
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:scaleType="fitXY"
+                android:id="@+id/imageView_two1_1"
+                android:layout_height="match_parent"/>
+            <cn.ghzn.player.CustomVideoView
+                android:layout_width="match_parent"
+                android:id="@+id/videoView_two1_1"
+                android:layout_height="match_parent"/>
+
+        </ViewAnimator>
+
     <ViewAnimator
         android:layout_width="match_parent"
         android:layout_weight="1"
-        android:background="@color/colorAccent"
-        android:layout_height="wrap_content">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:scaleType="fitXY"
-            android:id="@+id/imageView_two1_1"
-            android:layout_height="match_parent"/>
-        <VideoView
-            android:layout_width="match_parent"
-            android:id="@+id/videoView_two1_1"
-            android:layout_height="wrap_content"/>
-
-    </ViewAnimator>
-
-    <ViewAnimator
-        android:layout_width="match_parent"
-        android:layout_weight="1"
-        android:background="@color/colorPrimary"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
         <ImageView
             android:layout_width="match_parent"
             android:scaleType="fitXY"
             android:id="@+id/imageView_two1_2"
             android:layout_height="match_parent"/>
-        <VideoView
+        <cn.ghzn.player.CustomVideoView
             android:layout_width="match_parent"
             android:id="@+id/videoView_two1_2"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
 
     </ViewAnimator>
 

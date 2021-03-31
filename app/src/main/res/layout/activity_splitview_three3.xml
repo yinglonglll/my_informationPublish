@@ -5,40 +5,25 @@
     android:orientation="horizontal"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_weight="1"
-        android:layout_height="match_parent">
+
 
         <ViewAnimator
-            android:layout_width="wrap_content"
-            android:background="@color/colorAccent"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
             android:layout_height="match_parent">
-
             <ImageView
                 android:layout_width="match_parent"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three3_1"
                 android:layout_height="match_parent"/>
-            <VideoView
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three3_1"
-                android:layout_height="wrap_content"/>
-
+                android:layout_height="match_parent"/>
         </ViewAnimator>
-
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_height="match_parent">
-
         <ViewAnimator
-            android:layout_width="wrap_content"
-            android:background="@color/colorPrimary"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
             android:layout_height="match_parent">
 
             <ImageView
@@ -46,35 +31,26 @@
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three3_2"
                 android:layout_height="match_parent"/>
-            <VideoView
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three3_2"
-                android:layout_height="wrap_content"/>
+                android:layout_height="match_parent"/>
         </ViewAnimator>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_weight="1"
-        android:layout_height="match_parent">
-
         <ViewAnimator
-            android:layout_width="wrap_content"
-            android:background="#00000"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
             android:layout_height="match_parent">
             <ImageView
                 android:layout_width="match_parent"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_three3_3"
                 android:layout_height="match_parent"/>
-            <VideoView
+            <cn.ghzn.player.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_three3_3"
-                android:layout_height="wrap_content"/>
-
+                android:layout_height="match_parent"/>
         </ViewAnimator>
 
-    </LinearLayout>
 
 
     <!--    <ViewAnimator-->
