@@ -27,6 +27,7 @@ import com.apkfuns.logutils.LogUtils;
 import java.io.File;
 import java.security.PrivateKey;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -36,21 +37,28 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.ImportActivity.getMap1;
+import static cn.ghzn.player.MainActivity.app;
+import static cn.ghzn.player.MainActivity.daoManager;
+import static cn.ghzn.player.util.InfoUtils.getRandomString;
+import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
 
 public class TwoSplitViewActivity extends Activity {
     private static final String TAG = "TwoSplitViewActivity";
+
     private static ImageView imageView_1;
     private static ImageView imageView_2;
     private static CustomVideoView videoView_1;
     private static CustomVideoView videoView_2;
     private static Handler mHandler;
-    ArrayList arrayList1;//控件区1地址
-    ArrayList arrayList2;//控件区2地址
     private GestureDetector mGestureDetector;
-    private ThreadFactory threadFactory;
+
+    private ArrayList arrayList1;//控件区1地址
+    private ArrayList arrayList2;//控件区2地址
+
 
     public static ImageView getImageView_1() {
         return imageView_1;
@@ -76,44 +84,56 @@ public class TwoSplitViewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
-
         Log.d(TAG,"this is 跳转成功");
-        Intent intent = getIntent();
+        if (app.isExtraState()) {
+            Intent intent = getIntent();
+            int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
+            String filesParent = intent.getStringExtra("filesParent");
+            Log.d(TAG,"this is splitView" + fileCounts);
+            Log.d(TAG,"this is filesParent" + filesParent);
 
-        int splitView = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
-        String filesParent = intent.getStringExtra("filesParent");
-        Log.d(TAG,"this is splitView" + splitView);
-        Log.d(TAG,"this is filesParent" + filesParent);
+            File f = new File(filesParent);
+            if (!f.exists()) {
+                f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+            }
+            File[] files = f.listFiles();//展开父类文件夹ghznPlayer
 
-        File f = new File(filesParent);
-        if (!f.exists()) {
-            f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+            String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
+            app.setSplit_view(splits[0]);
+            app.setSplit_mode(splits[1]);
+            String split_widget = splits[2];
+            Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
+
+            initWidget(app.getSplit_mode());
+            Log.d(TAG,"this is initWidget(split_mode)");
+
+            for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
+                getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+            }
+
+            String key = app.getSplit_view() + "-" + app.getSplit_mode();//直接按分配类型取文件
+            arrayList1 = getSonImage(getMap1().get(key + "-1").toString());
+            arrayList2 = getSonImage(getMap1().get(key + "-2").toString());//获取到有效的资源信息
+
+            app.setSonSource(getMap1().get(key + "-1").toString() + "***" + getMap1().get(key + "-2").toString());//data：存储子文件夹的地址
+            //取出时记得拆分
+        }else {
+            initWidget(app.getSplit_mode());
+            String[] strings = app.getSon_source().split("\\*\\*\\*");
+            arrayList1 = getSonImage(strings[0]);
+            arrayList2 = getSonImage(strings[1]);
         }
-        File[] files = f.listFiles();//展开父类文件夹ghznPlayer
-
-        String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
-        String split_view = splits[0];//A，
-        String split_mode = splits[1];//B
-        String split_widget = splits[2];//c
-        Log.d(TAG,"this is split_view,split_mode,split_widget" + split_view +"***"+ split_mode + "***" + split_widget);
-
-        initWidget(split_mode);
-        Log.d(TAG,"this is initWidget(split_mode)");
-
-        for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-            getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
-        }
-
-        String key = split_view + "-" + split_mode;//直接按分配类型取文件
-        arrayList1 = ViewImportUtils.getSonImage(getMap1().get(key + "-1").toString());
-        arrayList2 = ViewImportUtils.getSonImage(getMap1().get(key + "-2").toString());//获取到有效的资源信息
-
-        if (getMap1().size() == splitView) {
-            Log.d(TAG,"this is if (getMap1().size() == splitView)");
-
+        if (app.getSplit_view() != null) {
             playSonImage(arrayList1,arrayList2);
-//            new Thread(new playRunnable1()).start();
-//            new Thread(new playRunnable2()).start();
+            if (app.isExtraState()) {
+                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
+                if(app.getSource() == null){//这一步多余
+                    app.setSource(new Source());//表不存在则新建赋值
+                    daoManager.getSession().getSourceDao().insert(getSource(app.getSource()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+                }else{//存在则直接修改
+                    daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
+                }
+            }
         }else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
@@ -121,6 +141,13 @@ public class TwoSplitViewActivity extends Activity {
         //todo:3.成功执行，数据为有效数据，才把信息存储到数据库中，完成更新；以便没U盘插入时，直接执行另外一个activity，取出赋值{KEY:A,B,ghznPlayer内所有文件的绝对地址以寻资源的地址键值对，}
     }
 
+    private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
+        source.setProgram_id(getRandomString(5));
+        source.setSplit_view(app.getSplit_view());
+        source.setSplit_mode(app.getSplit_mode());
+        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        return source;
+    }
     @SuppressLint("ClickableViewAccessibility")
     private void initWidget(String split_mode) {
         switch (split_mode){

@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -26,6 +27,7 @@ import com.apkfuns.logutils.LogUtils;
 
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
+import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.InfoUtils;
 import cn.ghzn.player.util.ViewImportUtils;
@@ -34,74 +36,87 @@ import static cn.ghzn.player.util.InfoUtils.getRandomString;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static MyApplication app;
+    public final static DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象，只管取来用)
     private static final String TAG = "MainActivity";
+
     GestureDetector mGestureDetector;
     private TextView mDeviceName;
     private TextView mDeviceId;
     private TextView mConnectionState;
     private TextView mAuthorityState;
-
-    private DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象)
-
-    private MyApplication application;
-//    private TextView mInstallTime;
-//    private TextView mProbationTime;
-    private boolean ConnectionState = false;
-
-    private boolean AuthorityState = false;
     private TextClock mLocalTime;
-    private AlertDialog mAlertDialogs;
-    private View mView;
+
     private int playFlag = 0;//播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWritePermission();//动态获取写入权限，如果静态获取失败的话
+        requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
+        app = (MyApplication)getApplication();//全局变量：
         setContentView(R.layout.activity_main);
-
-//        Log.d(TAG,"this is test");
-//
-//        final CustomVideoView customVideoView = this.findViewById(R.id.videoView_one1_1);
-//        customVideoView.setVideoURI(Uri.parse("android.resource://cn.ghzn.player/" + R.raw.test));
-//
-//        customVideoView.setVisibility(View.VISIBLE);
-//        customVideoView.start();
-//        customVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-//            @Override
-//            public boolean onError(MediaPlayer mp, int what, int extra) {
-//                Log.i("tag","视频播放失败");
-//                return false;
-//            }
-//        });
-//        customVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//            @Override
-//            public void onCompletion(MediaPlayer mp) {
-//                Log.i("tag","可以播放了");
-//                customVideoView.start();
-//            }
-//        });
-
-        daoManager.getSession().getDeviceDao();
-        //开机检查数据库中设备信息:数据库有则取出设置为当前值
-        Device device = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
-        if(device==null){
-            device = new Device();
-            daoManager.getSession().getDeviceDao().insert(getDevice(device));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-        }else{
-            daoManager.getSession().getDeviceDao().update(getDevice(device));
-        }
-        Log.d(TAG,"--------设备信息---------");
-        LogUtils.e(device);//利用第三方插件打印出对象的属性和方法值；
-
         initView();//找到layout控件
-        initWidget(device);//设置layout控件；从上述数据库中取信息出来显示
 
+        app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
+        if(app.getDevice() == null){
+            app.setDevice(new Device());//表不存在则新建赋值
+            daoManager.getSession().getDeviceDao().insert(getDevice(app.getDevice()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+        }else{//存在则直接修改
+            daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
+        }
+        Log.d(TAG,"this is if(app.getDevice() == null)");
+        initWidget(app.getDevice());//设置layout控件；从上述数据库中取信息出来显示
+        Log.d(TAG,"--------设备信息---------");
+        LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
+
+        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+        Log.d(TAG,"this is  app.setSource");
+        if (app.getSource() != null) {
+            initImport(app.getSource());//初始化数据库数据到全局变量池
+            Log.d(TAG,"--------资源信息---------");
+            LogUtils.e(app.getSource());
+            turnActivity(app.getSplit_view());
+        }
 
         setDialog();
-
-
     }
+
+    private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
+        switch (split_view) {
+            case "1":
+                Log.d(TAG,"this is case1");
+                    Intent intent1 = new Intent(this, OneSplitViewActivity.class);
+                    startActivity(intent1);
+                break;
+            case "2":
+                    Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
+                    startActivity(intent2);
+                break;
+            case "3":
+                    Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
+                    startActivity(intent3);
+
+                break;
+            case "4":
+                    Intent intent4 = new Intent(this, FourSplitViewActivity.class);
+                    startActivity(intent4);
+                break;
+            default:
+                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
+                break;
+        }
+    }
+
+    private void initImport(Source source) {
+        //将读取的数据赋值给全局变量
+
+        app.setProgram_id(source.getProgram_id());
+        app.setSplit_view(source.getSplit_view());
+        app.setSplit_mode(source.getSplit_mode());
+        app.setSon_source(source.getSon_source());
+        app.setCreate_time(source.getCreate_time());
+    }
+
     public void setDialog() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
@@ -145,7 +160,9 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     private void initWidget(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
-
+        Log.d(TAG,"this is private void initWidget(Device device)");
+        LogUtils.e(mDeviceName);
+        Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
         mDeviceName.setText("设备名字:" + device.getDevice_name());//从数据库中取已存的名字，而不是从方法中取；
         mDeviceName.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -165,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        mConnectionState.setText("连接状态：" + ConnectionState);
+        mConnectionState.setText("连接状态：" + app.isConnectionState());//监视U盘连接状态，与数据库中的数据没有关系
         mConnectionState.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -173,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        mAuthorityState.setText("授权状态：" + AuthorityState);
+        mAuthorityState.setText("授权状态：" + device.getAuthority_state());
         mAuthorityState.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -188,8 +205,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-
     }
     private void requestWritePermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -199,13 +214,13 @@ public class MainActivity extends AppCompatActivity {
     private Device getDevice(Device device){
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
-        if(device.getAuthority_state()==true)device.setAuthority_state(InfoUtils.AuthorityState());//默认为false，数据库获取为true才是已授权
+        if(device.getAuthority_state()==true)device.setAuthority_state(InfoUtils.getAuthorityState());//默认为false，数据库获取为true才是已授权
         if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
         if(device.getAuthorization()==null)device.setAuthorization(InfoUtils.getAuthorization());
 //        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
         device.setSoftware_version(InfoUtils.getSoftware_version());
         device.setFirmware_version(InfoUtils.FirmwareVersion());
-        device.setWidth(InfoUtils.getDWidth());//默认赋值为0
+        device.setWidth(InfoUtils.getWidth());//默认赋值为0
         device.setHeight(InfoUtils.getHeight());
 
         return device;
@@ -222,9 +237,6 @@ public class MainActivity extends AppCompatActivity {
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
 
-
-//        mInstallTime = (TextView) this.findViewById(R.id.InstallTime);
-//        mProbationTime = (TextView) this.findViewById(R.id.ProbationTime);
     }
 
     public void playBtn(View view) {
@@ -384,7 +396,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG,"停止按键为无效状态");
                 }
                 break;
-
         }
         Log.d(TAG,"this is stopBtn");
         Toast.makeText(this,"返回默认页面activity",Toast.LENGTH_SHORT).show();
@@ -399,82 +410,4 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is MachineIdOutBtn");
         setContentView(R.layout.activity_progress);
     }
-
-//    public void initWidgets(int splitView, String mode){//以A-B来选择性的初始化控件
-//        if (splitView == 1) {
-//            switch (mode){
-//                case "1":
-//                    break;
-//                ImageView imageView_two1_1= (ImageView) this.findViewById(R.id.imageView_two1_1);
-//                default:
-//                    //log
-//                    break;
-//            }
-//        } else if (splitView == 2) {
-//            switch (mode){
-//                case "1":
-//                    //content
-//                    break;
-//                case "2":
-//                    //content
-//                    break;
-//                case "3":
-//                    //content
-//                    break;
-//                case "4":
-//                    //content
-//                    break;
-//                case "5":
-//                    //content
-//                    break;
-//                case "6":
-//                    //content
-//                    break;
-//                default:
-//                    //log
-//                    break;
-//
-//            }
-//        } else if (splitView == 3) {
-//            switch (mode){
-//                case "1":
-//                    //content
-//                    break;
-//                case "2":
-//                    //content
-//                    break;
-//                case "3":
-//                    //content
-//                    break;
-//                case "4":
-//                    //content
-//                    break;
-//                case "5":
-//                    //content
-//                    break;
-//                case "6":
-//                    //content
-//                    break;
-//                case "7":
-//                    //content
-//                    break;
-//                case "8":
-//                    //content
-//                    break;
-//                default:
-//                    //log
-//                    break;
-//            }
-//        } else if (splitView ==4) {
-//            switch (mode){
-//                case "1":
-//                    //content
-//                    break;
-//                default:
-//                    //log
-//                    break;
-//            }
-//        }
-//
-//    }
 }
