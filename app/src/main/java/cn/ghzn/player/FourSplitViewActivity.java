@@ -17,14 +17,20 @@ import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 
+import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.ImportActivity.getMap1;
+import static cn.ghzn.player.MainActivity.app;
+import static cn.ghzn.player.MainActivity.daoManager;
+import static cn.ghzn.player.util.InfoUtils.getRandomString;
+import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
 
 public class FourSplitViewActivity extends Activity {
-
     private static final String TAG = "FourSplitViewActivity";
+
     private static ImageView imageView_1;
     private static ImageView imageView_2;
     private static ImageView imageView_3;
@@ -80,54 +86,76 @@ public class FourSplitViewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
+        Log.d(TAG,"this is 跳转成功");
+        if (app.isExtraState()) {
+            Intent intent = getIntent();
+            int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
+            String filesParent = intent.getStringExtra("filesParent");
+            Log.d(TAG,"this is splitView" + fileCounts);
+            Log.d(TAG,"this is filesParent" + filesParent);
 
-        Intent intent = getIntent();
-        int splitView = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
-        String filesParent = intent.getStringExtra("filesParent");
-        Log.d(TAG,"this is splitView" + splitView);
-        Log.d(TAG,"this is filesParent" + filesParent);
+            File f = new File(filesParent);
+            if (!f.exists()) {
+                f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+            }
+            File[] files = f.listFiles();
 
-        File f = new File(filesParent);
-        if (!f.exists()) {
-            f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+            String[] splits = files[0].getName().split("\\-");//A-B-C
+            app.setSplit_view(splits[0]);//A，存储于数据库
+            app.setSplit_mode(splits[1]);//B
+            String split_widget = splits[2];//c
+            Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
+
+            initWidget(app.getSplit_mode());
+            Log.d(TAG,"this is initWidget(split_mode)");
+
+            for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
+                getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+            }
+
+            String key = app.getSplit_view() + "-" + app.getSplit_mode();
+            arrayList1 = getSonImage(getMap1().get(key + "-1").toString());
+            arrayList2 = getSonImage(getMap1().get(key + "-2").toString());
+            arrayList3 = getSonImage(getMap1().get(key + "-3").toString());
+            arrayList4 = getSonImage(getMap1().get(key + "-4").toString());
+
+            app.setSonSource(getMap1().get(key + "-1").toString() + "***" + getMap1().get(key + "-2").toString()
+                    + "***" + getMap1().get(key + "-3").toString() + "***" + getMap1().get(key + "-4").toString());
+        }else{
+            initWidget(app.getSplit_mode());
+            String[] strings = app.getSon_source().split("\\*\\*\\*");
+            arrayList1 = getSonImage(strings[0]);
+            arrayList2 = getSonImage(strings[1]);
+            arrayList3 = getSonImage(strings[2]);
+            arrayList4 = getSonImage(strings[3]);
         }
-        File[] files = f.listFiles();
 
-        String[] splits = files[0].getName().split("\\-");//A-B-C
-        String split_view = splits[0];//A，存储于数据库
-        String split_mode = splits[1];//B
-        String split_widget = splits[2];//c
-        Log.d(TAG,"this is split_view,split_mode,split_widget" + split_view +"***"+ split_mode + "***" + split_widget);
-
-        initWidget(split_mode);
-        Log.d(TAG,"this is initWidget(split_mode)");
-
-        for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-            getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
-        }
-
-        String key = split_view + "-" + split_mode;
-        arrayList1 = ViewImportUtils.getSonImage(getMap1().get(key + "-1").toString());
-        arrayList2 = ViewImportUtils.getSonImage(getMap1().get(key + "-2").toString());
-        arrayList3 = ViewImportUtils.getSonImage(getMap1().get(key + "-3").toString());
-        arrayList4 = ViewImportUtils.getSonImage(getMap1().get(key + "-4").toString());
-        Log.d(TAG,"this is arrayList1" + arrayList1);
-        Log.d(TAG,"this is arrayList2" + arrayList2);
-        Log.d(TAG,"this is arrayList3" + arrayList3);
-        Log.d(TAG,"this is arrayList4" + arrayList4);
-
-
-        if (getMap1().size() == splitView) {
+        if (app.getSplit_view() != null) {
             Log.d(TAG, "this is if (getMap1().size() == splitView)");
             playSonImage(arrayList1,arrayList2,arrayList3,arrayList4);
+
+            if (app.isExtraState()) {
+                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
+                if(app.getSource() == null){//这一步多余
+                    app.setSource(new Source());//表不存在则新建赋值
+                    daoManager.getSession().getSourceDao().insert(getSource(app.getSource()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+                }else{//存在则直接修改
+                    daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
+                }
+            }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
-
-
     }
 
+    private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
+        source.setProgram_id(getRandomString(5));
+        source.setSplit_view(app.getSplit_view());
+        source.setSplit_mode(app.getSplit_mode());
+        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        return source;
+    }
     int listNum1 = 0;//用于记录单个文件夹循环时，处于第几个图片或视频；可使用集合但没必要
     int listNum2 = 0;
     int listNum3 = 0;

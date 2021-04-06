@@ -2,74 +2,136 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
+    android:orientation="horizontal"
     android:layout_height="match_parent">
 
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:id="@+id/DeviceName"
-        android:text="设备名字:"
-        android:layout_gravity="center_vertical"
-        android:paddingVertical="10dp"
-        android:textSize="15dp"
-        android:textColor="#ffffff"
-        android:layout_height="wrap_content" />
-    <TextView
+        android:layout_weight="2"
+        android:layout_height="match_parent">
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
-        android:id="@+id/DeviceID"
-        android:text="设备 I D:"
-        android:layout_gravity="center_vertical"
-        android:textSize="15dp"
-        android:textColor="#ffffff"
-        android:layout_height="wrap_content"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:id="@+id/ConnectionState"
-        android:text="连接状态:"
-        android:paddingVertical="10dp"
-        android:layout_gravity="center_vertical"
-        android:textSize="15dp"
-        android:textColor="#ffffff"
-        android:layout_height="wrap_content"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:id="@+id/AuthorityState"
-        android:text="授权状态:"
-        android:layout_gravity="center_vertical"
-        android:textSize="15dp"
-        android:textColor="#ffffff"
-        android:layout_height="wrap_content"/>
-    <TextClock
-        android:layout_width="match_parent"
-        android:id="@+id/localTime"
-        android:paddingVertical="10dp"
-        android:format24Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"
-        android:format12Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"
-        android:layout_gravity="center_vertical"
-        android:textSize="15dp"
-        android:textColor="#ffffff"
-        android:layout_height="match_parent"/>
-    <!--        <TextView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:id="@+id/InstallTime"-->
-    <!--            android:text="安装时间:"-->
-    <!--            android:layout_gravity="center_vertical"-->
-    <!--            android:textSize="15dp"-->
-    <!--            android:textColor="@color/black"-->
-    <!--            android:layout_height="wrap_content"/>-->
-    <!--        <TextView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:id="@+id/ProbationTime"-->
-    <!--            android:text="试用时间:"-->
-    <!--            android:paddingVertical="10dp"-->
-    <!--            android:layout_gravity="center_vertical"-->
-    <!--            android:textSize="15dp"-->
-    <!--            android:textColor="@color/black"-->
-    <!--            android:layout_height="wrap_content"/>-->
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_height="match_parent">
 
+            <TextView
+                android:id="@+id/DeviceName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="设备名字:"
+                android:textColor="#ffffff"
+                android:layout_weight="3"
+                android:gravity="bottom"
+                android:textSize="25dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:id="@+id/DeviceID"
+                android:text="设备 I D:"
+                android:textColor="#ffffff"
+                android:gravity="left"
+                android:textSize="25dp"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:id="@+id/ConnectionState"
+                android:text="连接状态:"
+                android:textColor="#ffffff"
+                android:gravity="left"
+                android:textSize="25dp"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/AuthorityState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="授权状态:"
+                android:textColor="#ffffff"
+                android:textSize="25dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_weight="3"
+                android:layout_height="wrap_content">
+                <TextClock
+                    android:id="@+id/localTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="left|top"
+                    android:format24Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"
+                    android:format12Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"
+                    android:textSize="25dp" />
+            </LinearLayout>
 
+    </LinearLayout>
 
-
+<!--<LinearLayout-->
+<!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:orientation="vertical"-->
+<!--    android:padding="20dp"-->
+<!--    android:layout_height="match_parent">-->
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_weight="6"-->
+<!--        android:orientation="vertical"-->
+<!--        android:layout_height="wrap_content">-->
+<!--        <TextView-->
+<!--            android:id="@+id/DeviceName"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:gravity="center|bottom"-->
+<!--            android:paddingBottom="10dp"-->
+<!--            android:paddingVertical="10dp"-->
+<!--            android:text="设备名字:"-->
+<!--            android:textColor="#ffffff"-->
+<!--            android:textSize="25dp" />-->
+<!--    </LinearLayout>-->
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:id="@+id/DeviceID"-->
+<!--        android:text="设备 I D:"-->
+<!--        android:gravity="center"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_weight="1"-->
+<!--        android:textSize="25dp"-->
+<!--        android:textColor="#ffffff"-->
+<!--        android:layout_height="wrap_content"/>-->
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:id="@+id/ConnectionState"-->
+<!--        android:text="连接状态:"-->
+<!--        android:gravity="center"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_weight="1"-->
+<!--        android:paddingVertical="10dp"-->
+<!--        android:textSize="25dp"-->
+<!--        android:textColor="#ffffff"-->
+<!--        android:layout_height="wrap_content"/>-->
+<!--    <TextView-->
+<!--        android:id="@+id/AuthorityState"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:gravity="center"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_weight="1"-->
+<!--        android:text="授权状态:"-->
+<!--        android:textColor="#ffffff"-->
+<!--        android:textSize="25dp" />-->
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_weight="6"-->
+<!--        android:layout_height="wrap_content">-->
+<!--        <TextClock-->
+<!--            android:id="@+id/localTime"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:gravity="center|top"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:format12Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"-->
+<!--            android:format24Hour="本地时间：yyyy年MM月dd日 EEEE aa HH:mm:ss"-->
+<!--            android:paddingVertical="10dp"-->
+<!--            android:textColor="#ffffff"-->
+<!--            android:textSize="25dp" />-->
+<!--    </LinearLayout>-->
 </LinearLayout>

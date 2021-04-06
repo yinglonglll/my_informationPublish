@@ -25,56 +25,41 @@ import cn.ghzn.player.util.ViewImportUtils;
 
 public class ImportActivity extends Activity {
     private static final String TAG = "ImportActivity";
-    private static String mSplitView = "";
+
     private static String mTarget ="";
-    private String mFileName = "";
     private static int filesCount = 0;
+    private MyApplication app;
     private DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象)
+    private static Runnable mRunnable;
+    private static Map map1 = new HashMap();//存每次导入进来时里面的U盘文件，
+    public static Runnable getRunnable() {
+        return mRunnable;
+    }
 
     public static int getFilesCount() {
         return filesCount;
     }
 
-    public static String getTarget() {
-        return mTarget;
-    }
-
-    private ArrayList arrayList = new ArrayList<String>();
-    public  int listNum = 0;
-
-    private ImageView[] mWidget1_image = null;
-    private VideoView[] mWidget1_video = null;
-    private ImageView[] mWidget2_image = null;
-    private VideoView[] mWidget2_video = null;
-
-    private static Runnable mRunnable;
-    private static Map map1 = new HashMap();//存每次导入进来时里面的U盘文件，
-    private static Map map2 = new HashMap();//存控件相关
-    private static Map map = new HashMap();//将map1和map2存入进来，通过map来对map1和map2进行调用；
-
     public static Map getMap1() {
         return map1;
     }
+//    private static Map map2 = new HashMap();//存控件相关
 
-    public static Map getMap2() {
-        return map2;
-    }
+//    private static Map map = new HashMap();//将map1和map2存入进来，通过map来对map1和map2进行调用；
+//    public static Map getMap2() {
+//        return map2;
+//    }
+//
+//    public static Map getMap() {
+//        return map;
 
-    public static Map getMap() {
-        return map;
-    }
+//    }
 
-    public static Runnable getRunnable() {
-        return mRunnable;
-    }
-
-    public static String getSplitView() {
-        return mSplitView;
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
         super.onCreate(savedInstanceState);
+        app = (MyApplication)getApplication();//全局变量池：
         setContentView(R.layout.activity_progress);
 
         Intent intent = getIntent();//获取意图
@@ -86,7 +71,7 @@ public class ImportActivity extends Activity {
 
 //        if (mTarget != null) {
         Log.d(TAG,"this is turnActivity(mTarget)");
-        turnActivity(mTarget);//从ghznPlayer文件夹中获取信息以跳转对应的activity;如果没有获取U盘的信息，默认读取数据库中的信息进行跳转
+        turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
 //        } else {
 //            Source source = daoManager.getSession().getSourceDao().queryBuilder().unique();//先查出来，再调出来。
 //            mTarget = source.getMtarget();
@@ -133,6 +118,7 @@ public class ImportActivity extends Activity {
                             intent.putExtra("splitView", filesCount);//分屏样式传递
                             intent.putExtra("filesParent", mTarget);//直接将ghzn文件夹地址传递过去，以获取父类file类型
                             Log.d(TAG,"this is if (turnFlag == filesCount)");
+                            app.setExtraState(true);
                             startActivity(intent);
                         }
                         break;
@@ -152,6 +138,7 @@ public class ImportActivity extends Activity {
                             intent.putExtra("splitView", filesCount);//将分屏样式传输过去
                             intent.putExtra("filesParent", mTarget);
                             Log.d(TAG,"this is if (turnFlag == filesCount)");
+                            app.setExtraState(true);
                             startActivity(intent);
                         }
                         break;
@@ -171,6 +158,7 @@ public class ImportActivity extends Activity {
                             intent.putExtra("splitView", filesCount);//将分屏样式传输过去
                             intent.putExtra("filesParent", mTarget);
                             Log.d(TAG,"this is if (turnFlag == filesCount)");
+                            app.setExtraState(true);
                             startActivity(intent);
                         }
                         break;
@@ -190,6 +178,7 @@ public class ImportActivity extends Activity {
                             intent.putExtra("splitView", filesCount);//将分屏样式传输过去
                             intent.putExtra("filesParent", mTarget);
                             Log.d(TAG,"this is if (turnFlag == filesCount)");
+                            app.setExtraState(true);
                             startActivity(intent);
                         }
                         break;

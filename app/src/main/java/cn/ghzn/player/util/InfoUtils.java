@@ -5,18 +5,14 @@ import android.content.Context;
 import java.util.Random;
 
 import cn.ghzn.player.Constants;
+import cn.ghzn.player.MainActivity;
+import cn.ghzn.player.MyApplication;
+
+import static cn.ghzn.player.MainActivity.*;
 
 public class InfoUtils {
-    private static Context mContext;//上下文，需要填上下文就直接新建一个填入参数使用即可，如下文getMac
-    public static String sDeviceId;
 
-    /**
-     * 获取软件名称
-     * @return
-     */
-    public static String getDeviceName(){
-        return Constants.DEVICE_PREFIX + getRandomString(10);
-    }
+    private static Context mContext;//上下文，需要填上下文就直接新建一个填入参数使用即可，如下文getMac
 
     public static String getRandomString(int length){
         String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -29,45 +25,57 @@ public class InfoUtils {
         return sb.toString();
     }
 
-    public static String getDeviceId() {
-        sDeviceId = MacUtils.getMac(mContext) + System.currentTimeMillis();//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
+    public static String getDeviceName(){
+        app.setDevice_Name(Constants.DEVICE_PREFIX + getRandomString(10));
+        return app.getDevice_Name();
+    }
 
-        return sDeviceId;
+    public static String getDeviceId() {
+        app.setDevice_Id(MacUtils.getMac(mContext) + System.currentTimeMillis());//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
+
+        return app.getDevice_Id();
 
     }
 
-    public static boolean AuthorityState() {
-        return true;
+    public static boolean getAuthorityState() {
+        app.setAuthority_state(false);
+        return app.isAuthority_state();
 
     }
 
     public static String getAuthorityTime() {
-        return null;
+        app.setAuthority_time("XX.XX.XX");
+        return app.getAuthority_time();
 
     }
 
     public static String getAuthorization() {
-        return null;
+        app.setAuthorization("123456789");
+        return app.getAuthorization();
 
     }
 
     public static String getSoftware_version() {
-        return null;
+        app.setSoftware_version("***");
+        return app.getSoftware_version();
 
     }
 
     public static String FirmwareVersion() {
-        return null;
+        app.setFirmware_version("***");
+        return app.getFirmware_version();
 
     }
 
-    public static int getDWidth() {
-        return 0;
+    public static int getWidth() {
+        app.setWidth(0);
+        return app.getWidth();
 
     }
 
     public static int getHeight() {
-        return 0;
+        app.setHeight(0);
+        return app.getHeight();
 
     }
 }
