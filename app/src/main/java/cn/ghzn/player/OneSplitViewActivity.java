@@ -2,8 +2,10 @@ package cn.ghzn.player;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -28,7 +30,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.Delayed;
 
+import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.source.Source;
 
 import static androidx.core.os.HandlerCompat.postDelayed;
@@ -37,24 +41,21 @@ import static cn.ghzn.player.MainActivity.*;
 import static cn.ghzn.player.util.InfoUtils.getDeviceId;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
+import static java.lang.Thread.sleep;
 
 public class OneSplitViewActivity extends Activity {
     private static final String TAG = "OneSplitViewActivity";
-
-    private static ImageView imageView_1;
-    private static CustomVideoView videoView_1;//自定义video类，原本的无法自适应全屏；
-    private static Handler mHandler;
-    private static Runnable mRunnable;
-    GestureDetector mGestureDetector;
-
-    private int fileCounts;
+    private BroadcastReceiver mBroadcastReceiver;
+    private int fileCounts;//私有全局变量
     private ArrayList arrayList;
-    private int listNum = 0;
+    GestureDetector mGestureDetector;//私有控件
+    private Runnable mRunnable;//目前暂时用不到，对于其他分屏的使用，可删或不变该变量
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        app.setCurrentActivity(this);
         Log.d(TAG,"this is 跳转成功");
 
         if (app.isExtraState()) {//外部导入状态为真
@@ -98,6 +99,19 @@ public class OneSplitViewActivity extends Activity {
         }
 
         if (app.getSplit_view() != null) {//该判断可有可无，命名规则跳转前已检查
+            mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.d(TAG,"this is varReceiver");
+                    Log.d(TAG,"why is mBroadcastReceiver:app.getListNum1()广播：" + app.getListNum1());
+                    playSonImage();
+//                    unregisterReceiver(mBroadcastReceiver);
+                }
+            });
+            IntentFilter filter = new IntentFilter();
+            filter.addAction("0");
+            registerReceiver(mBroadcastReceiver,filter);//注册广播
+
             playSonImage();//参数arrayList是默认的，可含或不含参，结果都一样
             //只需要存储有效数据
             if (app.isExtraState()) {
@@ -109,26 +123,15 @@ public class OneSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
-
             }
-
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
     }
-    public static Runnable getRunnable() {
-        return mRunnable;
-    }
-    public static Handler getHandler() {
-        return mHandler;
-    }
-    public static ImageView getImageView_1() {
-        return imageView_1;
-    }
 
-    public static CustomVideoView getVideoView_1() {
-        return videoView_1;
+    public OneSplitViewActivity() {
+        super();
     }
 
     private Source getSource(Source source) {//对数据库进行覆写
@@ -146,18 +149,18 @@ public class OneSplitViewActivity extends Activity {
 //                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 //                View view=inflater.inflate(R.layout.activity_splitview_one1, null);//setContent()的实际底层代码逻辑相关
                 setContentView(R.layout.activity_splitview_one1);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_one1_1);//this指当前当前layout里找控件，若是去其他layout找，需要用到layout过滤器如上
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_one1_1);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_one1_1));//this指当前当前layout里找控件，若是去其他layout找，需要用到layout过滤器如上
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_one1_1));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -171,53 +174,53 @@ public class OneSplitViewActivity extends Activity {
                 break;
         }
     }
-    private void playSonImage(){
+    public void playSonImage(){
 
-        if (listNum >= arrayList.size()) {
-            listNum = 0;//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
+        if (app.getListNum1() >= arrayList.size()) {
+            app.setListNum1(0);//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
+//            if (app.isFinishFlag()) {
+//                finish();
+//            }
             playSonImage();
-//            finish();
         } else {
             Log.d(TAG,"开始执行执行播放程序");
 
-            final File f = new File(arrayList.get(listNum).toString());
+            final File f = new File(arrayList.get(app.getListNum1()).toString());
             if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
                 Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+                app.setForMat1(1);//记录此时控件播放为图片
 
-                imageView_1.setImageURI(Uri.fromFile(f));
-                imageView_1.setVisibility(View.VISIBLE);
-                videoView_1.setVisibility(View.GONE);
-                Log.d(TAG,"this is Uri.fromFile(f)" + Uri.fromFile(f));
-                LogUtils.e(imageView_1);
-//                imageView_1.setImageURI(Uri.fromFile(f.getAbsoluteFile()));
+                app.getImageView_1().setImageURI(Uri.fromFile(f));
+                app.getImageView_1().setVisibility(View.VISIBLE);
+                app.getVideoView_1().setVisibility(View.GONE);
+                app.setListNum1(app.getListNum1() + 1);
 
-                mHandler = new Handler();
-                mHandler.postDelayed(mRunnable = new Runnable(){
+                app.setStartTime(System.currentTimeMillis());
+                app.getHandler().postDelayed(mRunnable = new Runnable(){
                     @Override
                     public void run() {
-
                         Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
-                        listNum++;
-                        playSonImage();
+                        if (app.getPlayFlag() == 0) {//非播放状态下，使其递归方法失效，但listNum递增1.当播放按下时，新建剩余延迟，再进行递增
+                            playSonImage();
+                        }
                     }
-                },3000);//3秒后结束当前图片
-
+                },app.getDelayMillis());//5秒后结束当前图片
+                app.setRunnable1(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable
             }
             else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
                 Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+                app.setForMat1(2);//记录此时控件播放为视频
 
-                    //控件1
-                videoView_1.setVideoURI(Uri.fromFile(f));
-                videoView_1.setVisibility(View.VISIBLE);
-                imageView_1.setVisibility(View.GONE);
-                videoView_1.start();
+                app.getVideoView_1().setVideoURI(Uri.fromFile(f));
+                app.getVideoView_1().setVisibility(View.VISIBLE);
+                app.getImageView_1().setVisibility(View.GONE);
+                app.getVideoView_1().start();
 
-                    Log.d(TAG,"this is videoView_1.start()");
-                    videoView_1.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    app.getVideoView_1().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
                             Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-                            listNum++;
+                            app.setListNum1(app.getListNum1() + 1);
                             playSonImage();
                         }
                     });
@@ -227,8 +230,8 @@ public class OneSplitViewActivity extends Activity {
 
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
-        alertDialog.setView(View);
+//        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
+        alertDialog.setView(app.getView());
         final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
             @Override
@@ -263,4 +266,5 @@ public class OneSplitViewActivity extends Activity {
             }
         });
     }
+
 }

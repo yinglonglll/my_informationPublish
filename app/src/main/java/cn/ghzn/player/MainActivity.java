@@ -6,33 +6,31 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.apkfuns.logutils.LogUtils;
 
+import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.InfoUtils;
-import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
+import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,8 +44,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView mConnectionState;
     private TextView mAuthorityState;
     private TextClock mLocalTime;
-
-    private int playFlag = 0;//播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
+    private BroadcastReceiver mBroadcastReceiver;
+    private OneSplitViewActivity mOneSplitViewActivity;
+    private Intent mIntent;
+    private Intent mIntent_FinishFlag = new Intent();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +55,25 @@ public class MainActivity extends AppCompatActivity {
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
         setContentView(R.layout.activity_main);
-        initView();//找到layout控件
+        initView();//找到layout控件，初始化主界面的信息
+        initBroadReceiver();//广播监听：保证资源播放activity被finish掉
+        initDevice();
+        initSource();
+        setDialog();
+    }
 
+    private void initSource() {
+        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+        Log.d(TAG,"this is  app.setSource");
+        if (app.getSource() != null) {
+            initImport(app.getSource());//初始化数据库数据到全局变量池
+            Log.d(TAG,"--------资源信息---------");
+            LogUtils.e(app.getSource());
+            turnActivity(app.getSplit_view());
+        }
+    }
+
+    private void initDevice() {
         app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
         if(app.getDevice() == null){
             app.setDevice(new Device());//表不存在则新建赋值
@@ -68,43 +85,19 @@ public class MainActivity extends AppCompatActivity {
         initWidget(app.getDevice());//设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
         LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
-
-        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
-        Log.d(TAG,"this is  app.setSource");
-        if (app.getSource() != null) {
-            initImport(app.getSource());//初始化数据库数据到全局变量池
-            Log.d(TAG,"--------资源信息---------");
-            LogUtils.e(app.getSource());
-            turnActivity(app.getSplit_view());
-        }
-
-        setDialog();
     }
 
-    private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
-        switch (split_view) {
-            case "1":
-                Log.d(TAG,"this is case1");
-                    Intent intent1 = new Intent(this, OneSplitViewActivity.class);
-                    startActivity(intent1);
-                break;
-            case "2":
-                    Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
-                    startActivity(intent2);
-                break;
-            case "3":
-                    Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
-                    startActivity(intent3);
-
-                break;
-            case "4":
-                    Intent intent4 = new Intent(this, FourSplitViewActivity.class);
-                    startActivity(intent4);
-                break;
-            default:
-                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
-                break;
-        }
+    private void initBroadReceiver() {
+        mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG,"this is varReceiver");
+                app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
+            }
+        });
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("true");
+        registerReceiver(mBroadcastReceiver,filter);//注册广播
     }
 
     private void initImport(Source source) {
@@ -116,47 +109,6 @@ public class MainActivity extends AppCompatActivity {
         app.setSon_source(source.getSon_source());
         app.setCreate_time(source.getCreate_time());
     }
-
-    public void setDialog() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
-        alertDialog.setView(View);
-        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
-        mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public void onShowPress(MotionEvent e) {
-
-            }
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                return false;
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                Log.d(TAG,"OnLongPressTap");
-                AlertDialogs.show();
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                return false;
-            }
-        });
-    }
-
-
 
     @SuppressLint("ClickableViewAccessibility")
     private void initWidget(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
@@ -206,11 +158,78 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    public void setDialog() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        app.setView(this.getLayoutInflater().inflate(R.layout.activity_dialog, null));
+        alertDialog.setView(app.getView());
+        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
+        mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                Log.d(TAG,"OnLongPressTap");
+                AlertDialogs.show();
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                return false;
+            }
+        });
+    }
+
+    private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
+        switch (split_view) {
+            case "1":
+                Log.d(TAG,"this is case1");
+                    Intent intent1 = new Intent(this, OneSplitViewActivity.class);
+                    startActivity(intent1);
+                break;
+            case "2":
+                    Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
+                    startActivity(intent2);
+                break;
+            case "3":
+                    Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
+                    startActivity(intent3);
+
+                break;
+            case "4":
+                    Intent intent4 = new Intent(this, FourSplitViewActivity.class);
+                    startActivity(intent4);
+                break;
+            default:
+                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
+                break;
+        }
+    }
+
     private void requestWritePermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
+
     private Device getDevice(Device device){
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
@@ -242,66 +261,239 @@ public class MainActivity extends AppCompatActivity {
     public void playBtn(View view) {
         //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
+        Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
         Toast.makeText(this,"重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
 
-        switch (ImportActivity.getFilesCount()){//可以从数据库中的mtarget绝对地址中算出来
-            case 1://一分屏时，三种状态下触发对对应控件进行操作
-                if (playFlag == 0) {//播放状态
-                    Log.d(TAG,"播放按键为无效状态");
-                }
-                if (playFlag == 1) {//暂停状态
-                    OneSplitViewActivity.getVideoView_1().resume();
-                    OneSplitViewActivity.getImageView_1().getHandler().notify();
-                }
-                if (playFlag == 2) {//停止状态
-                    //todo:实现重新运行程序，即重新执行turnActivity();
-                }
-            case 2:
-                if (playFlag == 0) {//播放状态
-                    Log.d(TAG,"播放按键为无效状态");
-                }
-                if (playFlag == 1) {//暂停状态
-                    TwoSplitViewActivity.getVideoView_1().resume();
-                    TwoSplitViewActivity.getVideoView_2().resume();
-                    TwoSplitViewActivity.getImageView_1().getHandler().notify();
-                    TwoSplitViewActivity.getImageView_2().getHandler().notify();
-                }
-                if (playFlag == 2) {//停止状态
-                    //todo:实现重新运行程序，即重新执行turnActivity();
-                }
-            case 3:
-                if (playFlag == 0) {//播放状态
-                    Log.d(TAG,"播放按键为无效状态");
-                }
-                if (playFlag == 1) {//暂停状态
-                    ThreeSplitViewActivity.getVideoView_1().resume();
-                    ThreeSplitViewActivity.getVideoView_2().resume();
-                    ThreeSplitViewActivity.getVideoView_3().resume();
-                    ThreeSplitViewActivity.getImageView_1().getHandler().notify();
-                    ThreeSplitViewActivity.getImageView_2().getHandler().notify();
-                    ThreeSplitViewActivity.getImageView_3().getHandler().notify();
-                }
-                if (playFlag == 2) {//停止状态
-                    //todo:实现重新运行程序，即重新执行turnActivity();
-                }
-            case 4:
-                if (playFlag == 0) {//播放状态
-                    Log.d(TAG,"播放按键为无效状态");
-                }
-                if (playFlag == 1) {//暂停状态
-                    FourSplitViewActivity.getVideoView_1().resume();
-                    FourSplitViewActivity.getVideoView_2().resume();
-                    FourSplitViewActivity.getVideoView_3().resume();
-                    FourSplitViewActivity.getVideoView_4().resume();
-                    FourSplitViewActivity.getImageView_1().getHandler().notify();
-                    FourSplitViewActivity.getImageView_2().getHandler().notify();
-                    FourSplitViewActivity.getImageView_3().getHandler().notify();
-                    FourSplitViewActivity.getImageView_4().getHandler().notify();
-                }
-                if (playFlag == 2) {//停止状态
-                    //实现重写运行程序
-                }
+        switch (app.getSplit_view()){//文件数就是分屏数
+            case "1"://一分屏时，三种状态下触发对对应控件进行操作
+                if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
 
+                    //自定义广播对象，重写监听到后执行的程序
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+
+
+                    initDevice();
+                    initSource();
+
+                    setDialog();
+                }else if (app.getPlayFlag() == 1) {//暂停状态
+                    Log.d(TAG,"this is app.getPlayFlag() == 1");
+                    switch (app.getForMat1()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Log.d(TAG,"why is app.getDelayMillis()-app.getTimeDiff() :" + (app.getDelayMillis()-app.getTimeDiff())/1000);
+
+//                            long newDelayMillis = (app.getDelayMillis()-app.getTimeDiff());
+//                            Log.d(TAG,"why is app.getDelayMillis()-app.getTimeDiff() :" + app.getDelayMillis()/1000 + "-" + app.getTimeDiff()/1000 + "=" + (app.getDelayMillis()-app.getTimeDiff())/1000);
+//                            Runnable runnable;
+//                            app.getHandler().postDelayed(runnable = new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if (app.getPlayFlag() == 0) {//只有在播放状态下才可以进行执行递归，也就是按下暂停或停止时，不会执行递归
+////                                        mOneSplitViewActivity.playSonImage();
+//                                        Log.d(TAG,"why is 进入了意图传递");
+//                                        Intent intent = new Intent();
+//                                        intent.setAction(String.valueOf(app.getPlayFlag()));
+//                                        sendBroadcast(intent);//发送广播
+//                                    }
+//                                }
+//                            },newDelayMillis);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_1().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(0);
+                }else if (app.getPlayFlag() == 2) {//停止状态
+                    app.setPlaySonImageFlag(true);
+
+                    initSource();
+                    setDialog();
+                    app.setPlayFlag(0);
+                }
+                break;
+            case "2":
+                if (app.getPlayFlag() == 0) {//播放状态
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+                    initDevice();
+                    initSource();
+
+                    setDialog();
+                }else if (app.getPlayFlag() == 1) {//暂停状态
+                    Log.d(TAG,"this is app.getPlayFlag() == 1");
+                    switch (app.getForMat1()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_1().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat2()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_2().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(0);
+                }else if (app.getPlayFlag() == 2) {//停止状态
+                    app.setPlaySonImageFlag(true);
+
+                    initSource();
+                    setDialog();
+                    app.setPlayFlag(0);
+                }
+                break;
+            case "3":
+                if (app.getPlayFlag() == 0) {//播放状态
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+                    initDevice();
+                    initSource();
+
+                    setDialog();
+                }else if (app.getPlayFlag() == 1) {//暂停状态
+                    switch (app.getForMat1()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_1().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat2()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_2().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat3()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_3().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(0);
+                }else if (app.getPlayFlag() == 2) {//停止状态
+                    app.setPlaySonImageFlag(true);
+
+                    initSource();
+                    setDialog();
+                    app.setPlayFlag(0);
+                }
+                break;
+            case "4":
+                if (app.getPlayFlag() == 0) {//播放状态
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+
+                    initDevice();
+                    initSource();
+                    setDialog();
+
+                }else if (app.getPlayFlag() == 1) {//暂停状态
+                    switch (app.getForMat1()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_1().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat2()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_2().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat3()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_3().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat4()){
+                        case 1:
+                            app.setPlayFlag(0);
+                            Intent intent = new Intent();
+                            intent.setAction(String.valueOf(app.getPlayFlag()));
+                            sendBroadcast(intent);//发送广播
+                            break;
+                        case 2:
+                            app.getVideoView_4().resume();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(0);
+                }else if (app.getPlayFlag() == 2) {//停止状态
+                    app.setPlaySonImageFlag(true);
+
+                    initSource();
+                    setDialog();
+                    app.setPlayFlag(0);
+                }
         }
     }
 
@@ -309,73 +501,149 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is suspendBtn");
         Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();//获取当前文件夹的命名格式中的分屏字符串，以此获得对应的控件，控件又分图片和视频子控件；即先判分屏名，再判类型
 
-        switch (ImportActivity.getFilesCount()){
-            case 1://一分屏
-                if (playFlag == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
-                    OneSplitViewActivity.getVideoView_1().pause();
-                    try {
-                        OneSplitViewActivity.getHandler().wait();//两个方法搭配使用，wait()使线程进入阻塞状态，调用notify()时，线程进入可执行状态。
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+        switch (app.getSplit_view()){
+            case "1"://一分屏
+                if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
+                    switch (app.getForMat1()){
+                        case 1:
+                            app.setEndTime(System.currentTimeMillis());
+                            app.setTimeDiff((app.getEndTime()-app.getStartTime()));//获取已播放多少时间；
+//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_1().pause();
+                            break;
                     }
-                } else if (playFlag == 1) {//暂停状态
+                    app.setPlayFlag(1);
+                } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                } else if (playFlag ==2) {//停止状态
-                    Log.d(TAG,"暂停按键为无效状态");//或跳回主界面
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                } else if (app.getPlayFlag() ==2) {//停止状态
+                    Log.d(TAG,"暂停按键为无效状态");
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case 2:
-                if (playFlag == 0){
-                    TwoSplitViewActivity.getVideoView_1().pause();
-                    TwoSplitViewActivity.getVideoView_2().pause();
-                    try {
-                        TwoSplitViewActivity.getImageView_1().getHandler().wait();
-                        TwoSplitViewActivity.getImageView_2().getHandler().wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            case "2":
+                if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
+                    switch (app.getForMat1()){
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_1().pause();
+                            break;
+                        default:
+                            break;
                     }
-                } else if (playFlag == 1) {//暂停状态
+                    switch (app.getForMat2()){
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable2());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_2().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(1);
+                } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                } else if (playFlag ==2) {//停止状态
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                } else if (app.getPlayFlag() ==2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case 3:
-                if (playFlag == 0){
-                    ThreeSplitViewActivity.getVideoView_1().pause();
-                    ThreeSplitViewActivity.getVideoView_2().pause();
-                    ThreeSplitViewActivity.getVideoView_3().pause();
-                    try {
-                        ThreeSplitViewActivity.getImageView_1().getHandler().wait();
-                        ThreeSplitViewActivity.getImageView_2().getHandler().wait();
-                        ThreeSplitViewActivity.getImageView_3().getHandler().wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            case "3":
+                if (app.getPlayFlag() == 0){
+                    switch (app.getForMat1()){
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_1().pause();
+                            break;
+                        default:
+                            break;
                     }
-                } else if (playFlag == 1) {//暂停状态
+                    switch (app.getForMat2()) {
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable2());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_2().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat3()) {
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable3());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_3().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(1);
+                } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                } else if (playFlag ==2) {//停止状态
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                } else if (app.getPlayFlag() ==2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case 4:
-                if (playFlag == 0){
-                    FourSplitViewActivity.getVideoView_1().pause();
-                    FourSplitViewActivity.getVideoView_2().pause();
-                    FourSplitViewActivity.getVideoView_3().pause();
-                    FourSplitViewActivity.getVideoView_4().pause();
-                    try {
-                        FourSplitViewActivity.getImageView_1().getHandler().wait();
-                        FourSplitViewActivity.getImageView_2().getHandler().wait();
-                        FourSplitViewActivity.getImageView_3().getHandler().wait();
-                        FourSplitViewActivity.getImageView_4().getHandler().wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            case "4":
+                if (app.getPlayFlag() == 0){
+                    switch (app.getForMat1()){
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_1().pause();
+                            break;
+                        default:
+                            break;
                     }
-                } else if (playFlag == 1) {//暂停状态
+                    switch (app.getForMat2()) {
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable2());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_2().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat3()) {
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable3());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_3().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    switch (app.getForMat4()) {
+                        case 1:
+//                            app.getHandler().removeCallbacks(app.getRunnable4());//线程不会立即取消，而是执行完本次后才取消
+                            break;
+                        case 2:
+                            app.getVideoView_4().pause();
+                            break;
+                        default:
+                            break;
+                    }
+                    app.setPlayFlag(1);
+                } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                } else if (playFlag ==2) {//停止状态
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                } else if (app.getPlayFlag() == 2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
+                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             default:
@@ -385,29 +653,60 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stopBtn(View view) {
-        switch (ImportActivity.getFilesCount()){
-            case 1://一分屏
-                if (playFlag == 0) {
-                    OneSplitViewActivity.getImageView_1().getHandler().removeCallbacks(OneSplitViewActivity.getRunnable());//不知实际效果，待测；
-                    //todo：结束所有线程，清除所有视频状态等，再跳转回主界面；
-                } else if (playFlag == 1) {
-                    //todo：结束所有线程，清除所有视频状态等，再跳转回主界面；
-                } else if (playFlag ==2) {
+        switch (app.getSplit_view()){
+            case "1"://一分屏
+            case "2":
+            case "3":
+            case "4":
+                if (app.getPlayFlag() == 0) {
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+                    app.setPlaySonImageFlag(false);
+
+                    setContentView(R.layout.activity_main);
+                    initView();//找到layout控件
+                    initDevice();
+                    setDialog();
+
+                    app.setPlayFlag(2);
+                } else if (app.getPlayFlag() == 1) {
+                    app.setFinishFlag(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    sendBroadcast(mIntent_FinishFlag);//发送广播
+                    app.setPlaySonImageFlag(false);
+
+                    setContentView(R.layout.activity_main);
+                    initView();//找到layout控件
+                    initDevice();
+                    setDialog();
+
+                    app.setPlayFlag(2);
+                } else if (app.getPlayFlag() ==2) {
                     Log.d(TAG,"停止按键为无效状态");
+                    Toast.makeText(this,"停止按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
-        Log.d(TAG,"this is stopBtn");
-        Toast.makeText(this,"返回默认页面activity",Toast.LENGTH_SHORT).show();
     }
 
     public void exitBtn(View view) {
         Log.d(TAG,"this is exitBtn");
+        app.getCurrentActivity().finish();//先finish掉(可采用循环finish，但activity少没必要)，然后再退出，不然退不出
+        finish();
         System.exit(0);
     }
 
     public void MachineIdOutBtn(View view) {
         Log.d(TAG,"this is MachineIdOutBtn");
         setContentView(R.layout.activity_progress);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
     }
 }

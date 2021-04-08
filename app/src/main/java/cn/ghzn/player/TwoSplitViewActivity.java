@@ -2,8 +2,10 @@ package cn.ghzn.player;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.media.MediaPlayer;
@@ -37,6 +39,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.ViewImportUtils;
 
@@ -48,41 +51,19 @@ import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
 
 public class TwoSplitViewActivity extends Activity {
     private static final String TAG = "TwoSplitViewActivity";
-
-    private static ImageView imageView_1;
-    private static ImageView imageView_2;
-    private static CustomVideoView videoView_1;
-    private static CustomVideoView videoView_2;
-    private static Handler mHandler;
+    private Runnable mRunnable;
     private GestureDetector mGestureDetector;
+    private BroadcastReceiver mBroadcastReceiver;
 
     private ArrayList arrayList1;//控件区1地址
     private ArrayList arrayList2;//控件区2地址
 
 
-    public static ImageView getImageView_1() {
-        return imageView_1;
-    }
-
-    public static ImageView getImageView_2() {
-        return imageView_2;
-    }
-
-    public static CustomVideoView getVideoView_1() {
-        return videoView_1;
-    }
-
-    public static CustomVideoView getVideoView_2() {
-        return videoView_2;
-    }
-
-    public static Handler getHandler() {
-        return mHandler;
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        app.setCurrentActivity(this);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {
@@ -124,6 +105,17 @@ public class TwoSplitViewActivity extends Activity {
             arrayList2 = getSonImage(strings[1]);
         }
         if (app.getSplit_view() != null) {
+            mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.d(TAG,"this is varReceiver");
+                    playSonImage(arrayList1,arrayList2);
+                }
+            });
+            IntentFilter filter = new IntentFilter();
+            filter.addAction("0");
+            registerReceiver(mBroadcastReceiver,filter);//注册广播
+
             playSonImage(arrayList1,arrayList2);
             if (app.isExtraState()) {
                 app.setCreate_time(new Date());//new Date()出来的时间是本地时间
@@ -153,34 +145,34 @@ public class TwoSplitViewActivity extends Activity {
         switch (split_mode){
             case "1":
                 setContentView(R.layout.activity_splitview_two1);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two1_1);
-                videoView_1 = (CustomVideoView) this.findViewById(R.id.videoView_two1_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two1_2);
-                videoView_2 = (CustomVideoView) this.findViewById(R.id.videoView_two1_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two1_1));
+                app.setVideoView_1((CustomVideoView) this.findViewById(R.id.videoView_two1_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two1_2));
+                app.setVideoView_2((CustomVideoView) this.findViewById(R.id.videoView_two1_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -191,34 +183,34 @@ public class TwoSplitViewActivity extends Activity {
                 break;
             case "2":
                 setContentView(R.layout.activity_splitview_two2);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two2_1);
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_two2_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two2_2);
-                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_two2_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two2_1));
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_two2_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two2_2));
+                app.setVideoView_2((CustomVideoView)this.findViewById(R.id.videoView_two2_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -229,34 +221,34 @@ public class TwoSplitViewActivity extends Activity {
                 break;
             case "3":
                 setContentView(R.layout.activity_splitview_two3);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two3_1);
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_two3_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two3_2);
-                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_two3_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two3_1));
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_two3_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two3_2));
+                app.setVideoView_2((CustomVideoView)this.findViewById(R.id.videoView_two3_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -266,34 +258,34 @@ public class TwoSplitViewActivity extends Activity {
                 break;
             case "4":
                 setContentView(R.layout.activity_splitview_two4);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two4_1);
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_two4_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two4_2);
-                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_two4_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two4_1));
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_two4_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two4_2));
+                app.setVideoView_2((CustomVideoView)this.findViewById(R.id.videoView_two4_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -303,34 +295,34 @@ public class TwoSplitViewActivity extends Activity {
                 break;
             case "5":
                 setContentView(R.layout.activity_splitview_two5);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two5_1);
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_two5_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two5_2);
-                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_two5_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two5_1));
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_two5_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two5_2));
+                app.setVideoView_2((CustomVideoView)this.findViewById(R.id.videoView_two5_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -340,34 +332,34 @@ public class TwoSplitViewActivity extends Activity {
                 break;
             case "6":
                 setContentView(R.layout.activity_splitview_two6);
-                imageView_1 = (ImageView)this.findViewById(R.id.imageView_two6_1);
-                videoView_1 = (CustomVideoView)this.findViewById(R.id.videoView_two6_1);
-                imageView_2 = (ImageView)this.findViewById(R.id.imageView_two6_2);
-                videoView_2 = (CustomVideoView)this.findViewById(R.id.videoView_two6_2);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_two6_1));
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_two6_1));
+                app.setImageView_2((ImageView)this.findViewById(R.id.imageView_two6_2));
+                app.setVideoView_2((CustomVideoView)this.findViewById(R.id.videoView_two6_2));
 
                 setDialog(this);
-                imageView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_1.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                imageView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getImageView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
                         return true;
                     }
                 });
-                videoView_2.setOnTouchListener(new View.OnTouchListener() {
+                app.getVideoView_2().setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
                         mGestureDetector.onTouchEvent(event);
@@ -384,8 +376,8 @@ public class TwoSplitViewActivity extends Activity {
 //    ArrayList[] Recursive1 = new ArrayList[1];//先声明--仅用于存储递归时的参数
 //    ArrayList[] Recursive2 = new ArrayList[1];//先声明--仅用于存储递归时的参数
 
-    int listNum1 = 0;//用于记录单个文件夹循环时，处于第几个图片或视频；
-    int listNum2 = 0;
+//    int listNum1 = 0;//用于记录单个文件夹循环时，处于第几个图片或视频；
+//    int listNum2 = 0;
     boolean isFreeFlag1 = true;
     boolean isFreeFlag2 = true;
     ArrayList[] Recursive = new ArrayList[2];//先声明--仅用于存储递归时的参数
@@ -395,49 +387,55 @@ public class TwoSplitViewActivity extends Activity {
         Recursive[1] = arrayList2;
         if (isFreeFlag1) {
             Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
-            if (listNum1 >= arrayList1.size()) {
-                listNum1 = 0;//循环要求，仅重置变量为0功能
+            if (app.getListNum1() >= arrayList1.size()) {
+                app.setListNum1(0);//循环要求，仅重置变量为0功能
                 playSonImage(Recursive[0],Recursive[1]);
 //            finish();
             } else {
                 Log.d(TAG,"开始执行执行播放程序");
-                final File f = new File(arrayList1.get(listNum1).toString());
+                final File f = new File(arrayList1.get(app.getListNum1()).toString());
                 if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
                     Log.d(TAG,"playSonImage1执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+                    app.setForMat1(1);//记录此时控件播放为图片
                     isFreeFlag1 = false;//进入图片赋值程序，先设为忙线状态
 
-                    imageView_1.setImageURI(Uri.fromFile(f));
-                    imageView_1.setVisibility(View.VISIBLE);
-                    videoView_1.setVisibility(View.GONE);
+                    app.getImageView_1().setImageURI(Uri.fromFile(f));
+                    app.getImageView_1().setVisibility(View.VISIBLE);
+                    app.getVideoView_1().setVisibility(View.GONE);
+                    app.setListNum1(app.getListNum1() + 1);
 
-                    mHandler = new Handler();
-                    mHandler.postDelayed(new Runnable(){
+                    app.setStartTime(System.currentTimeMillis());
+                    app.getHandler().postDelayed(mRunnable = new Runnable() {
                         @Override
                         public void run() {
-                            Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
-                            listNum1++;
+                            Log.d(TAG, "执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
                             isFreeFlag1 = true;//图片赋值程序完成，退出忙线状态
-                            playSonImage(Recursive[0],Recursive[1]);
+                            if (app.getPlayFlag() == 0) {
+                                playSonImage(Recursive[0], Recursive[1]);
+                            }
                         }
-                    },3000);//3秒后结束当前图片
+                    }, app.getDelayMillis());//5秒后结束当前图片
+                    app.setRunnable1(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable，用于暂停时取消线程
+
                 } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
                     Log.d(TAG,"playSonImage1执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+                    app.setForMat1(2);//记录此时控件播放为视频
                     isFreeFlag1 = false;//进入图片赋值程序，先设为忙线状态
 
-                    videoView_1.setVideoURI(Uri.fromFile(f));
-                    videoView_1.setVisibility(View.VISIBLE);
-                    imageView_1.setVisibility(View.GONE);
-                    videoView_1.start();
+                    app.getVideoView_1().setVideoURI(Uri.fromFile(f));
+                    app.getVideoView_1().setVisibility(View.VISIBLE);
+                    app.getImageView_1().setVisibility(View.GONE);
+                    app.getVideoView_1().start();
                     try {
                         Thread.sleep(1000);//默认设置1S给videoView加载视频的时间，实际上读取视频都有加载导致黑屏，目前暂无找到合适方法解决
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    videoView_1.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    app.getVideoView_1().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
 //                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-                            listNum1++;
+                            app.setListNum1(app.getListNum1() + 1);
                             isFreeFlag1 = true;//视频赋值程序完成，退出忙线状态
                             playSonImage(Recursive[0],Recursive[1]);
                         }
@@ -448,53 +446,57 @@ public class TwoSplitViewActivity extends Activity {
 
         if (isFreeFlag2) {
             Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
-            if (listNum2 >= arrayList2.size()) {
-                listNum2 = 0;
+            if (app.getListNum2() >= arrayList2.size()) {
+                app.setListNum2(0);
                 playSonImage(Recursive[0],Recursive[1]);
 //            finish();
             } else {
                 Log.d(TAG,"开始执行执行播放程序");
-                final File f = new File(arrayList2.get(listNum2).toString());
+                final File f = new File(arrayList2.get(app.getListNum2()).toString());
                 if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
                     Log.d(TAG,"playSonImage2执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+                    app.setForMat2(1);//记录此时控件播放为图片
                     isFreeFlag2 = false;//执行图片赋值程序，进入忙线状态
 
-                    imageView_2.setImageURI(Uri.fromFile(f));
-                    imageView_2.setVisibility(View.VISIBLE);
-                    videoView_2.setVisibility(View.GONE);
+                    app.getImageView_2().setImageURI(Uri.fromFile(f));
+                    app.getImageView_2().setVisibility(View.VISIBLE);
+                    app.getVideoView_2().setVisibility(View.GONE);
+                    app.setListNum2(app.getListNum2() + 1);
 
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable(){
+
+                    app.setStartTime(System.currentTimeMillis());
+                    app.getHandler().postDelayed(mRunnable = new Runnable(){
                         @Override
                         public void run() {
                             Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
-                            listNum2++;
                             isFreeFlag2 = true;//图片赋值程序完成，退出忙线状态
-                            playSonImage(Recursive[0],Recursive[1]);
+                            if (app.getPlayFlag() == 0) {
+                                playSonImage(Recursive[0], Recursive[1]);
+                            }
                         }
                     },3000);//3秒后结束当前图片
+                    app.setRunnable2(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable，用于暂停时取消线程
 
                 } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
                     Log.d(TAG,"playSonImage2执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+                    app.setForMat2(2);//记录此时控件播放为视频
                     isFreeFlag2 = false;//执行视频赋值程序，进入忙线状态
 
 
-                    videoView_2.setVideoURI(Uri.fromFile(f));
-                    videoView_2.setVisibility(View.VISIBLE);
-                    imageView_2.setVisibility(View.GONE);
-//                LogUtils.e(videoView_2);
-//                    videoView_2.seekTo(1);
-                    videoView_2.start();
+                    app.getVideoView_2().setVideoURI(Uri.fromFile(f));
+                    app.getVideoView_2().setVisibility(View.VISIBLE);
+                    app.getImageView_2().setVisibility(View.GONE);
+                    app.getVideoView_2().start();
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    videoView_2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    app.getVideoView_2().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {
 //                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-                            listNum2++;
+                            app.setListNum2(app.getListNum2() + 1);
                             isFreeFlag2 = true;//视频赋值程序完成，退出忙线状态
                             playSonImage(Recursive[0],Recursive[1]);
                         }
@@ -624,8 +626,7 @@ public class TwoSplitViewActivity extends Activity {
 
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
-        alertDialog.setView(View);
+        alertDialog.setView(app.getView());
         final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
             @Override

@@ -1,12 +1,15 @@
 package cn.ghzn.player;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.VideoView;
 
-public class    CustomVideoView extends VideoView {
+public class CustomVideoView extends VideoView {
+    private int stopPosition;
+
     public CustomVideoView(Context context) {
         super(context);
     }
@@ -39,5 +42,19 @@ public class    CustomVideoView extends VideoView {
         }
 
 //        setMeasuredDimension(width, height);
+    }
+
+    @Override
+    public void pause() {
+        super.pause();
+        stopPosition = super.getCurrentPosition(); //stopPosition is an int
+    }
+
+    @Override
+    public void resume() {
+        super.resume();
+        super.seekTo(stopPosition);
+//        CustomVideoView.seekTo(stopPosition);本行为错误例子
+        super.start(); //Or use resume() if it doesn't work. I'm not sure
     }
 }
