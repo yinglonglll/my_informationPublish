@@ -115,7 +115,7 @@ public class OneSplitViewActivity extends Activity {
             playSonImage();//参数arrayList是默认的，可含或不含参，结果都一样
             //只需要存储有效数据
             if (app.isExtraState()) {
-                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
+//                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
 //            Source source = DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique();//一查新建的Device表
                 if(app.getSource() == null){//这一步多余
                     app.setSource(new Source());//表不存在则新建赋值
@@ -135,10 +135,13 @@ public class OneSplitViewActivity extends Activity {
     }
 
     private Source getSource(Source source) {//对数据库进行覆写
+        source.setStart_time(app.getStart_time());
+        source.setEnd_time(app.getEnd_time());
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
         source.setSplit_mode(app.getSplit_mode());
         source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        source.setCreate_time(app.getCreate_time());
         return source;
     }
     @SuppressLint("ClickableViewAccessibility")

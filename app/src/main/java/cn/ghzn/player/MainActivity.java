@@ -22,13 +22,17 @@ import android.widget.Toast;
 
 import com.apkfuns.logutils.LogUtils;
 
+import java.io.File;
+
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
+import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.InfoUtils;
 
+import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static java.lang.Thread.sleep;
 
@@ -55,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
         setContentView(R.layout.activity_main);
+
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
@@ -64,12 +69,27 @@ public class MainActivity extends AppCompatActivity {
 
     private void initSource() {
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+        app.setLicenceDir(getFilePath(this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
+        app.setCreateTime(System.currentTimeMillis());
+
+        File file = new File(app.getLicenceDir());
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        Log.d(TAG,"this is app.getLicenceDir()>>>>" + app.getLicenceDir());
+//        app.getSource().setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
+//        LogUtils.e(app.getSource());//未U盘导入资源时，表为空，不可调用赋值。
+
+        //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
         Log.d(TAG,"this is  app.setSource");
-        if (app.getSource() != null) {
-            initImport(app.getSource());//初始化数据库数据到全局变量池
+        if (app.getSource() != null) {//资源导入进来意味着处于授权期内,还需防止修改系统时间。
+            initImportSource(app.getSource());//初始化数据库数据到全局变量池
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
-            turnActivity(app.getSplit_view());
+                //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+            if (app.getCreateTime() > app.getSource().getCreate_time() && app.getEnd_time() > app.getCreate_time()) {
+                turnActivity(app.getSplit_view());
+            }
         }
     }
 
@@ -82,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
         }
         Log.d(TAG,"this is if(app.getDevice() == null)");
-        initWidget(app.getDevice());//设置layout控件；从上述数据库中取信息出来显示
+        initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
         LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
     }
@@ -100,19 +120,27 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(mBroadcastReceiver,filter);//注册广播
     }
 
-    private void initImport(Source source) {
+    private void initImportSource(Source source) {
         //将读取的数据赋值给全局变量
-
+        app.setStart_time(source.getStart_time());
+        app.setEnd_time(source.getEnd_time());
+        app.setCreate_time(source.getCreate_time());
         app.setProgram_id(source.getProgram_id());
         app.setSplit_view(source.getSplit_view());
         app.setSplit_mode(source.getSplit_mode());
         app.setSon_source(source.getSon_source());
-        app.setCreate_time(source.getCreate_time());
+//        app.setCreate_time(source.getCreate_time());
+        app.setLicenceDir(source.getLicense_dir());//程序执行时，U盘未插入，此时内容为空;将txt文本的绝对地址从数据库中取出再赋值给全局变量
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void initWidget(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
-        Log.d(TAG,"this is private void initWidget(Device device)");
+    private void initImportDevice(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
+
+        app.setDevice_Name(device.getDevice_name());
+        app.setDevice_Id(device.getDevice_id());
+        app.setAuthority_state(device.getAuthority_state());
+        app.setAuthorization(device.getAuthorization());
+
         LogUtils.e(mDeviceName);
         Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
         mDeviceName.setText("设备名字:" + device.getDevice_name());//从数据库中取已存的名字，而不是从方法中取；
@@ -255,7 +283,6 @@ public class MainActivity extends AppCompatActivity {
         mConnectionState = (TextView) this.findViewById(R.id.ConnectionState);
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
-
     }
 
     public void playBtn(View view) {
@@ -269,8 +296,8 @@ public class MainActivity extends AppCompatActivity {
                 if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
 
                     //自定义广播对象，重写监听到后执行的程序
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
 
 
@@ -321,8 +348,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "2":
                 if (app.getPlayFlag() == 0) {//播放状态
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
                     initDevice();
                     initSource();
@@ -367,8 +394,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "3":
                 if (app.getPlayFlag() == 0) {//播放状态
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
                     initDevice();
                     initSource();
@@ -425,8 +452,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "4":
                 if (app.getPlayFlag() == 0) {//播放状态
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
 
                     initDevice();
@@ -659,8 +686,8 @@ public class MainActivity extends AppCompatActivity {
             case "3":
             case "4":
                 if (app.getPlayFlag() == 0) {
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
                     app.setPlaySonImageFlag(false);
 
@@ -671,8 +698,8 @@ public class MainActivity extends AppCompatActivity {
 
                     app.setPlayFlag(2);
                 } else if (app.getPlayFlag() == 1) {
-                    app.setFinishFlag(true);
-                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishFlag()));
+                    app.setFinishState(true);
+                    mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
                     app.setPlaySonImageFlag(false);
 
@@ -697,9 +724,15 @@ public class MainActivity extends AppCompatActivity {
         System.exit(0);
     }
 
-    public void MachineIdOutBtn(View view) {
+    public void machineIdOutBtn(View view) {
         Log.d(TAG,"this is MachineIdOutBtn");
-        setContentView(R.layout.activity_progress);
+        FileUtils.getMachineId();
+        Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+    }
+
+    public void deleteMachineIdOutBtn(View view) {
+        FileUtils.deleteMachineId();
+        Toast.makeText(this,"删除机器码成功",Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -108,7 +108,7 @@ public class ThreeSplitViewActivity extends Activity {
 
             playSonImage(arrayList1,arrayList2,arrayList3);
             if (app.isExtraState()) {
-                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
+//                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
                 if(app.getSource() == null){//这一步多余
                     app.setSource(new Source());//表不存在则新建赋值
                     daoManager.getSession().getSourceDao().insert(getSource(app.getSource()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；

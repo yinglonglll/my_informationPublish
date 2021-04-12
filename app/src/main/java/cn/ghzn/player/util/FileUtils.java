@@ -3,19 +3,30 @@ package cn.ghzn.player.util;
 import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.apkfuns.logutils.LogUtils;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 import static android.os.Environment.MEDIA_MOUNTED;
+import static cn.ghzn.player.MainActivity.app;
 
 public class FileUtils {
     private static final String TAG = "FileUtils";
+    private static File mFile;
+    private static boolean isSave;
+    private static File mSaveFile;
+    private static Context mContext;
 
     public static String getFilePath(Context context, String dir) {
         String directoryPath = "";
@@ -33,10 +44,11 @@ public class FileUtils {
         }
         return directoryPath;
     }
+
     public static boolean copyFile(String source, String target){//对文件进行赋值，不能直接以目录为参数进行复制目录内所有参数；
         try {
             File targetFile = new File(target);
-            if(!targetFile.getParentFile().exists()){
+            if(!targetFile.getParentFile().exists()){//对单个文件复制，先判断父文件夹是否存在，要存在才一起复制过去
                 targetFile.getParentFile().mkdirs();//每次new文件时，都判断是否成功建立，不成再建立一次
             }
             FileChannel input = new FileInputStream(new File(source)).getChannel();//得到复制处的输入流通道
@@ -57,5 +69,78 @@ public class FileUtils {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public static void getMachineId(){
+        if (app.isImportState()) {
+            //todo:实现将授权文件生成到U盘目录下，取U盘绝对地址进行赋值
+
+            mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
+            if (mSaveFile.exists()) {
+                Log.d(TAG, "机器码已存在，若需生成，请先删除");
+            } else {
+                FileOutputStream outStream = null;
+                try {
+                    outStream = new FileOutputStream(mSaveFile);
+                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.close();
+                    outStream.flush();
+                    isSave = true;
+                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
+            if (mSaveFile.exists()) {
+                Log.d(TAG, "机器码已存在，若需生成，请先删除");
+            } else {
+                FileOutputStream outStream = null;
+                try {
+                    outStream = new FileOutputStream(mSaveFile);
+                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.close();
+                    outStream.flush();
+                    isSave = true;
+                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
+//            copyFile(app.getLicenseDir(),app.getExtraPath());
+//            Log.d(TAG,"this is copyFile ：" + copyFile(app.getLicenseDir(),app.getExtraPath()));
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void deleteMachineId(){
+        ViewImportUtils.deleteFile(mSaveFile);//先删再建
+    }
+
+    public static String readTxt(String path){//txt文件的绝对地址
+        String txtStr = "";
+        try {
+            File txtFile = new File(path);
+            InputStreamReader isr = new InputStreamReader(new FileInputStream(txtFile), "GBK");//UTF-8
+            BufferedReader br = new BufferedReader(isr);
+
+            String mimeTypeLine = null ;
+            while ((mimeTypeLine = br.readLine()) != null) {
+                txtStr = txtStr + mimeTypeLine;//将缓存池的逐行衔接到字符串上
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return  txtStr;
     }
 }

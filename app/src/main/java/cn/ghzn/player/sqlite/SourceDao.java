@@ -29,7 +29,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
         public final static Property Split_view = new Property(2, String.class, "split_view", false, "SPLIT_VIEW");
         public final static Property Split_mode = new Property(3, String.class, "split_mode", false, "SPLIT_MODE");
         public final static Property Son_source = new Property(4, String.class, "son_source", false, "SON_SOURCE");
-        public final static Property Create_time = new Property(5, java.util.Date.class, "create_time", false, "CREATE_TIME");
+        public final static Property Create_time = new Property(5, long.class, "create_time", false, "CREATE_TIME");
+        public final static Property Start_time = new Property(6, long.class, "start_time", false, "START_TIME");
+        public final static Property End_time = new Property(7, long.class, "end_time", false, "END_TIME");
+        public final static Property License_dir = new Property(8, String.class, "license_dir", false, "LICENSE_DIR");
     }
 
 
@@ -50,7 +53,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
                 "\"SPLIT_VIEW\" TEXT," + // 2: split_view
                 "\"SPLIT_MODE\" TEXT," + // 3: split_mode
                 "\"SON_SOURCE\" TEXT," + // 4: son_source
-                "\"CREATE_TIME\" INTEGER);"); // 5: create_time
+                "\"CREATE_TIME\" INTEGER NOT NULL ," + // 5: create_time
+                "\"START_TIME\" INTEGER NOT NULL ," + // 6: start_time
+                "\"END_TIME\" INTEGER NOT NULL ," + // 7: end_time
+                "\"LICENSE_DIR\" TEXT);"); // 8: license_dir
     }
 
     /** Drops the underlying database table. */
@@ -87,10 +93,13 @@ public class SourceDao extends AbstractDao<Source, Long> {
         if (son_source != null) {
             stmt.bindString(5, son_source);
         }
+        stmt.bindLong(6, entity.getCreate_time());
+        stmt.bindLong(7, entity.getStart_time());
+        stmt.bindLong(8, entity.getEnd_time());
  
-        java.util.Date create_time = entity.getCreate_time();
-        if (create_time != null) {
-            stmt.bindLong(6, create_time.getTime());
+        String license_dir = entity.getLicense_dir();
+        if (license_dir != null) {
+            stmt.bindString(9, license_dir);
         }
     }
 
@@ -122,10 +131,13 @@ public class SourceDao extends AbstractDao<Source, Long> {
         if (son_source != null) {
             stmt.bindString(5, son_source);
         }
+        stmt.bindLong(6, entity.getCreate_time());
+        stmt.bindLong(7, entity.getStart_time());
+        stmt.bindLong(8, entity.getEnd_time());
  
-        java.util.Date create_time = entity.getCreate_time();
-        if (create_time != null) {
-            stmt.bindLong(6, create_time.getTime());
+        String license_dir = entity.getLicense_dir();
+        if (license_dir != null) {
+            stmt.bindString(9, license_dir);
         }
     }
 
@@ -142,7 +154,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // split_view
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // split_mode
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4), // son_source
-            cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)) // create_time
+            cursor.getLong(offset + 5), // create_time
+            cursor.getLong(offset + 6), // start_time
+            cursor.getLong(offset + 7), // end_time
+            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8) // license_dir
         );
         return entity;
     }
@@ -154,7 +169,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
         entity.setSplit_view(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setSplit_mode(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setSon_source(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
-        entity.setCreate_time(cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)));
+        entity.setCreate_time(cursor.getLong(offset + 5));
+        entity.setStart_time(cursor.getLong(offset + 6));
+        entity.setEnd_time(cursor.getLong(offset + 7));
+        entity.setLicense_dir(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
      }
     
     @Override

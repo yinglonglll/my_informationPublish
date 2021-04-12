@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.Handler;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Data;
 import android.view.View;
 import android.widget.ImageView;
 
 import java.util.Date;
+import java.util.Map;
 
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
@@ -15,57 +18,70 @@ import cn.ghzn.player.sqlite.source.Source;
 
 public class MyApplication extends Application {
 
-    private String program_id = "";//存储数据库数据声明;
-    private String split_view = "";//记住，该application类是优先加载的！！！
+    //数据库数据初始化声明;
+    private String program_id = "";
+    private String split_view = "";
     private String split_mode = "";
-    private String son_source = "";
-    private Date create_time ;
-
+    private String son_source = "";//存数据库数据的变量
+    private long create_time = 0;//记录上一次节目导入的时间
     private String device_Name = "";
     private String device_Id = "";
-    private boolean authority_state;
-    private String authority_time = "";
-    private String authorization = "";
+    private boolean authority_state = false;//授权状态_
+    private String authority_time = "";//授权时间_
+    private String authorization = "";//授权码_
     private String software_version = "";
     private String firmware_version = "";
     private int width ;
     private int height ;
+    private long start_time;//授权文件的授权开始时间
+    private long end_time;//授权文件的授权结束时间
 
-    private static Context mContext;//变量声明
+    //变量声明
     private Device mDevice;
-    private Source mSource;
+    private Source mSource;//表示数据库source表
     private boolean extraState = false;
     private boolean ConnectionState = false;
-    private String sonSource;
+    private String sonSource;//存储所有子文件夹绝对地址
     private long startTime;
     private long endTime;
     private long timeDiff;
-    private Activity currentActivity;
     private long delayMillis = 5000;
     private boolean playSonImageFlag =true;
+    private String licenceDir;//本地调用license文件的地址
+    private String extraPath;
+    private long createTime;//记录本次节目导入的时间
 
-    private int playFlag = 0;//默认模式：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
-    private boolean finishFlag = false;
-    private int forMat1 = 0;//默认模式：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
+
+    //对象声明
+    private static Context mContext;
+    private Activity currentActivity;
+    private Map<String,Object> mMap;
+
+
+    //标志状态声明
+    private boolean finishState = false;//activity的结束广播状态
+    private boolean importState = false;//U盘导入状态
+    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
+    private int forMat1 = 0;//控件1的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
     private int forMat2 = 0;
     private int forMat3 = 0;
     private int forMat4 = 0;
+    //private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
+
+
+    //控件相关声明
     private int listNum1 = 0;
     private int listNum2 = 0;
     private int listNum3 = 0;
     private int listNum4 = 0;
-    //    private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
-
-
-
-    private ImageView imageView_1;//控件声明
-    private ImageView imageView_2;//控件声明
-    private ImageView imageView_3;//控件声明
-    private ImageView imageView_4;//控件声明
-    private CustomVideoView videoView_1;//自定义video类，原本的无法自适应全屏；
-    private CustomVideoView videoView_2;//自定义video类，原本的无法自适应全屏；
-    private CustomVideoView videoView_3;//自定义video类，原本的无法自适应全屏；
-    private CustomVideoView videoView_4;//自定义video类，原本的无法自适应全屏；
+    private ImageView imageView_1;
+    private ImageView imageView_2;
+    private ImageView imageView_3;
+    private ImageView imageView_4;
+    private CustomVideoView videoView_1;//自定义video类，原本的无法自适应全屏,且无法正常性暂停播放
+    private CustomVideoView videoView_2;
+    private CustomVideoView videoView_3;
+    private CustomVideoView videoView_4;
     private View view;//存储菜单布局的VIew
     private android.os.Handler handler = new Handler();
     private Runnable runnable1;
@@ -78,8 +94,58 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
+        mContext.getExternalFilesDirs(null);
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+
+    public long getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(long createTime) {
+        this.createTime = createTime;
+    }
+
+    public long getStart_time() {
+        return start_time;
+    }
+
+    public void setStart_time(long start_time) {
+        this.start_time = start_time;
+    }
+
+    public long getEnd_time() {
+        return end_time;
+    }
+
+    public void setEnd_time(long end_time) {
+        this.end_time = end_time;
+    }
+
+    public Map<String, Object> getMap() {
+        return mMap;
+    }
+
+    public void setMap(Map<String, Object> map) {
+        mMap = map;
+    }
+
+    public String getExtraPath() {
+        return extraPath;
+    }
+
+    public void setExtraPath(String extraPath) {
+        this.extraPath = extraPath;
+    }
+
+    public String getLicenceDir() {
+        return licenceDir;
+    }
+
+    public void setLicenceDir(String licenceDir) {
+        this.licenceDir = licenceDir;
     }
 
     public boolean isPlaySonImageFlag() {
@@ -219,12 +285,20 @@ public class MyApplication extends Application {
         this.currentActivity = currentActivity;
     }
 
-    public boolean isFinishFlag() {
-        return finishFlag;
+    public boolean isFinishState() {
+        return finishState;
     }
 
-    public void setFinishFlag(boolean finishFlag) {
-        this.finishFlag = finishFlag;
+    public void setFinishState(boolean finishState) {
+        this.finishState = finishState;
+    }
+
+    public boolean isImportState() {
+        return importState;
+    }
+
+    public void setImportState(boolean importState) {
+        this.importState = importState;
     }
 
     public int getPlayFlag() {
@@ -468,11 +542,11 @@ public class MyApplication extends Application {
         this.son_source = son_source;
     }
 
-    public Date getCreate_time() {
+    public long getCreate_time() {
         return create_time;
     }
 
-    public void setCreate_time(Date create_time) {
+    public void setCreate_time(long create_time) {
         this.create_time = create_time;
     }
 

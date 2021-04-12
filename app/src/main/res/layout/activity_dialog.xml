@@ -27,7 +27,13 @@
         android:layout_width="match_parent"
         android:text="机器码导出"
         android:textSize="15dp"
-        android:onClick="MachineIdOutBtn"
+        android:onClick="machineIdOutBtn"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:layout_width="match_parent"
+        android:text="删除机器码"
+        android:textSize="15dp"
+        android:onClick="deleteMachineIdOutBtn"
         android:layout_height="wrap_content"/>
     <Button
         android:layout_width="match_parent"

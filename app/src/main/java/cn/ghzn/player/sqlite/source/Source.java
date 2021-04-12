@@ -23,22 +23,38 @@ public class Source {
      */
     private String split_mode;
     /**
-     * 存储所有子文件夹的绝对地址,以拼字串形式 “ ** ”
+     * 存储所有子文件夹的绝对地址,以拼字串形式 “ *** ”
      */
     private String son_source;
     /**
+     * 每次节目导入时间；用于
+     */
+    private long create_time;
+    /**
      * 节目导入时间
      */
-    private Date create_time;
-    @Generated(hash = 1465902185)
+    private long start_time;
+    /**
+     * 节目导入时间
+     */
+    private long end_time;
+    /**
+     * 授权文件的绝对地址
+     */
+    private String license_dir;
+    @Generated(hash = 578278582)
     public Source(Long id, String program_id, String split_view, String split_mode,
-            String son_source, Date create_time) {
+            String son_source, long create_time, long start_time, long end_time,
+            String license_dir) {
         this.id = id;
         this.program_id = program_id;
         this.split_view = split_view;
         this.split_mode = split_mode;
         this.son_source = son_source;
         this.create_time = create_time;
+        this.start_time = start_time;
+        this.end_time = end_time;
+        this.license_dir = license_dir;
     }
     @Generated(hash = 615387317)
     public Source() {
@@ -73,11 +89,29 @@ public class Source {
     public void setSon_source(String son_source) {
         this.son_source = son_source;
     }
-    public Date getCreate_time() {
+    public long getCreate_time() {
         return this.create_time;
     }
-    public void setCreate_time(Date create_time) {
+    public void setCreate_time(long create_time) {
         this.create_time = create_time;
+    }
+    public String getLicense_dir() {
+        return this.license_dir;
+    }
+    public void setLicense_dir(String license_dir) {
+        this.license_dir = license_dir;
+    }
+    public long getStart_time() {
+        return this.start_time;
+    }
+    public void setStart_time(long start_time) {
+        this.start_time = start_time;
+    }
+    public long getEnd_time() {
+        return this.end_time;
+    }
+    public void setEnd_time(long end_time) {
+        this.end_time = end_time;
     }
 
 

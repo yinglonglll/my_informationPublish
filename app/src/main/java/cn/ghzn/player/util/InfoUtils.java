@@ -1,6 +1,8 @@
 package cn.ghzn.player.util;
 
 import android.content.Context;
+import android.nfc.Tag;
+import android.util.Log;
 
 import java.util.Random;
 
@@ -12,6 +14,7 @@ import static cn.ghzn.player.MainActivity.*;
 
 public class InfoUtils {
 
+    private static final String TAG = "InfoUtils";
     private static Context mContext;//上下文，需要填上下文就直接新建一个填入参数使用即可，如下文getMac
 
     public static String getRandomString(int length){
@@ -50,7 +53,9 @@ public class InfoUtils {
     }
 
     public static String getAuthorization() {
-        app.setAuthorization("123456789");
+//        app.setAuthorization(AuthorityUtils.digest(app.getDevice_Id()));//重新生成一次mac加密设备ID作为授权码；
+        app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
+        Log.d(TAG,"设置授权码成功");
         return app.getAuthorization();
 
     }
