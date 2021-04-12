@@ -78,6 +78,7 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                             Log.d(TAG, "this is 合法文件中mac验证身份正确");
                             app.setMap(AuthorityUtils.getAuthInfo(macStrings[1]));
 
+
 //                            @SuppressLint("SimpleDateFormat") SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 //                            df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
 
