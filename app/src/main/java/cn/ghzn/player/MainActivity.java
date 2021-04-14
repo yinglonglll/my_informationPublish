@@ -52,12 +52,15 @@ public class MainActivity extends AppCompatActivity {
     private OneSplitViewActivity mOneSplitViewActivity;
     private Intent mIntent;
     private Intent mIntent_FinishFlag = new Intent();
+    private TextView mAuthorityTime;
+    private TextView mAuthorityExpired;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
+
         setContentView(R.layout.activity_main);
 
         initView();//找到layout控件，初始化主界面的信息
@@ -69,7 +72,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void initSource() {
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+        Log.d(TAG,"this is first app.setLicenceDir" + app.getLicenceDir());
         app.setLicenceDir(getFilePath(this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
+
         app.setCreateTime(System.currentTimeMillis());
 
         File file = new File(app.getLicenceDir());
@@ -87,8 +92,13 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
                 //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+            LogUtils.e(app.getCreateTime() > app.getSource().getCreate_time());
+            LogUtils.e(app.getEnd_time() > app.getCreate_time());
             if (app.getCreateTime() > app.getSource().getCreate_time() && app.getEnd_time() > app.getCreate_time()) {
                 turnActivity(app.getSplit_view());
+            } else {
+                Log.d(TAG,"this is is app.setAuthority_state(false)");
+                app.setAuthority_state(false);//一旦出现不再授权期内，则设为无授权状态，禁止U盘资源的读取
             }
         }
     }
@@ -122,10 +132,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void initImportSource(Source source) {
         //将读取的数据赋值给全局变量
-        app.setStart_time(source.getStart_time());
-        app.setEnd_time(source.getEnd_time());
+        app.setLicenceDir(source.getLicense_dir());//通用自动生成信息
         app.setCreate_time(source.getCreate_time());
-        app.setProgram_id(source.getProgram_id());
+
+        app.setStart_time(source.getStart_time());//U盘授权文件信息
+        app.setEnd_time(source.getEnd_time());
+
+        app.setProgram_id(source.getProgram_id());//U盘文件获取信息
         app.setSplit_view(source.getSplit_view());
         app.setSplit_mode(source.getSplit_mode());
         app.setSon_source(source.getSon_source());
@@ -139,11 +152,15 @@ public class MainActivity extends AppCompatActivity {
         app.setDevice_Name(device.getDevice_name());
         app.setDevice_Id(device.getDevice_id());
         app.setAuthority_state(device.getAuthority_state());
+        Log.d(TAG,"this is initImportDeviced的getDevice().getAuthority_state()" + app.getDevice().getAuthority_state());
+        Log.d(TAG,"this is initImportDeviced的app.isAuthority_state()" + app.isAuthority_state());
         app.setAuthorization(device.getAuthorization());
+        app.setAuthority_time(device.getAuthority_time());
+        app.setAuthority_expired(device.getAuthority_expired());
 
         LogUtils.e(mDeviceName);
         Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
-        mDeviceName.setText("设备名字:" + device.getDevice_name());//从数据库中取已存的名字，而不是从方法中取；
+        mDeviceName.setText("设备名字:" + app.getDevice_Name());//从数据库中取已存的名字，而不是从方法中取；
         mDeviceName.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -154,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         //ID明文;getMac需要三个权限，wifi，网络状态，还有INTERENT
 //        sDeviceId = MacUtils.getMac(MainActivity.this) + System.currentTimeMillis();//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
 //        mDeviceId.setText("设备 ID：" + AuthorityUtils.digest(DeviceDao.Properties.Device_id.toString()));//ID密文
-        mDeviceId.setText("设备 ID：" + AuthorityUtils.digest(device.getDevice_id()));//ID密文
+        mDeviceId.setText("设备 ID：" + AuthorityUtils.digest(app.getDevice_Id()));//ID密文
         mDeviceId.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -162,20 +179,28 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        mConnectionState.setText("连接状态：" + app.isConnectionState());//监视U盘连接状态，与数据库中的数据没有关系
-        mConnectionState.setOnTouchListener(new View.OnTouchListener() {
+        mAuthorityState.setText("授权状态：" + app.isAuthority_state());
+        mAuthorityState.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mGestureDetector.onTouchEvent(event);
                 return true;
             }
         });
-        mAuthorityState.setText("授权状态：" + device.getAuthority_state());
-        mAuthorityState.setOnTouchListener(new View.OnTouchListener() {
+        mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
+        mAuthorityTime.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mGestureDetector.onTouchEvent(event);
                 return true;
+            }
+        });
+        mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
+        mAuthorityExpired.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mGestureDetector.onTouchEvent(event);
+                return false;
             }
         });
         mLocalTime.setOnTouchListener(new View.OnTouchListener() {
@@ -186,6 +211,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+//    public void initAuthorXml(){//用于覆盖第一次读取数据库时，数据库内容为null时的值
+//        mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
+//        mAuthorityTime = (TextView) this.findViewById(R.id.AuthorityTime);
+//        mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
+//        mAuthorityState.setText("授权状态：" + app.isAuthority_state());
+//        mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
+//        mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
+//    }
 
     public void setDialog() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
@@ -261,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
     private Device getDevice(Device device){
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
-        if(device.getAuthority_state()==true)device.setAuthority_state(InfoUtils.getAuthorityState());//默认为false，数据库获取为true才是已授权
+//        if(device.getAuthority_state()==true)device.setAuthority_state(InfoUtils.getAuthorityState());//默认为false，数据库获取为true才是已授权
         if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
         if(device.getAuthorization()==null)device.setAuthorization(InfoUtils.getAuthorization());
 //        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
@@ -280,8 +313,9 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         mDeviceName = (TextView) this.findViewById(R.id.DeviceName);
         mDeviceId = (TextView) this.findViewById(R.id.DeviceID);
-        mConnectionState = (TextView) this.findViewById(R.id.ConnectionState);
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
+        mAuthorityTime = (TextView) this.findViewById(R.id.AuthorityTime);
+        mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
     }
 
@@ -299,8 +333,6 @@ public class MainActivity extends AppCompatActivity {
                     app.setFinishState(true);
                     mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
-
-
                     initDevice();
                     initSource();
 
@@ -626,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
                 if (app.getPlayFlag() == 0){
                     switch (app.getForMat1()){
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
+//                            app.getHandler().removeCallbacks(app.getRunnable1());//只有在暂停的时候才可以被取消，配合delay
                             break;
                         case 2:
                             app.getVideoView_1().pause();
@@ -730,10 +762,10 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
     }
 
-    public void deleteMachineIdOutBtn(View view) {
-        FileUtils.deleteMachineId();
-        Toast.makeText(this,"删除机器码成功",Toast.LENGTH_SHORT).show();
-    }
+//    public void deleteMachineIdOutBtn(View view) {
+//        FileUtils.deleteMachineId();
+//        Toast.makeText(this,"删除机器码成功",Toast.LENGTH_SHORT).show();
+//    }
 
     @Override
     protected void onDestroy() {

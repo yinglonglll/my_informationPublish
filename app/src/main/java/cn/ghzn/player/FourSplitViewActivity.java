@@ -118,6 +118,11 @@ public class FourSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
+                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
+                app.getDevice().setAuthority_time(app.getAuthority_time());
+                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+//                MainActivity main = new MainActivity();
+//                main.initAuthorXml();
             }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
@@ -126,10 +131,14 @@ public class FourSplitViewActivity extends Activity {
     }
 
     private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
+        source.setLicense_dir(app.getLicenceDir());
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
         source.setSplit_mode(app.getSplit_mode());
         source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        source.setStart_time(app.getStart_time());
+        source.setEnd_time(app.getEnd_time());
+        source.setCreate_time(app.getCreate_time());
         return source;
     }
 
@@ -288,7 +297,9 @@ public class FourSplitViewActivity extends Activity {
                             public void run() {
                                 Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
                                 isFreeFlag1 = true;//图片赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                if (app.getPlayFlag() == 0){
+                                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                }
                             }
                         },app.getDelayMillis());//3秒后结束当前图片
                         app.setRunnable1(mRunnable);
@@ -313,7 +324,7 @@ public class FourSplitViewActivity extends Activity {
                                 Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
                                 app.setListNum1(app.getListNum1() + 1);
                                 isFreeFlag1 = true;//视频赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
                             }
                         });
                     }
@@ -343,7 +354,9 @@ public class FourSplitViewActivity extends Activity {
                             public void run() {
                                 Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
                                 isFreeFlag2 = true;//图片赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                if (app.getPlayFlag() == 0){
+                                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                }
                             }
                         },app.getDelayMillis());//3秒后结束当前图片
                         app.setRunnable2(mRunnable);
@@ -368,7 +381,7 @@ public class FourSplitViewActivity extends Activity {
                                 Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
                                 app.setListNum2(app.getListNum2() + 1);
                                 isFreeFlag2 = true;//视频赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
                             }
                         });
                     }
@@ -399,7 +412,9 @@ public class FourSplitViewActivity extends Activity {
                             public void run() {
                                 Log.d(TAG, "执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
                                 isFreeFlag3 = true;//图片赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0], Recursive[1], Recursive[2], Recursive[3]);
+                                if (app.getPlayFlag() == 0){
+                                    playSonImage(Recursive[0], Recursive[1], Recursive[2], Recursive[3]);
+                                }
                             }
                         }, 3000);//3秒后结束当前图片
                         app.setRunnable3(mRunnable);
@@ -454,7 +469,9 @@ public class FourSplitViewActivity extends Activity {
                             public void run() {
                                 Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
                                 isFreeFlag4 = true;//图片赋值程序完成，退出忙线状态
-                                playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                if (app.getPlayFlag() == 0){
+                                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
+                                }
                             }
                         },app.getDelayMillis());//3秒后结束当前图片
                         app.setRunnable4(mRunnable);
@@ -735,4 +752,12 @@ public class FourSplitViewActivity extends Activity {
 //        }
 
 //    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
+    }
 }

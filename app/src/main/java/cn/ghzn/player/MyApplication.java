@@ -16,6 +16,8 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 
+import static cn.ghzn.player.util.FileUtils.getFilePath;
+
 public class MyApplication extends Application {
 
     //数据库数据初始化声明;
@@ -27,7 +29,8 @@ public class MyApplication extends Application {
     private String device_Name = "";
     private String device_Id = "";
     private boolean authority_state = false;//授权状态_
-    private String authority_time = "";//授权时间_
+    private String authority_time;//授权时间_
+    private String authority_expired ;//授权到期时间_
     private String authorization = "";//授权码_
     private String software_version = "";
     private String firmware_version = "";
@@ -39,8 +42,7 @@ public class MyApplication extends Application {
     //变量声明
     private Device mDevice;
     private Source mSource;//表示数据库source表
-    private boolean extraState = false;
-    private boolean ConnectionState = false;
+    private boolean extraState = false;//表示由ImportActivity跳转的标志，意为U盘接入状态；与importState功能大概一致--多余
     private String sonSource;//存储所有子文件夹绝对地址
     private long startTime;
     private long endTime;
@@ -95,6 +97,7 @@ public class MyApplication extends Application {
         super.onCreate();
         mContext = getApplicationContext();
         mContext.getExternalFilesDirs(null);
+
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
     }
@@ -405,14 +408,6 @@ public class MyApplication extends Application {
         this.sonSource = sonSource;
     }
 
-    public boolean isConnectionState() {
-        return ConnectionState;
-    }
-
-    public void setConnectionState(boolean connectionState) {
-        ConnectionState = connectionState;
-    }
-
     public String getDevice_Name() {
         return device_Name;
     }
@@ -435,6 +430,14 @@ public class MyApplication extends Application {
 
     public void setAuthority_state(boolean authority_state) {
         this.authority_state = authority_state;
+    }
+
+    public String getAuthority_expired() {
+        return authority_expired;
+    }
+
+    public void setAuthority_expired(String authority_expired) {
+        this.authority_expired = authority_expired;
     }
 
     public String getAuthority_time() {

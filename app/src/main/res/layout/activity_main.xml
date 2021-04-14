@@ -33,14 +33,7 @@
                 android:gravity="left"
                 android:textSize="25dp"
                 android:layout_height="wrap_content"/>
-            <TextView
-                android:layout_width="match_parent"
-                android:id="@+id/ConnectionState"
-                android:text="连接状态:"
-                android:textColor="#ffffff"
-                android:gravity="left"
-                android:textSize="25dp"
-                android:layout_height="wrap_content"/>
+
             <TextView
                 android:id="@+id/AuthorityState"
                 android:layout_width="match_parent"
@@ -48,6 +41,20 @@
                 android:text="授权状态:"
                 android:textColor="#ffffff"
                 android:textSize="25dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:textColor="#ffffff"
+                android:text="授权时间:"
+                android:textSize="25dp"
+                android:id="@+id/AuthorityTime"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:textColor="#ffffff"
+                android:text="授权到期:"
+                android:textSize="25dp"
+                android:id="@+id/AuthorityExpired"
+                android:layout_height="wrap_content"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_weight="3"

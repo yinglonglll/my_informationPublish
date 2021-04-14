@@ -60,15 +60,13 @@ public class ImportActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
         super.onCreate(savedInstanceState);
         app = (MyApplication)getApplication();//全局变量池：
-        setContentView(R.layout.activity_progress);
+//        setContentView(R.layout.activity_progress);
+        Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
 
         Intent intent = getIntent();//获取意图
         String extraPath = intent.getExtras().getString("extra_path");
         Log.d(TAG,"extraPath的值为：" + extraPath);
-
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
-
-
 //        if (mTarget != null) {
         Log.d(TAG,"this is turnActivity(mTarget)");
         turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
@@ -274,4 +272,9 @@ public class ImportActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        finish();
+        super.onDestroy();
+    }
 }

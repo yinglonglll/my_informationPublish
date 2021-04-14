@@ -32,6 +32,7 @@ import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.MainActivity.app;
 import static cn.ghzn.player.MainActivity.daoManager;
 import static cn.ghzn.player.util.AuthorityUtils.digest;
+import static cn.ghzn.player.util.FileUtils.getFilePath;
 
 public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误，非activity作用，请注意！！！
     private static final String TAG = "UsbReceiverActivity";
@@ -56,44 +57,61 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                 Toast.makeText(context,path,Toast.LENGTH_SHORT).show();
                 Log.d(TAG, path);
                 String extraPath = path.replace("file://", "");//去除uri前缀，得到文件路径(绝对路径)
-                app.setExtraPath(extraPath + "/Android/data/cn.ghzn.player/files/ghzn/");//记录U盘中我们新建ghznPlayer的绝对地址
+                app.setExtraPath(extraPath + "/Android/data/cn.ghzn.player/files/");//记录U盘中我们新建ghznPlayer的绝对地址
                 Log.d(TAG,"this is extraPath" + app.getExtraPath());
 
                 //todo:对搜寻授权码进行更新检查，保持最新的授权码
                 File updateLicence = new File(app.getExtraPath() + LICENCE_NAME);
                 if (updateLicence.exists()) {
                     Log.d(TAG, "this is 授权码存在 :" + updateLicence.getAbsolutePath());
+
                     File deleteLicence = new File(app.getLicenceDir() + LICENCE_NAME);
                     if (deleteLicence.exists()) {
                         deleteLicence.delete();
                         Log.d(TAG, "this is 原机器码存在，进行删除 ：" + deleteLicence.delete());
+                    }
+                    //存在app.getLicenceDir()为null的情况//在重复U盘考入文件播放时会出现
+                    if (app.getLicenceDir() == null) {
+                        app.setLicenceDir(getFilePath(context, Constants.STOREPATH) + "/");
+                        Log.d(TAG,"this is app.getLicenceDir() :" + app.getLicenceDir());
                     }
                     FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);
 
                     //todo：U盘导入后，先搜寻授权文件-验证mac-分析内容，符合则真状态，不符则假状态;授权文件以","为区分
                     if (FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).contains(",")) {
                         Log.d(TAG, "this is 合法授权文件");
+
+
                         String[] macStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
                         if (macStrings[0].equals(digest(MacUtils.getMac(context)))) {//合法文件中mac验证身份正确
                             Log.d(TAG, "this is 合法文件中mac验证身份正确");
                             app.setMap(AuthorityUtils.getAuthInfo(macStrings[1]));
-
-
 //                            @SuppressLint("SimpleDateFormat") SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 //                            df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
 
                             app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
                             app.setEnd_time((long) app.getMap().get("endTime"));
-                            LogUtils.e(app.getStart_time());
-                            LogUtils.e(app.getEnd_time());
-                            LogUtils.e(app.getMap());
+
+                            //todo:设置显示授权时间和授权失效时间
+                            LogUtils.e(app.getAuthority_time());
+                            if (app.getAuthority_time() == null) {//第一次赋值
+                                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+                                app.setAuthority_time(df.format(new Date(app.getStart_time())));
+                                app.setAuthority_expired(df.format(new Date(app.getEnd_time())));
+                                Log.d(TAG,"this is app.getAuthority_time() :" + app.getAuthority_time());
+                                Log.d(TAG,"this is app.getEnd_time() :" + app.getAuthority_expired());
+                            }
+//                            LogUtils.e(app.getStart_time());
+//                            LogUtils.e(app.getEnd_time());
+//                            LogUtils.e(app.getMap());
 
                             //todo:获取并存储授权信息的内容，再进行对内容的取出，用于判断授权状态以限制其他操作---嵌入跳转功能
                             if (app.getCreate_time() == 0) {//第一次导入资源时，数据库的当前时间为默认值为0
+                                app.setAuthority_state(true);//此次已获取授权状态，完成授权文件的更新
                                 usbTurnActivity(context, path);
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 if ((Long) app.getMap().get("endTime") > app.getCreate_time() && app.getCreateTime() > app.getSource().getCreate_time()) {
-                                    app.getSource().setCreate_time(app.getCreateTime());
+                                    app.setAuthority_state(true);
                                     usbTurnActivity(context, path);
                                 } else {
                                     Log.d(TAG, "this is 后续导入资源时，不在有效授权时间内");
@@ -106,31 +124,18 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                         Log.d(TAG, "this is 非法授权文件");
                     }
                 } else {
-                    Log.d(TAG,"updateLicence.exists() ：不存在");
+                    Log.d(TAG,"this is 无授权文件，检查授权状态");
+                    if (app.getDevice().getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
+                        Log.d(TAG,"this is 无授权文件，存在授权状态");
+                        usbTurnActivity(context, path);
+                    }
                 }
             } else {
                 Toast.makeText(context,"path为空，未接入U盘",Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "U盘未接入");
             }
 
-            //获取U盘路径后，先把对U盘路径下的license文件进行检测，有效则进行替换覆盖，跳转之前先进行授权判断
-//            LogUtils.e(app.getSource());
-//            Log.d(TAG,"this is app.getLicenseDir() 》》》》》》》》》》》" + app.getLicenceDir());
-//            Log.d(TAG,"this is FileUtils.readTxt(app.getLicenseDir()) 》》》》》》》》》》》" + FileUtils.readTxt(app.getLicenceDir()));
-//            String[] strings = FileUtils.readTxt(app.getLicenceDir()).split(",");
-//            app.setMap(AuthorityUtils.getAuthInfo(strings[1]));//手动替换：从路径的文件取出文件内容,再将内容拿给getAuth方法截取信息存储在map中
-//            LogUtils.e(app.getMap());
-//            if (strings[0].equals(digest(MacUtils.getMac(context)))) {//已授权，进行导入跳转
-//                Log.d(TAG,"this is 已授权");
-//
-//            } else {
-//                Log.d(TAG,"this is 未授权");
-//                Log.d(TAG,"this is strings[0] :" + strings[0]);
-//                Log.d(TAG,"this is  digest(MacUtils.getMac(context)) :" + digest(MacUtils.getMac(context)));
-//            }
-//            //todo：跳转部分只有在授权期内(真状态)才进行
 //            usbTurnActivity(context, path);
-
 
         }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
             // doSomething
@@ -144,6 +149,8 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
 
 
     private void usbTurnActivity(Context context, String path) {
+        app.setCreate_time(app.getCreateTime());//获取当前时间赋值给与数据库相关数据的"当前时间"--作为上次时导入时间
+
         Intent i = new Intent(context, ImportActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString("extra_path", path);

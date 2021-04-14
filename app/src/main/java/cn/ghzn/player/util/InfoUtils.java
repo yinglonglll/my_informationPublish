@@ -41,15 +41,11 @@ public class InfoUtils {
     }
 
     public static boolean getAuthorityState() {
-        app.setAuthority_state(false);
         return app.isAuthority_state();
-
     }
 
     public static String getAuthorityTime() {
-        app.setAuthority_time("XX.XX.XX");
         return app.getAuthority_time();
-
     }
 
     public static String getAuthorization() {
@@ -57,29 +53,28 @@ public class InfoUtils {
         app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
         Log.d(TAG,"设置授权码成功");
         return app.getAuthorization();
-
     }
 
     public static String getSoftware_version() {
-        app.setSoftware_version("***");
+//        app.setSoftware_version("***");
         return app.getSoftware_version();
 
     }
 
     public static String FirmwareVersion() {
-        app.setFirmware_version("***");
+//        app.setFirmware_version("***");
         return app.getFirmware_version();
 
     }
 
     public static int getWidth() {
-        app.setWidth(0);
+//        app.setWidth(0);
         return app.getWidth();
 
     }
 
     public static int getHeight() {
-        app.setHeight(0);
+//        app.setHeight(0);
         return app.getHeight();
 
     }

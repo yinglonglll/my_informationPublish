@@ -25,13 +25,13 @@ public class Device {
      */
     private String authority_time;
     /**
+     * 授权到期时间
+     */
+    private String authority_expired;
+    /**
      * 授权码
      */
     private String authorization;
-    /**
-     * 授权到期时间
-     */
-    private String authority_expried;
     /**
      * 系统软件版本号
      */
@@ -48,18 +48,17 @@ public class Device {
      * 终端屏幕高度
      */
     private int height;
-    @Generated(hash = 934091218)
-    public Device(Long id, String device_name, String device_id,
-                  boolean authority_state, String authority_time, String authorization,
-                  String authority_expried, String software_version,
-                  String firmware_version, int width, int height) {
+    @Generated(hash = 1016804166)
+    public Device(Long id, String device_name, String device_id, boolean authority_state,
+            String authority_time, String authority_expired, String authorization,
+            String software_version, String firmware_version, int width, int height) {
         this.id = id;
         this.device_name = device_name;
         this.device_id = device_id;
         this.authority_state = authority_state;
         this.authority_time = authority_time;
+        this.authority_expired = authority_expired;
         this.authorization = authorization;
-        this.authority_expried = authority_expried;
         this.software_version = software_version;
         this.firmware_version = firmware_version;
         this.width = width;
@@ -104,12 +103,7 @@ public class Device {
     public void setAuthorization(String authorization) {
         this.authorization = authorization;
     }
-    public String getAuthority_expried() {
-        return this.authority_expried;
-    }
-    public void setAuthority_expried(String authority_expried) {
-        this.authority_expried = authority_expried;
-    }
+
     public String getSoftware_version() {
         return this.software_version;
     }
@@ -133,6 +127,12 @@ public class Device {
     }
     public void setHeight(int height) {
         this.height = height;
+    }
+    public String getAuthority_expired() {
+        return this.authority_expired;
+    }
+    public void setAuthority_expired(String authority_expired) {
+        this.authority_expired = authority_expired;
     }
 
 

@@ -48,6 +48,10 @@ public class FileUtils {
     public static boolean copyFile(String source, String target){//对文件进行赋值，不能直接以目录为参数进行复制目录内所有参数；
         try {
             File targetFile = new File(target);
+//            LogUtils.e(targetFile);
+//            LogUtils.e(targetFile.getParentFile());
+//            LogUtils.e(targetFile.getParentFile().exists());
+
             if(!targetFile.getParentFile().exists()){//对单个文件复制，先判断父文件夹是否存在，要存在才一起复制过去
                 targetFile.getParentFile().mkdirs();//每次new文件时，都判断是否成功建立，不成再建立一次
             }
@@ -78,6 +82,7 @@ public class FileUtils {
             mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
                 Log.d(TAG, "机器码已存在，若需生成，请先删除");
+                Toast.makeText(mContext,"机器码已存在",Toast.LENGTH_SHORT).show();
             } else {
                 FileOutputStream outStream = null;
                 try {
@@ -123,9 +128,9 @@ public class FileUtils {
         }
     }
 
-    public static void deleteMachineId(){
-        ViewImportUtils.deleteFile(mSaveFile);//先删再建
-    }
+//    public static void deleteMachineId(){
+//        ViewImportUtils.deleteFile(mSaveFile);//先删再建
+//    }
 
     public static String readTxt(String path){//txt文件的绝对地址
         String txtStr = "";

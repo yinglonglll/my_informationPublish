@@ -123,6 +123,12 @@ public class OneSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
+                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
+                app.getDevice().setAuthority_time(app.getAuthority_time());
+                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+//                MainActivity main = new MainActivity();
+//                main.initAuthorXml();
+
             }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
@@ -135,13 +141,14 @@ public class OneSplitViewActivity extends Activity {
     }
 
     private Source getSource(Source source) {//对数据库进行覆写
-        source.setStart_time(app.getStart_time());
-        source.setEnd_time(app.getEnd_time());
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
         source.setSplit_mode(app.getSplit_mode());
         source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        source.setStart_time(app.getStart_time());
+        source.setEnd_time(app.getEnd_time());
         source.setCreate_time(app.getCreate_time());
+
         return source;
     }
     @SuppressLint("ClickableViewAccessibility")
@@ -268,6 +275,13 @@ public class OneSplitViewActivity extends Activity {
                 return false;
             }
         });
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
     }
 
 }
