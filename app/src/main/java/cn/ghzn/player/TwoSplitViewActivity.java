@@ -66,7 +66,7 @@ public class TwoSplitViewActivity extends Activity {
         app.setCurrentActivity(this);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
         Log.d(TAG,"this is 跳转成功");
-        if (app.isExtraState()) {
+        if (app.isExtraState()) {//若是U盘插入时，文件为不合规定，此时U盘也仍未插入状态true
             Intent intent = getIntent();
             int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
             String filesParent = intent.getStringExtra("filesParent");
@@ -129,8 +129,7 @@ public class TwoSplitViewActivity extends Activity {
                 Log.d(TAG,"this is >>> app.getDevice().getAuthority_state() :" + app.getDevice().getAuthority_state());
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
-//                MainActivity main = new MainActivity();
-//                main.initAuthorXml();
+
             }
         }else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
@@ -147,6 +146,9 @@ public class TwoSplitViewActivity extends Activity {
         source.setStart_time(app.getStart_time());
         source.setEnd_time(app.getEnd_time());
         source.setCreate_time(app.getCreate_time());
+        source.setFirst_time(app.getFirst_time());
+        source.setTime_difference(app.getTime_difference());
+        source.setRelative_time(app.getRelative_time());
         return source;
     }
     @SuppressLint("ClickableViewAccessibility")

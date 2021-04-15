@@ -23,11 +23,11 @@ public class Device {
     /**
      * 授权时间
      */
-    private String authority_time;
+    private String authority_time = "无";
     /**
      * 授权到期时间
      */
-    private String authority_expired;
+    private String authority_expired = "无";
     /**
      * 授权码
      */

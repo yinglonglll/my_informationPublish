@@ -32,7 +32,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
         public final static Property Create_time = new Property(5, long.class, "create_time", false, "CREATE_TIME");
         public final static Property Start_time = new Property(6, long.class, "start_time", false, "START_TIME");
         public final static Property End_time = new Property(7, long.class, "end_time", false, "END_TIME");
-        public final static Property License_dir = new Property(8, String.class, "license_dir", false, "LICENSE_DIR");
+        public final static Property Time_difference = new Property(8, long.class, "time_difference", false, "TIME_DIFFERENCE");
+        public final static Property First_time = new Property(9, long.class, "first_time", false, "FIRST_TIME");
+        public final static Property Relative_time = new Property(10, long.class, "relative_time", false, "RELATIVE_TIME");
+        public final static Property License_dir = new Property(11, String.class, "license_dir", false, "LICENSE_DIR");
     }
 
 
@@ -56,7 +59,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
                 "\"CREATE_TIME\" INTEGER NOT NULL ," + // 5: create_time
                 "\"START_TIME\" INTEGER NOT NULL ," + // 6: start_time
                 "\"END_TIME\" INTEGER NOT NULL ," + // 7: end_time
-                "\"LICENSE_DIR\" TEXT);"); // 8: license_dir
+                "\"TIME_DIFFERENCE\" INTEGER NOT NULL ," + // 8: time_difference
+                "\"FIRST_TIME\" INTEGER NOT NULL ," + // 9: first_time
+                "\"RELATIVE_TIME\" INTEGER NOT NULL ," + // 10: relative_time
+                "\"LICENSE_DIR\" TEXT);"); // 11: license_dir
     }
 
     /** Drops the underlying database table. */
@@ -96,10 +102,13 @@ public class SourceDao extends AbstractDao<Source, Long> {
         stmt.bindLong(6, entity.getCreate_time());
         stmt.bindLong(7, entity.getStart_time());
         stmt.bindLong(8, entity.getEnd_time());
+        stmt.bindLong(9, entity.getTime_difference());
+        stmt.bindLong(10, entity.getFirst_time());
+        stmt.bindLong(11, entity.getRelative_time());
  
         String license_dir = entity.getLicense_dir();
         if (license_dir != null) {
-            stmt.bindString(9, license_dir);
+            stmt.bindString(12, license_dir);
         }
     }
 
@@ -134,10 +143,13 @@ public class SourceDao extends AbstractDao<Source, Long> {
         stmt.bindLong(6, entity.getCreate_time());
         stmt.bindLong(7, entity.getStart_time());
         stmt.bindLong(8, entity.getEnd_time());
+        stmt.bindLong(9, entity.getTime_difference());
+        stmt.bindLong(10, entity.getFirst_time());
+        stmt.bindLong(11, entity.getRelative_time());
  
         String license_dir = entity.getLicense_dir();
         if (license_dir != null) {
-            stmt.bindString(9, license_dir);
+            stmt.bindString(12, license_dir);
         }
     }
 
@@ -157,7 +169,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
             cursor.getLong(offset + 5), // create_time
             cursor.getLong(offset + 6), // start_time
             cursor.getLong(offset + 7), // end_time
-            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8) // license_dir
+            cursor.getLong(offset + 8), // time_difference
+            cursor.getLong(offset + 9), // first_time
+            cursor.getLong(offset + 10), // relative_time
+            cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11) // license_dir
         );
         return entity;
     }
@@ -172,7 +187,10 @@ public class SourceDao extends AbstractDao<Source, Long> {
         entity.setCreate_time(cursor.getLong(offset + 5));
         entity.setStart_time(cursor.getLong(offset + 6));
         entity.setEnd_time(cursor.getLong(offset + 7));
-        entity.setLicense_dir(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
+        entity.setTime_difference(cursor.getLong(offset + 8));
+        entity.setFirst_time(cursor.getLong(offset + 9));
+        entity.setRelative_time(cursor.getLong(offset + 10));
+        entity.setLicense_dir(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
      }
     
     @Override

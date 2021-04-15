@@ -23,6 +23,8 @@ import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.ViewImportUtils;
 
+import static java.lang.Thread.sleep;
+
 public class ImportActivity extends Activity {
     private static final String TAG = "ImportActivity";
 
@@ -32,6 +34,9 @@ public class ImportActivity extends Activity {
     private DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象)
     private static Runnable mRunnable;
     private static Map map1 = new HashMap();//存每次导入进来时里面的U盘文件，
+    private boolean mMatch;
+    private MainActivity mMain;
+
     public static Runnable getRunnable() {
         return mRunnable;
     }
@@ -43,38 +48,25 @@ public class ImportActivity extends Activity {
     public static Map getMap1() {
         return map1;
     }
-//    private static Map map2 = new HashMap();//存控件相关
-
-//    private static Map map = new HashMap();//将map1和map2存入进来，通过map来对map1和map2进行调用；
-//    public static Map getMap2() {
-//        return map2;
-//    }
-//
-//    public static Map getMap() {
-//        return map;
-
-//    }
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
         super.onCreate(savedInstanceState);
         app = (MyApplication)getApplication();//全局变量池：
-//        setContentView(R.layout.activity_progress);
-        Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
+        setContentView(R.layout.activity_progress);
 
+        Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
         Intent intent = getIntent();//获取意图
         String extraPath = intent.getExtras().getString("extra_path");
         Log.d(TAG,"extraPath的值为：" + extraPath);
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
-//        if (mTarget != null) {
-        Log.d(TAG,"this is turnActivity(mTarget)");
-        turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
-//        } else {
-//            Source source = daoManager.getSession().getSourceDao().queryBuilder().unique();//先查出来，再调出来。
-//            mTarget = source.getMtarget();
-//        }
-
+        if (mMatch) {//需找到有路径，路径为有效
+            turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
+        } else {
+            Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对");//禁止从U盘导入的跳转
+            Toast.makeText(this,"您的ghznPlayer文件夹内格式不对",Toast.LENGTH_SHORT).show();
+        }
+        finish();
     }
 
 
@@ -185,7 +177,8 @@ public class ImportActivity extends Activity {
                         break;
                 }
             } else {
-                Log.d(TAG, "turnActivity--if (filesCount != 0)--filesCount：0或files.length = 0");
+                Log.d(TAG, "this is 子文件夹数量为0");
+                Toast.makeText(this,"ghznPlayer文件夹内没有文件",Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -233,15 +226,35 @@ public class ImportActivity extends Activity {
         if(extraDirectory.isDirectory()){
             File[] files = extraDirectory.listFiles();//查找给定目录中的所有文件和目录(listFiles()得到的结果类似相对路径)
             LogUtils.e(files);
-            boolean match = false;//初始化状态变量
+            //初始化状态变量
+            mMatch = false;
             String source = "";
             mTarget = "";
             if (files != null&& files.length != 0) {
                 for(File file : files){
                     if (file.getName().equals("ghznPlayer")) {//从U盘路径中找到我们放入的文件夹ghznPlayer，以找到文件夹的路径
                         Log.d(TAG, "find extra program:" + file.getAbsolutePath());
-                        match = true;//标志找到
+                        mMatch = true;//标志找到--找到ghznPlayer文件路径
                         source = file.getAbsolutePath();//U盘存放目标文件ghznPlayer的绝对路径
+                        int uFileCount;
+
+                        //todo：自定义--复制之前先检查对象是否合乎U盘的规定，不合乎则设此路径无效，即找了也没用
+                        if (source != "") {//找到文件路径时
+                            File uf = new File(source);
+                            File[] ufs = uf.listFiles();
+                            String[] uss = ufs[0].getName().split("\\-");
+                            uFileCount = ufs.length;//取子文件数
+                            if (!uss[0].equals(String.valueOf(uFileCount))) {//不符我的规定,设找到的路径为无效路径
+                                mMatch = false;
+                                //todo:意图跳转到之前的当前activty上即可。
+                                Intent ci = new Intent(this,app.getCurrentActivity().getClass());
+                                Log.d(TAG,"this is 找到的文件无效，即将跳转回原先播放的activity");
+                                startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                            }
+                            Log.d(TAG," this is uss[0]和String.valueOf(uFileCount)分别是" + uss[0] + (uFileCount));
+                            Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
+                        }
+
                         Log.d(TAG,"source的值为：" + source);
                         mTarget = FileUtils.getFilePath(this, Constants.STOREPATH) + "/" + file.getName();//方法返回String类型，拼起来就是完整的复制目标地址,创建目标文件夹
                         Log.d(TAG,"mTarget的值为：" + mTarget);
@@ -252,7 +265,7 @@ public class ImportActivity extends Activity {
                     }
                 }
             }
-            if(match){//标志找到后需复制的动作,复制之前先把原有的删除了
+            if(mMatch){//标志找到后需复制的动作,复制之前先把原有的删除了
                 boolean success = false;
                 success = copyFiles(source, mTarget);//通过打开输入/出通道，执行读写复制
                 if(success){//复制的动作执行成功
@@ -260,7 +273,7 @@ public class ImportActivity extends Activity {
                 }else{
                     Log.d(TAG,"复制失败，即将跳转主界面...");
                     try {
-                        Thread.sleep(2000);
+                        sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -268,13 +281,11 @@ public class ImportActivity extends Activity {
                     startActivity(i);
                 }
             }
-
         }
     }
 
     @Override
     protected void onDestroy() {
-        finish();
         super.onDestroy();
     }
 }

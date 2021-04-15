@@ -40,10 +40,6 @@ public class InfoUtils {
 
     }
 
-    public static boolean getAuthorityState() {
-        return app.isAuthority_state();
-    }
-
     public static String getAuthorityTime() {
         return app.getAuthority_time();
     }

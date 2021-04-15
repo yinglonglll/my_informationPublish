@@ -29,22 +29,35 @@ public class Source {
     /**
      * 每次节目导入时间；用于
      */
-    private long create_time;
+    private long create_time = 0;
     /**
-     * 节目导入时间
+     * 节目导入时间戳
      */
     private long start_time;
     /**
-     * 节目导入时间
+     * 节目导入时间戳
      */
     private long end_time;
+    /**
+     * 节目导入时间戳的差值
+     */
+    private long time_difference;
+    /**
+     * 首次导入节目时间(本地时间)
+     */
+    private long first_time;
+    /**
+     * 用于存储是本地时间还是服务器时间的抽象变量
+     */
+    private long relative_time;
     /**
      * 授权文件的绝对地址
      */
     private String license_dir;
-    @Generated(hash = 578278582)
+    @Generated(hash = 537373540)
     public Source(Long id, String program_id, String split_view, String split_mode,
             String son_source, long create_time, long start_time, long end_time,
+            long time_difference, long first_time, long relative_time,
             String license_dir) {
         this.id = id;
         this.program_id = program_id;
@@ -54,6 +67,9 @@ public class Source {
         this.create_time = create_time;
         this.start_time = start_time;
         this.end_time = end_time;
+        this.time_difference = time_difference;
+        this.first_time = first_time;
+        this.relative_time = relative_time;
         this.license_dir = license_dir;
     }
     @Generated(hash = 615387317)
@@ -112,6 +128,24 @@ public class Source {
     }
     public void setEnd_time(long end_time) {
         this.end_time = end_time;
+    }
+    public long getTime_difference() {
+        return this.time_difference;
+    }
+    public void setTime_difference(long time_difference) {
+        this.time_difference = time_difference;
+    }
+    public long getFirst_time() {
+        return this.first_time;
+    }
+    public void setFirst_time(long first_time) {
+        this.first_time = first_time;
+    }
+    public long getRelative_time() {
+        return this.relative_time;
+    }
+    public void setRelative_time(long relative_time) {
+        this.relative_time = relative_time;
     }
 
 

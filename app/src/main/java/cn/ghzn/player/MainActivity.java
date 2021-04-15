@@ -23,6 +23,10 @@ import android.widget.Toast;
 import com.apkfuns.logutils.LogUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
@@ -41,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     public static MyApplication app;
     public final static DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象，只管取来用)
     private static final String TAG = "MainActivity";
+    private static boolean isSave;
 
     GestureDetector mGestureDetector;
     private TextView mDeviceName;
@@ -54,19 +59,19 @@ public class MainActivity extends AppCompatActivity {
     private Intent mIntent_FinishFlag = new Intent();
     private TextView mAuthorityTime;
     private TextView mAuthorityExpired;
+    private File mSaveFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
-
         setContentView(R.layout.activity_main);
-
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
-        initSource();
+        initSource();//资源初始化放在如上
+        LogUtils.e(app.isAuthority_state());
         setDialog();
     }
 
@@ -74,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
         Log.d(TAG,"this is first app.setLicenceDir" + app.getLicenceDir());
         app.setLicenceDir(getFilePath(this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
-
         app.setCreateTime(System.currentTimeMillis());
 
         File file = new File(app.getLicenceDir());
@@ -88,28 +92,36 @@ public class MainActivity extends AppCompatActivity {
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
         Log.d(TAG,"this is  app.setSource");
         if (app.getSource() != null) {//资源导入进来意味着处于授权期内,还需防止修改系统时间。
-            initImportSource(app.getSource());//初始化数据库数据到全局变量池
+            initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
-                //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+            //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
             LogUtils.e(app.getCreateTime() > app.getSource().getCreate_time());
             LogUtils.e(app.getEnd_time() > app.getCreate_time());
-            if (app.getCreateTime() > app.getSource().getCreate_time() && app.getEnd_time() > app.getCreate_time()) {
-                turnActivity(app.getSplit_view());
+            LogUtils.e((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference());
+            //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
+            LogUtils.e(app.getRelative_time() > app.getCreate_time());//1.防止本地或服务器时间大于授权到期相对时间；
+            if (app.getCreateTime() > app.getSource().getCreate_time() && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()) {
+                app.getDevice().setAuthority_state(true);
+                turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)
             } else {
-                Log.d(TAG,"this is is app.setAuthority_state(false)");
-                app.setAuthority_state(false);//一旦出现不再授权期内，则设为无授权状态，禁止U盘资源的读取
+                Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
+                app.getDevice().setAuthority_state(false);
             }
+            daoManager.getSession().getDeviceDao().update(app.getDevice());
+            Log.d(TAG,"this is device.state:" + app.getDevice().getAuthority_state());
         }
     }
 
-    private void initDevice() {
+    public void initDevice() {
         app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
         if(app.getDevice() == null){
             app.setDevice(new Device());//表不存在则新建赋值
             daoManager.getSession().getDeviceDao().insert(getDevice(app.getDevice()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
         }else{//存在则直接修改
+            LogUtils.e(app.getDevice().getAuthority_state());
             daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
+            LogUtils.e(app.getDevice().getAuthority_state());
         }
         Log.d(TAG,"this is if(app.getDevice() == null)");
         initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
@@ -137,6 +149,8 @@ public class MainActivity extends AppCompatActivity {
 
         app.setStart_time(source.getStart_time());//U盘授权文件信息
         app.setEnd_time(source.getEnd_time());
+        app.setFirst_time(source.getFirst_time());
+        app.setTime_difference(source.getTime_difference());
 
         app.setProgram_id(source.getProgram_id());//U盘文件获取信息
         app.setSplit_view(source.getSplit_view());
@@ -151,7 +165,9 @@ public class MainActivity extends AppCompatActivity {
 
         app.setDevice_Name(device.getDevice_name());
         app.setDevice_Id(device.getDevice_id());
+        LogUtils.e(app.isAuthority_state());
         app.setAuthority_state(device.getAuthority_state());
+        LogUtils.e(app.isAuthority_state());
         Log.d(TAG,"this is initImportDeviced的getDevice().getAuthority_state()" + app.getDevice().getAuthority_state());
         Log.d(TAG,"this is initImportDeviced的app.isAuthority_state()" + app.isAuthority_state());
         app.setAuthorization(device.getAuthorization());
@@ -294,7 +310,6 @@ public class MainActivity extends AppCompatActivity {
     private Device getDevice(Device device){
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
-//        if(device.getAuthority_state()==true)device.setAuthority_state(InfoUtils.getAuthorityState());//默认为false，数据库获取为true才是已授权
         if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
         if(device.getAuthorization()==null)device.setAuthorization(InfoUtils.getAuthorization());
 //        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
@@ -302,7 +317,6 @@ public class MainActivity extends AppCompatActivity {
         device.setFirmware_version(InfoUtils.FirmwareVersion());
         device.setWidth(InfoUtils.getWidth());//默认赋值为0
         device.setHeight(InfoUtils.getHeight());
-
         return device;
     }
 
@@ -310,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
         return Constants.DEVICE_PREFIX + getRandomString(10);
     }
 
-    private void initView() {
+    public void initView() {
         mDeviceName = (TextView) this.findViewById(R.id.DeviceName);
         mDeviceId = (TextView) this.findViewById(R.id.DeviceID);
         mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
@@ -758,14 +772,60 @@ public class MainActivity extends AppCompatActivity {
 
     public void machineIdOutBtn(View view) {
         Log.d(TAG,"this is MachineIdOutBtn");
-        FileUtils.getMachineId();
-        Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+
+        if (app.isImportState()) {
+            //todo:实现将授权文件生成到U盘目录下，取U盘绝对地址进行赋值
+
+            mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
+            if (mSaveFile.exists()) {
+                Log.d(TAG, "U盘的机器码或授权码已存在，无法导出到U盘指定文件处");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
+                Toast.makeText(this,"U盘的机器码或授权码已存在，无法导出到U盘指定文件处",Toast.LENGTH_SHORT).show();
+            } else {
+                FileOutputStream outStream = null;
+                try {
+                    outStream = new FileOutputStream(mSaveFile);
+                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.close();
+                    outStream.flush();
+                    isSave = true;
+                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
+                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
+            if (mSaveFile.exists()) {
+                Log.d(TAG, "终端的机器码或授权码已存在，无法导出到本地指定文件处");
+                Toast.makeText(this,"终端的机器码或授权码已存在，无法导出到本地指定文件处",Toast.LENGTH_SHORT).show();
+            } else {
+                FileOutputStream outStream = null;
+                try {
+                    outStream = new FileOutputStream(mSaveFile);
+                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.close();
+                    outStream.flush();
+                    isSave = true;
+                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
+                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
-//    public void deleteMachineIdOutBtn(View view) {
-//        FileUtils.deleteMachineId();
-//        Toast.makeText(this,"删除机器码成功",Toast.LENGTH_SHORT).show();
-//    }
 
     @Override
     protected void onDestroy() {

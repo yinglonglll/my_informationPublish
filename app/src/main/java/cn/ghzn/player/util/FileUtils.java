@@ -81,7 +81,7 @@ public class FileUtils {
 
             mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
-                Log.d(TAG, "机器码已存在，若需生成，请先删除");
+                Log.d(TAG, "U盘的机器码或授权码已存在，无法导出到U盘指定文件处");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
                 Toast.makeText(mContext,"机器码已存在",Toast.LENGTH_SHORT).show();
             } else {
                 FileOutputStream outStream = null;
@@ -92,7 +92,6 @@ public class FileUtils {
                     outStream.flush();
                     isSave = true;
                     Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
-
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (UnsupportedEncodingException e) {
@@ -104,7 +103,7 @@ public class FileUtils {
         } else {
             mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
-                Log.d(TAG, "机器码已存在，若需生成，请先删除");
+                Log.d(TAG, "终端的机器码或授权码已存在，无法导出到本地指定文件处");
             } else {
                 FileOutputStream outStream = null;
                 try {

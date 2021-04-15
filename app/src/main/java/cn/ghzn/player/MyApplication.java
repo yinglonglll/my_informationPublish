@@ -25,19 +25,22 @@ public class MyApplication extends Application {
     private String split_view = "";
     private String split_mode = "";
     private String son_source = "";//存数据库数据的变量
-    private long create_time = 0;//记录上一次节目导入的时间
+    private long create_time;//记录上一次节目导入的时间
     private String device_Name = "";
     private String device_Id = "";
     private boolean authority_state = false;//授权状态_
-    private String authority_time;//授权时间_
-    private String authority_expired ;//授权到期时间_
+    private String authority_time;//授权文件的授权开始时间戳转换为格式化的日期时间_
+    private String authority_expired;//授权到期时间_
     private String authorization = "";//授权码_
     private String software_version = "";
     private String firmware_version = "";
     private int width ;
     private int height ;
-    private long start_time;//授权文件的授权开始时间
-    private long end_time;//授权文件的授权结束时间
+    private long start_time;//授权文件的授权开始时间戳
+    private long end_time;//授权文件的授权结束时间戳
+    private long time_difference;
+    private long first_time;
+    private long relative_time;
 
     //变量声明
     private Device mDevice;
@@ -51,7 +54,7 @@ public class MyApplication extends Application {
     private boolean playSonImageFlag =true;
     private String licenceDir;//本地调用license文件的地址
     private String extraPath;
-    private long createTime;//记录本次节目导入的时间
+    private long createTime;//记录当前的本地时间，而create_time是成功播放资源才记录的本地时间，不成功则不记录
 
 
     //对象声明
@@ -102,6 +105,29 @@ public class MyApplication extends Application {
         DaoManager.getInstance();
     }
 
+    public long getRelative_time() {
+        return relative_time;
+    }
+
+    public void setRelative_time(long relative_time) {
+        this.relative_time = relative_time;
+    }
+
+    public long getTime_difference() {
+        return time_difference;
+    }
+
+    public void setTime_difference(long time_difference) {
+        this.time_difference = time_difference;
+    }
+
+    public long getFirst_time() {
+        return first_time;
+    }
+
+    public void setFirst_time(long first_time) {
+        this.first_time = first_time;
+    }
 
     public long getCreateTime() {
         return createTime;

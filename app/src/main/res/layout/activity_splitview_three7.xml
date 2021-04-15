@@ -12,30 +12,47 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="match_parent">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:scaleType="fitXY"
-                android:id="@+id/imageView_three7_1"
-                android:layout_height="match_parent"/>
-            <cn.ghzn.player.CustomVideoView
-                android:layout_width="match_parent"
-                android:id="@+id/videoView_three7_1"
-                android:layout_height="match_parent"/>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:scaleType="fitXY"
+                    android:id="@+id/imageView_three7_1"
+                    android:layout_height="match_parent"/>
+                <cn.ghzn.player.CustomVideoView
+                    android:layout_width="match_parent"
+                    android:id="@+id/videoView_three7_1"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_height="match_parent"/>
+            </RelativeLayout>
         </ViewAnimator>
         <ViewAnimator
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="match_parent">
-            <ImageView
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:scaleType="fitXY"
-                android:id="@+id/imageView_three7_2"
-                android:layout_height="match_parent"/>
-            <cn.ghzn.player.CustomVideoView
-                android:layout_width="match_parent"
-                android:id="@+id/videoView_three7_2"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:scaleType="fitXY"
+                    android:id="@+id/imageView_three7_2"
+                    android:layout_height="match_parent"/>
+                <cn.ghzn.player.CustomVideoView
+                    android:layout_width="match_parent"
+                    android:id="@+id/videoView_three7_2"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_height="match_parent"/>
+            </RelativeLayout>
         </ViewAnimator>
     </LinearLayout>
 
@@ -48,18 +65,25 @@
         <ViewAnimator
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:scaleType="fitXY"
-                android:id="@+id/imageView_three7_3"
-                android:layout_height="match_parent"/>
-            <cn.ghzn.player.CustomVideoView
-                android:layout_width="match_parent"
-                android:id="@+id/videoView_three7_3"
-                android:layout_height="match_parent"/>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:scaleType="fitXY"
+                    android:id="@+id/imageView_three7_3"
+                    android:layout_height="match_parent"/>
+                <cn.ghzn.player.CustomVideoView
+                    android:layout_width="match_parent"
+                    android:id="@+id/videoView_three7_3"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_height="match_parent"/>
+            </RelativeLayout>
         </ViewAnimator>
-
     </LinearLayout>
 
 

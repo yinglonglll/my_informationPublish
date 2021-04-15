@@ -148,6 +148,9 @@ public class OneSplitViewActivity extends Activity {
         source.setStart_time(app.getStart_time());
         source.setEnd_time(app.getEnd_time());
         source.setCreate_time(app.getCreate_time());
+        source.setFirst_time(app.getFirst_time());
+        source.setTime_difference(app.getTime_difference());
+        source.setRelative_time(app.getRelative_time());
 
         return source;
     }
