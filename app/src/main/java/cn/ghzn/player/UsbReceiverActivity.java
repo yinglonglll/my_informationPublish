@@ -26,6 +26,7 @@ import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.InfoUtils;
 import cn.ghzn.player.util.MacUtils;
+import cn.ghzn.player.util.UsbUtils;
 import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.Constants.LICENCE_NAME;
@@ -37,16 +38,17 @@ import static java.lang.Thread.sleep;
 
 public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误，非activity作用，请注意！！！
     private static final String TAG = "UsbReceiverActivity";
-//    private static boolean mActionFlag = false;
+    private String[] mMacStrings;
+    //    private static boolean mActionFlag = false;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
+        //广播有则接受，但需要特定信息才进行特定操作
         //1.监听是否得到U盘目录(是否存在文件)(true跳转import，false返回mainActivity；做出提示)->
         //2.进入import，加入加载页面，执行复制U盘程序，复制完成后判断是否成功复制(true跳转playerActivity，false跳转mainActivity；做出提示)
         //3.进入playerActivity，执行分屏逻辑和动态imageView逻辑；执行完后才退出加载页面，；
         //先执行完程序，如果没问题才跳转到对应的player布局界面
-
+        UsbUtils.checkUsb(context);
         Log.d(TAG,"action === " + intent.getAction());
         if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {
             String path = intent.getDataString();
@@ -76,18 +78,18 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                         app.setLicenceDir(getFilePath(context, Constants.STOREPATH) + "/");
                         Log.d(TAG,"this is app.getLicenceDir() :" + app.getLicenceDir());
                     }
-                    FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);
-
+                    //若是非法授权文件，则直接放弃读取，不执行覆盖。
                     //todo：U盘导入后，先搜寻授权文件-验证mac-分析内容，符合则真状态，不符则假状态;授权文件以","为区分
-                    if (FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).contains(",")) {
+                    if (FileUtils.readTxt(updateLicence.getAbsolutePath()).contains(",")) {//检验U盘授权文件的合法性
                         Log.d(TAG, "this is 合法授权文件");
-                        Toast.makeText(context,"this is 非法授权文件",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,"this is 合法授权文件",Toast.LENGTH_SHORT).show();
+                        FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);
 
-                        String[] macStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
-                        if (macStrings[0].equals(digest(MacUtils.getMac(context)))) {//合法文件中mac验证身份正确--正确且符合的授权文件
+                        mMacStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
+                        if (mMacStrings[0].equals(digest(MacUtils.getMac(context)))) {//合法文件中mac验证身份正确--正确且符合的授权文件
                             Log.d(TAG, "this is 合法文件中mac验证身份正确");
                             Toast.makeText(context,"this is 合法文件中mac验证身份正确",Toast.LENGTH_SHORT).show();
-                            app.setMap(AuthorityUtils.getAuthInfo(macStrings[1]));
+                            app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
 //                            @SuppressLint("SimpleDateFormat") SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 //                            df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));
 
@@ -125,10 +127,15 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
                                 LogUtils.e(app.getRelative_time() > app.getCreate_time());//1.防止本地或服务器时间大于授权到期相对时间；
+                                Log.d(TAG,"this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()));
+                                Log.d(TAG,"this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
+                                app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
                                 if (((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()) && app.getCreateTime() > app.getSource().getCreate_time()) {//2.第一次导入资源时间与当前时间差<授权时间段；3.当前时间一定大于上一次的当前时间
                                     Toast.makeText(context,"this is 后续资源导入",Toast.LENGTH_SHORT).show();
                                     app.setAuthority_state(true);
-
+//                                    if (app.getCurrentActivity() != null) {
+//                                        app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+//                                    }
                                     usbTurnActivity(context, path);
                                 } else {
                                     Log.d(TAG, "this is 后续导入资源时，不在有效授权时间内");
@@ -137,11 +144,13 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                             }
                         } else {
                             Log.d(TAG, "this is 非法身份验证或逗号过多的非法授权文件");
+                            Log.d(TAG,"this is mMacStrings[0] :" + mMacStrings[0]);
+                            Log.d(TAG,"this is digest(MacUtils.getMac(context))" +digest(MacUtils.getMac(context)));
                             Toast.makeText(context,"this is 非法身份验证或逗号过多的非法授权文件",Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         Log.d(TAG, "this is 非法授权文件");
-                        Toast.makeText(context,"this is 非法授权文件",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,"this is 非法授权文件，无进行复制授权文件",Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Log.d(TAG,"this is 无授权文件，检查授权状态");

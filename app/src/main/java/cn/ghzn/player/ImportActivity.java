@@ -241,18 +241,28 @@ public class ImportActivity extends Activity {
                         //todo：自定义--复制之前先检查对象是否合乎U盘的规定，不合乎则设此路径无效，即找了也没用
                         if (source != "") {//找到文件路径时
                             File uf = new File(source);
-                            File[] ufs = uf.listFiles();
-                            String[] uss = ufs[0].getName().split("\\-");
-                            uFileCount = ufs.length;//取子文件数
-                            if (!uss[0].equals(String.valueOf(uFileCount))) {//不符我的规定,设找到的路径为无效路径
-                                mMatch = false;
-                                //todo:意图跳转到之前的当前activty上即可。
-                                Intent ci = new Intent(this,app.getCurrentActivity().getClass());
-                                Log.d(TAG,"this is 找到的文件无效，即将跳转回原先播放的activity");
-                                startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                            if (!uf.exists()) {
+                                uf.mkdirs();
                             }
-                            Log.d(TAG," this is uss[0]和String.valueOf(uFileCount)分别是" + uss[0] + (uFileCount));
-                            Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
+                            File[] ufs = uf.listFiles();
+                            uFileCount = ufs.length;//取子文件数
+                            Log.d(TAG,"this is uFileCount :" + uFileCount);
+
+                            if (uFileCount != 0) {//非空情况下，遍历检测每个子文件夹的命名是否符合分屏
+                                for (File son_ufs : ufs) {
+                                    String[] uss = son_ufs.getName().split("\\-");//将每个名字拆分
+                                    if (!uss[0].equals(String.valueOf(uFileCount))) {//只要有一个命名不符我的规定,设找到的路径为无效路径
+                                        mMatch = false;
+                                        //todo:意图跳转到之前的当前activty上即可。
+                                        Intent ci = new Intent(this,app.getCurrentActivity().getClass());
+                                        Log.d(TAG,"this is 找到的文件无效，即将跳转回原先播放的activity");
+                                        Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
+                                        startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                                    }
+                                }
+                            }
+
+
                         }
 
                         Log.d(TAG,"source的值为：" + source);

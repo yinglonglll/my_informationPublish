@@ -68,12 +68,14 @@ public class TwoSplitViewActivity extends Activity {
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {//若是U盘插入时，文件为不合规定，此时U盘也仍未插入状态true
             Intent intent = getIntent();
-            int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
-            String filesParent = intent.getStringExtra("filesParent");
-            Log.d(TAG,"this is splitView" + fileCounts);
-            Log.d(TAG,"this is filesParent" + filesParent);
+            if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
+                app.setFileCounts(intent.getIntExtra("splitView",0));
+                app.setFilesParent(intent.getStringExtra("filesParent"));
+            }
+            Log.d(TAG,"this is splitView" + app.getFileCounts());
+            Log.d(TAG,"this is filesParent" + app.getFilesParent());
 
-            File f = new File(filesParent);
+            File f = new File(app.getFilesParent());
             if (!f.exists()) {
                 f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
             }
@@ -129,6 +131,7 @@ public class TwoSplitViewActivity extends Activity {
                 Log.d(TAG,"this is >>> app.getDevice().getAuthority_state() :" + app.getDevice().getAuthority_state());
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                Log.d(TAG,"this is done 数据存储");
 
             }
         }else {

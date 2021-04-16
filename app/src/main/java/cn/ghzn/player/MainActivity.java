@@ -8,6 +8,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     public final static DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象，只管取来用)
     private static final String TAG = "MainActivity";
     private static boolean isSave;
+    private View view;
 
     GestureDetector mGestureDetector;
     private TextView mDeviceName;
@@ -67,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
         setContentView(R.layout.activity_main);
+
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
@@ -134,7 +138,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG,"this is varReceiver");
-                app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
+                if (app.getCurrentActivity() != null) {
+                    app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
+                }
             }
         });
         IntentFilter filter = new IntentFilter();
@@ -265,7 +271,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLongPress(MotionEvent e) {
                 Log.d(TAG,"OnLongPressTap");
+
                 AlertDialogs.show();
+                //解决右键退出AlertDialogs的bug：The specified child already has a parent. You must call removeView() on the child's parent first. The specified child already has a parent. You must call removeView() on the child's parent first.
+                AlertDialogs.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        Log.d(TAG,"this is to do on Dismiss()");
+                        if (view != null) {
+                            ViewGroup parentView = (ViewGroup) view.getParent();
+                            if (parentView != null) {
+                                parentView.removeView(view);
+                                Log.d(TAG,"this is to doing ：parentView.removeView(view)");
+                            }
+                        }
+                        Log.d(TAG,"this is to done Dismiss()");
+                    }
+                });
             }
 
             @Override
@@ -567,6 +589,10 @@ public class MainActivity extends AppCompatActivity {
                     setDialog();
                     app.setPlayFlag(0);
                 }
+                break;
+            default:
+                Toast.makeText(this,"不合规操作，请卸载再安装重新操作",Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
@@ -720,7 +746,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             default:
-                Log.d(TAG,"Location is switch (ImportActivity.filesCount)_default");
+                Toast.makeText(this,"不合规操作，请卸载再安装重新操作",Toast.LENGTH_SHORT).show();
                 break;
         }
     }
@@ -759,6 +785,9 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG,"停止按键为无效状态");
                     Toast.makeText(this,"停止按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
+                break;
+            default:
+                Toast.makeText(this,"不合规操作，请卸载再安装重新操作",Toast.LENGTH_SHORT).show();
                 break;
         }
     }

@@ -55,12 +55,14 @@ public class FourSplitViewActivity extends Activity {
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {
             Intent intent = getIntent();
-            int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
-            String filesParent = intent.getStringExtra("filesParent");
-            Log.d(TAG,"this is splitView" + fileCounts);
-            Log.d(TAG,"this is filesParent" + filesParent);
+            if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
+                app.setFileCounts(intent.getIntExtra("splitView",0));
+                app.setFilesParent(intent.getStringExtra("filesParent"));
+            }
+            Log.d(TAG,"this is splitView" + app.getFileCounts());
+            Log.d(TAG,"this is filesParent" + app.getFilesParent());
 
-            File f = new File(filesParent);
+            File f = new File(app.getFilesParent());
             if (!f.exists()) {
                 f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
             }
@@ -121,6 +123,7 @@ public class FourSplitViewActivity extends Activity {
                 app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                Log.d(TAG,"this is done 数据存储");
 //                MainActivity main = new MainActivity();
 //                main.initAuthorXml();
             }

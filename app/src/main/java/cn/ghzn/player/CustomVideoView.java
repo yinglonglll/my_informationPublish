@@ -57,4 +57,5 @@ public class CustomVideoView extends VideoView {
 //        CustomVideoView.seekTo(stopPosition);本行为错误例子
         super.start(); //Or use resume() if it doesn't work. I'm not sure
     }
+
 }

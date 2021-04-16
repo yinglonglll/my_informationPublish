@@ -55,6 +55,8 @@ public class MyApplication extends Application {
     private String licenceDir;//本地调用license文件的地址
     private String extraPath;
     private long createTime;//记录当前的本地时间，而create_time是成功播放资源才记录的本地时间，不成功则不记录
+    private int fileCounts;
+    private String filesParent;
 
 
     //对象声明
@@ -103,6 +105,22 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+    public int getFileCounts() {
+        return fileCounts;
+    }
+
+    public void setFileCounts(int fileCounts) {
+        this.fileCounts = fileCounts;
+    }
+
+    public String getFilesParent() {
+        return filesParent;
+    }
+
+    public void setFilesParent(String filesParent) {
+        this.filesParent = filesParent;
     }
 
     public long getRelative_time() {

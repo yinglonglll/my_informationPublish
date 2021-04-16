@@ -22,6 +22,8 @@ import android.widget.VideoView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
+import com.apkfuns.logutils.LogUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,12 +59,17 @@ public class ThreeSplitViewActivity extends Activity {
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {
             Intent intent = getIntent();
-            int fileCounts = intent.getIntExtra("splitView",0);//以文件的数量获取分屏样式，
-            String filesParent = intent.getStringExtra("filesParent");
-            Log.d(TAG,"this is splitView" + fileCounts);
-            Log.d(TAG,"this is filesParent" + filesParent);
 
-            File f = new File(filesParent);
+            LogUtils.e(app.getFileCounts());
+            LogUtils.e(app.getFilesParent());
+            if (app.getFileCounts() == 0 && app.getFilesParent() == null) {//当U盘导入完成后，U盘仍处于插入状态，此时再点播放，导致getIntent为空，因为U盘广播只执行一次。解决方法：导入一次，变量值就不为初试量。
+                app.setFileCounts(intent.getIntExtra("splitView",0));//以文件的数量获取分屏样式，
+                app.setFilesParent(intent.getStringExtra("filesParent"));
+            }
+
+            LogUtils.e(app.getFileCounts());
+            LogUtils.e(app.getFilesParent());
+            File f = new File(app.getFilesParent());
             if (!f.exists()) {
                 f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
             }
@@ -118,6 +125,7 @@ public class ThreeSplitViewActivity extends Activity {
                 app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                Log.d(TAG,"this is done数据存储");
 //                MainActivity main = new MainActivity();
 //                main.initAuthorXml();
             }

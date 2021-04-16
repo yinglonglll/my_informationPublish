@@ -46,7 +46,6 @@ import static java.lang.Thread.sleep;
 public class OneSplitViewActivity extends Activity {
     private static final String TAG = "OneSplitViewActivity";
     private BroadcastReceiver mBroadcastReceiver;
-    private int fileCounts;//私有全局变量
     private ArrayList arrayList;
     GestureDetector mGestureDetector;//私有控件
     private Runnable mRunnable;//目前暂时用不到，对于其他分屏的使用，可删或不变该变量
@@ -62,12 +61,14 @@ public class OneSplitViewActivity extends Activity {
             Log.d(TAG,"app.isExtraState()" + app.isExtraState());
             Intent intent = getIntent();
             //以文件的数量获取分屏样式，
-            fileCounts = intent.getIntExtra("splitView",0);
-            String filesParent = intent.getStringExtra("filesParent");
-            Log.d(TAG,"this is splitView" + fileCounts);
-            Log.d(TAG,"this is filesParent" + filesParent);
+            if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
+                app.setFileCounts(intent.getIntExtra("splitView",0));
+                app.setFilesParent(intent.getStringExtra("filesParent"));
+            }
+            LogUtils.e(app.getFileCounts());
+            LogUtils.e(app.getFilesParent());
 
-            File f = new File(filesParent);//创建文件对象需判断有无，无则创建
+            File f = new File(app.getFilesParent());//创建文件对象需判断有无，无则创建
             if (!f.exists()) {
                 f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
             }
@@ -126,6 +127,7 @@ public class OneSplitViewActivity extends Activity {
                 app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                Log.d(TAG,"this is done 数据存储");
 //                MainActivity main = new MainActivity();
 //                main.initAuthorXml();
 
