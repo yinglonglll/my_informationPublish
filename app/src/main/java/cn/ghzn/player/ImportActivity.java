@@ -60,7 +60,13 @@ public class ImportActivity extends Activity {
         String extraPath = intent.getExtras().getString("extra_path");
         Log.d(TAG,"extraPath的值为：" + extraPath);
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
+
         if (mMatch) {//需找到有路径，路径为有效
+            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
+                LogUtils.e(TAG,app.getCurrentActivity());
+                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+                Log.d(TAG,"this is kill curActivity");
+            }
             turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
         } else {
             Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对");//禁止从U盘导入的跳转
@@ -238,7 +244,7 @@ public class ImportActivity extends Activity {
                         source = file.getAbsolutePath();//U盘存放目标文件ghznPlayer的绝对路径
                         int uFileCount;
 
-                        //todo：自定义--复制之前先检查对象是否合乎U盘的规定，不合乎则设此路径无效，即找了也没用
+                        //todo：自定义--复制之前先检查对象是否合乎U盘A-B-C的规定，不合乎则设此路径无效，即找了也没用
                         if (source != "") {//找到文件路径时
                             File uf = new File(source);
                             if (!uf.exists()) {
@@ -249,15 +255,63 @@ public class ImportActivity extends Activity {
                             Log.d(TAG,"this is uFileCount :" + uFileCount);
 
                             if (uFileCount != 0) {//非空情况下，遍历检测每个子文件夹的命名是否符合分屏
+                                String B1 = null;
+                                int C = 1;
                                 for (File son_ufs : ufs) {
                                     String[] uss = son_ufs.getName().split("\\-");//将每个名字拆分
+                                    if (B1 == null) {
+                                        B1 = uss[1];//取第一次为参照物对比第二次第三次的值
+                                    }
+                                    //why is 循环检查A-B-c的文件命名是否符合
                                     if (!uss[0].equals(String.valueOf(uFileCount))) {//只要有一个命名不符我的规定,设找到的路径为无效路径
                                         mMatch = false;
-                                        //todo:意图跳转到之前的当前activty上即可。
                                         Intent ci = new Intent(this,app.getCurrentActivity().getClass());
-                                        Log.d(TAG,"this is 找到的文件无效，即将跳转回原先播放的activity");
+                                        Log.d(TAG,"this is 找到的错误文件命名格式A，即将跳转回原先播放的activity");
                                         Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
                                         startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                                        break;
+                                    }
+                                    if (!uss[1].equals(B1)) {
+                                        mMatch = false;
+                                        Intent ci = new Intent(this,app.getCurrentActivity().getClass());
+                                        Log.d(TAG,"this is 找到的错误文件命名格式B，即将跳转回原先播放的activity");
+                                        Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
+                                        startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                                        break;
+                                    }
+                                    if (!uss[2].equals(String.valueOf(C++))) {
+                                        mMatch = false;
+                                        Intent ci = new Intent(this,app.getCurrentActivity().getClass());
+                                        Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                        Log.d(TAG,"this is 找到的文件路径是否有效？" + mMatch);
+                                        startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                                        break;
+                                    }
+                                    //todo:自定义--对子文件夹资源中全部的资源后缀名6种进行检查，如图片，jpg，png，jpeg;视频：MP4，avi，3gp。
+                                    File[] son_ufss = son_ufs.listFiles();
+                                    if (son_ufss != null) {
+                                         for (File sons_ufss : son_ufss) {
+
+                                            if (!(sons_ufss.getName().endsWith("jpg") ||sons_ufss.getName().endsWith("jpeg")
+                                                    ||sons_ufss.getName().endsWith("png")||sons_ufss.getName().endsWith("mp4")
+                                                    || sons_ufss.getName().endsWith("avi") || sons_ufss.getName().endsWith("3gp"))) {
+                                                mMatch = false;
+                                                Intent ci;//第一次放入资源时，此时软件是没有分屏记录的，故先跳转到mainActivity
+                                                if(app.getCurrentActivity() != null) {//非第一次放入错误后缀格式文件
+                                                    ci = new Intent(this, app.getCurrentActivity().getClass());
+                                                    Log.d(TAG, "this is 找到的错误文件命名格式A-B-C-D.后缀格式，即将跳转回原先播放的activity");
+                                                } else {//第一次放入后缀错误文件在U盘
+                                                    ci = new Intent(this, MainActivity.class);
+                                                    Log.d(TAG, "this is 第一次放入后缀错误文件在U盘，找到的错误文件命名格式A-B-C-D.后缀格式");
+                                                }
+                                                Log.d(TAG, "this is 找到的文件路径是否有效？" + mMatch);
+                                                startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+                                                break;
+                                            }
+                                         }
+                                         if (!mMatch) {//本次break退出外循环
+                                             break;
+                                         }
                                     }
                                 }
                             }

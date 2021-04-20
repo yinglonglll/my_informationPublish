@@ -55,6 +55,7 @@ public class OneSplitViewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app.setCurrentActivity(this);
+        app.setMediaPlayState(true);
         Log.d(TAG,"this is 跳转成功");
 
         if (app.isExtraState()) {//外部导入状态为真
@@ -127,6 +128,7 @@ public class OneSplitViewActivity extends Activity {
                 app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
                 Log.d(TAG,"this is done 数据存储");
 //                MainActivity main = new MainActivity();
 //                main.initAuthorXml();
@@ -196,16 +198,16 @@ public class OneSplitViewActivity extends Activity {
 //            if (app.isFinishFlag()) {
 //                finish();
 //            }
-            playSonImage();
-        } else {
+//            playSonImage();1111
+//        } else {1111
+        }
             Log.d(TAG,"开始执行执行播放程序");
 
-            final File f = new File(arrayList.get(app.getListNum1()).toString());
-            if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
-                Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+            app.setFile(new File(arrayList.get(app.getListNum1()).toString()));
+            if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
+                Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
                 app.setForMat1(1);//记录此时控件播放为图片
-
-                app.getImageView_1().setImageURI(Uri.fromFile(f));
+                app.getImageView_1().setImageURI(Uri.fromFile(app.getFile()));
                 app.getImageView_1().setVisibility(View.VISIBLE);
                 app.getVideoView_1().setVisibility(View.GONE);
                 app.setListNum1(app.getListNum1() + 1);
@@ -214,7 +216,7 @@ public class OneSplitViewActivity extends Activity {
                 app.getHandler().postDelayed(mRunnable = new Runnable(){
                     @Override
                     public void run() {
-                        Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
+                        Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + app.getFile().getAbsolutePath());
                         if (app.getPlayFlag() == 0) {//非播放状态下，使其递归方法失效，但listNum递增1.当播放按下时，新建剩余延迟，再进行递增
                             playSonImage();
                         }
@@ -222,25 +224,33 @@ public class OneSplitViewActivity extends Activity {
                 },app.getDelayMillis());//5秒后结束当前图片
                 app.setRunnable1(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable
             }
-            else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
-                Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+            else if (app.getFile().getName().endsWith("mp4") || app.getFile().getName().endsWith("avi") || app.getFile().getName().endsWith("3gp")) {
+                Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + app.getFile().getAbsolutePath());
                 app.setForMat1(2);//记录此时控件播放为视频
-
-                app.getVideoView_1().setVideoURI(Uri.fromFile(f));
-                app.getVideoView_1().setVisibility(View.VISIBLE);
-                app.getImageView_1().setVisibility(View.GONE);
-                app.getVideoView_1().start();
+                if (app.isMediaPlayState()) {
+                    app.getVideoView_1().setVideoURI(Uri.fromFile(app.getFile()));
+                    app.getVideoView_1().setVisibility(View.VISIBLE);
+                    app.getImageView_1().setVisibility(View.GONE);
+                    app.getVideoView_1().start();
 
                     app.getVideoView_1().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
-                            Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
+                            Log.d(TAG,"执行播放完视频，视频位于：" + app.getFile().getAbsolutePath());
                             app.setListNum1(app.getListNum1() + 1);
                             playSonImage();
                         }
                     });
+                    app.getVideoView_1().setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                        @Override
+                        public boolean onError(MediaPlayer mp, int what, int extra) {
+                            app.getVideoView_1().stopPlayback();
+                            return true;
+                        }
+                    });
+                }
             }
-        }
+//        }1111
     }
 
     public void setDialog(Context context) {
@@ -281,11 +291,23 @@ public class OneSplitViewActivity extends Activity {
             }
         });
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        app.setPlayFlag(0);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
+        }
+
+        if (app.getRunnable1() != null) {
+            app.getHandler().removeCallbacks(app.getRunnable1());
         }
     }
 

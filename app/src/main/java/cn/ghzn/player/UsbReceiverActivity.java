@@ -48,13 +48,12 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
         //2.进入import，加入加载页面，执行复制U盘程序，复制完成后判断是否成功复制(true跳转playerActivity，false跳转mainActivity；做出提示)
         //3.进入playerActivity，执行分屏逻辑和动态imageView逻辑；执行完后才退出加载页面，；
         //先执行完程序，如果没问题才跳转到对应的player布局界面
-        UsbUtils.checkUsb(context);
+        UsbUtils.checkUsb(context);//有需求时再加入条件判断 //|| intent.getAction().equals("USB IS CONNECTING")
         Log.d(TAG,"action === " + intent.getAction());
         if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {
             String path = intent.getDataString();
-            if (path != null) {
+            if (path != null || app.isImportState()) {//接入的不是U盘则不会进行读取
                 Log.d(TAG, "U盘接入");
-                app.setImportState(true);
 
                 Toast.makeText(context,"U盘接入，路径为：",Toast.LENGTH_SHORT).show();
                 Toast.makeText(context,path,Toast.LENGTH_SHORT).show();
@@ -98,10 +97,11 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
 
                             //todo:设置显示授权时间和授权失效时间
                             LogUtils.e(app.getAuthority_time());
-                            if (app.getAuthority_time().equals("无")) {//第一次初始化--数据库的授权时间默认为无
+                            if (app.getAuthority_time().equals("无")) {//仅执行一次的第一次初始化--数据库的授权时间默认为无
                                 app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
                                 app.setTime_difference(app.getEnd_time() - app.getStart_time());//记录两时间戳的差值
                                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+//                                df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));//加上这一行代码之后，将当前时间转化为世界时间，但不适用此处
                                 //todo：这里是授权文件的时间，如果电脑的时间不是准确的，则本地加时间差。
                                 if (app.getStart_time() < app.getCreateTime()) {//获取本地时间为准还是以服务器时间为准
                                     Log.d(TAG,"this is 本地时间是服务器时间");
@@ -126,16 +126,16 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
                                 usbTurnActivity(context, path);
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
-                                LogUtils.e(app.getRelative_time() > app.getCreate_time());//1.防止本地或服务器时间大于授权到期相对时间；
+                                LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题
                                 Log.d(TAG,"this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()));
                                 Log.d(TAG,"this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
                                 app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
-                                if (((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()) && app.getCreateTime() > app.getSource().getCreate_time()) {//2.第一次导入资源时间与当前时间差<授权时间段；3.当前时间一定大于上一次的当前时间
+                                if (((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference())
+                                        && app.getCreateTime() > app.getSource().getCreate_time()
+                                        && app.getRelative_time() > app.getCreateTime()) {//1.第一次导入资源时间与当前时间差<授权时间段；2.当前时间一定大于上一次的当前时间；3.设置相对过期时间，当前时间过了就不允许播放
                                     Toast.makeText(context,"this is 后续资源导入",Toast.LENGTH_SHORT).show();
                                     app.setAuthority_state(true);
-//                                    if (app.getCurrentActivity() != null) {
-//                                        app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
-//                                    }
+
                                     usbTurnActivity(context, path);
                                 } else {
                                     Log.d(TAG, "this is 后续导入资源时，不在有效授权时间内");

@@ -10,6 +10,8 @@ import com.apkfuns.logutils.LogUtils;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import static cn.ghzn.player.MainActivity.app;
+
 /**
  * @author : GuQiuSheng
  * @e-mail : guqiusheng@ghzn.cn
@@ -48,6 +50,7 @@ public class UsbUtils {
                     sb.append("此设备是打印机\n");
                 }else if(anInterface.getInterfaceClass()==8){
                     sb.append("此设备是U盘\n");
+                    app.setImportState(true);
                 }
                 sb.append("anInterface.getInterfaceProtocol()="+anInterface.getInterfaceProtocol()+"\n");//获取接口协议
                 sb.append("anInterface.getInterfaceSubclass()="+anInterface.getInterfaceSubclass()+"\n");//获取子类

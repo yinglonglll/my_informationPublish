@@ -65,6 +65,7 @@ public class TwoSplitViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         app.setCurrentActivity(this);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
+        app.setMediaPlayState(true);
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {//若是U盘插入时，文件为不合规定，此时U盘也仍未插入状态true
             Intent intent = getIntent();
@@ -128,9 +129,9 @@ public class TwoSplitViewActivity extends Activity {
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
                 app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
-                Log.d(TAG,"this is >>> app.getDevice().getAuthority_state() :" + app.getDevice().getAuthority_state());
                 app.getDevice().setAuthority_time(app.getAuthority_time());
                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
                 Log.d(TAG,"this is done 数据存储");
 
             }
@@ -403,17 +404,17 @@ public class TwoSplitViewActivity extends Activity {
             Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
             if (app.getListNum1() >= arrayList1.size()) {
                 app.setListNum1(0);//循环要求，仅重置变量为0功能
-                playSonImage(Recursive[0],Recursive[1]);
+//                playSonImage(Recursive[0],Recursive[1]);
 //            finish();
-            } else {
+            }
                 Log.d(TAG,"开始执行执行播放程序");
-                final File f = new File(arrayList1.get(app.getListNum1()).toString());
-                if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
-                    Log.d(TAG,"playSonImage1执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+                app.setFile(new File(arrayList1.get(app.getListNum1()).toString()));
+                if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
+                    Log.d(TAG,"playSonImage1执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
                     app.setForMat1(1);//记录此时控件播放为图片
                     isFreeFlag1 = false;//进入图片赋值程序，先设为忙线状态
 
-                    app.getImageView_1().setImageURI(Uri.fromFile(f));
+                    app.getImageView_1().setImageURI(Uri.fromFile(app.getFile()));
                     app.getImageView_1().setVisibility(View.VISIBLE);
                     app.getVideoView_1().setVisibility(View.GONE);
                     app.setListNum1(app.getListNum1() + 1);
@@ -422,7 +423,7 @@ public class TwoSplitViewActivity extends Activity {
                     app.getHandler().postDelayed(mRunnable = new Runnable() {
                         @Override
                         public void run() {
-                            Log.d(TAG, "执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
+                            Log.d(TAG, "执行延迟播放图片3秒，图片位于：" + app.getFile().getAbsolutePath());
                             isFreeFlag1 = true;//图片赋值程序完成，退出忙线状态
                             if (app.getPlayFlag() == 0) {
                                 playSonImage(Recursive[0], Recursive[1]);
@@ -431,48 +432,51 @@ public class TwoSplitViewActivity extends Activity {
                     }, app.getDelayMillis());//5秒后结束当前图片
                     app.setRunnable1(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable，用于暂停时取消线程
 
-                } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
-                    Log.d(TAG,"playSonImage1执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+                } else if (app.getFile().getName().endsWith("mp4") || app.getFile().getName().endsWith("avi") || app.getFile().getName().endsWith("3gp")) {
+                    Log.d(TAG,"playSonImage1执行视频播放，添加了视频：《《《《《" + app.getFile().getAbsolutePath());
                     app.setForMat1(2);//记录此时控件播放为视频
                     isFreeFlag1 = false;//进入图片赋值程序，先设为忙线状态
+                    if (app.isMediaPlayState()) {
+                        app.getVideoView_1().setVideoURI(Uri.fromFile(app.getFile()));
+                        app.getVideoView_1().setVisibility(View.VISIBLE);
+                        app.getImageView_1().setVisibility(View.GONE);
+                        app.getVideoView_1().start();
 
-                    app.getVideoView_1().setVideoURI(Uri.fromFile(f));
-                    app.getVideoView_1().setVisibility(View.VISIBLE);
-                    app.getImageView_1().setVisibility(View.GONE);
-                    app.getVideoView_1().start();
-                    try {
-                        Thread.sleep(1000);//默认设置1S给videoView加载视频的时间，实际上读取视频都有加载导致黑屏，目前暂无找到合适方法解决
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    app.getVideoView_1().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
+                        app.getVideoView_1().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
 //                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-                            app.setListNum1(app.getListNum1() + 1);
-                            isFreeFlag1 = true;//视频赋值程序完成，退出忙线状态
-                            playSonImage(Recursive[0],Recursive[1]);
-                        }
-                    });
+                                app.setListNum1(app.getListNum1() + 1);
+                                isFreeFlag1 = true;//视频赋值程序完成，退出忙线状态
+                                playSonImage(Recursive[0],Recursive[1]);
+                            }
+                        });
+                        app.getVideoView_1().setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                            @Override
+                            public boolean onError(MediaPlayer mp, int what, int extra) {
+                                app.getVideoView_1().stopPlayback();
+                                return true;
+                            }
+                        });
+                    }
                 }
-            }
         }
 
         if (isFreeFlag2) {
             Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
             if (app.getListNum2() >= arrayList2.size()) {
                 app.setListNum2(0);
-                playSonImage(Recursive[0],Recursive[1]);
+//                playSonImage(Recursive[0],Recursive[1]);
 //            finish();
-            } else {
+            }
                 Log.d(TAG,"开始执行执行播放程序");
-                final File f = new File(arrayList2.get(app.getListNum2()).toString());
-                if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
-                    Log.d(TAG,"playSonImage2执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
+                app.setFile(new File(arrayList2.get(app.getListNum2()).toString()));
+                if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
+                    Log.d(TAG,"playSonImage2执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
                     app.setForMat2(1);//记录此时控件播放为图片
                     isFreeFlag2 = false;//执行图片赋值程序，进入忙线状态
 
-                    app.getImageView_2().setImageURI(Uri.fromFile(f));
+                    app.getImageView_2().setImageURI(Uri.fromFile(app.getFile()));
                     app.getImageView_2().setVisibility(View.VISIBLE);
                     app.getVideoView_2().setVisibility(View.GONE);
                     app.setListNum2(app.getListNum2() + 1);
@@ -482,7 +486,7 @@ public class TwoSplitViewActivity extends Activity {
                     app.getHandler().postDelayed(mRunnable = new Runnable(){
                         @Override
                         public void run() {
-                            Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
+                            Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + app.getFile().getAbsolutePath());
                             isFreeFlag2 = true;//图片赋值程序完成，退出忙线状态
                             if (app.getPlayFlag() == 0) {
                                 playSonImage(Recursive[0], Recursive[1]);
@@ -491,33 +495,35 @@ public class TwoSplitViewActivity extends Activity {
                     },3000);//3秒后结束当前图片
                     app.setRunnable2(mRunnable);//无法set线程，只好绑定mRunnable到全局Runnable，用于暂停时取消线程
 
-                } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
-                    Log.d(TAG,"playSonImage2执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
+                } else if (app.getFile().getName().endsWith("mp4") || app.getFile().getName().endsWith("avi") || app.getFile().getName().endsWith("3gp")) {
+                    Log.d(TAG,"playSonImage2执行视频播放，添加了视频：《《《《《" + app.getFile().getAbsolutePath());
                     app.setForMat2(2);//记录此时控件播放为视频
                     isFreeFlag2 = false;//执行视频赋值程序，进入忙线状态
+                    if (app.isMediaPlayState()) {
+                        app.getVideoView_2().setVideoURI(Uri.fromFile(app.getFile()));
+                        app.getVideoView_2().setVisibility(View.VISIBLE);
+                        app.getImageView_2().setVisibility(View.GONE);
+                        app.getVideoView_2().start();
 
-
-                    app.getVideoView_2().setVideoURI(Uri.fromFile(f));
-                    app.getVideoView_2().setVisibility(View.VISIBLE);
-                    app.getImageView_2().setVisibility(View.GONE);
-                    app.getVideoView_2().start();
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    app.getVideoView_2().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
+                        app.getVideoView_2().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {
 //                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-                            app.setListNum2(app.getListNum2() + 1);
-                            isFreeFlag2 = true;//视频赋值程序完成，退出忙线状态
-                            playSonImage(Recursive[0],Recursive[1]);
-                        }
-                    });
+                                app.setListNum2(app.getListNum2() + 1);
+                                isFreeFlag2 = true;//视频赋值程序完成，退出忙线状态
+                                playSonImage(Recursive[0],Recursive[1]);
+                            }
+                        });
+                        app.getVideoView_2().setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                            @Override
+                            public boolean onError(MediaPlayer mp, int what, int extra) {
+                                app.getVideoView_2().stopPlayback();
+                                return true;
+                            }
+                        });
+                    }
                 }
             }
-        }
     }
 
 //    private void playSonImage1(ArrayList arrayList){
@@ -691,12 +697,28 @@ public class TwoSplitViewActivity extends Activity {
 //            playSonImage2(arrayList2);
 //        }
 //    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        app.setPlayFlag(0);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
-}
+
+        if (app.getRunnable1() != null) {
+            app.getHandler().removeCallbacks(app.getRunnable1());
+        }
+        if (app.getRunnable2() != null) {
+            app.getHandler().removeCallbacks(app.getRunnable2());
+        }
+    }
 
 }

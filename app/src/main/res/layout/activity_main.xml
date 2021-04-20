@@ -9,6 +9,10 @@
         android:layout_width="match_parent"
         android:layout_weight="2"
         android:layout_height="match_parent">
+        <TextView
+            android:layout_width="match_parent"
+            android:id="@+id/leftMargin"
+            android:layout_height="match_parent"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,6 +36,8 @@
                 android:textColor="#ffffff"
                 android:gravity="left"
                 android:textSize="25dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
                 android:layout_height="wrap_content"/>
 
             <TextView
@@ -47,6 +53,8 @@
                 android:text="授权时间:"
                 android:textSize="25dp"
                 android:id="@+id/AuthorityTime"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
                 android:layout_height="wrap_content"/>
             <TextView
                 android:layout_width="match_parent"
@@ -54,6 +62,7 @@
                 android:text="授权到期:"
                 android:textSize="25dp"
                 android:id="@+id/AuthorityExpired"
+                android:paddingBottom="5dp"
                 android:layout_height="wrap_content"/>
             <LinearLayout
                 android:layout_width="match_parent"

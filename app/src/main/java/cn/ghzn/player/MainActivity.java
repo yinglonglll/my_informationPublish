@@ -7,11 +7,13 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.icu.util.LocaleData;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -29,6 +31,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
@@ -37,6 +43,7 @@ import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.InfoUtils;
+import cn.ghzn.player.util.UsbUtils;
 
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
@@ -58,29 +65,46 @@ public class MainActivity extends AppCompatActivity {
     private TextClock mLocalTime;
     private BroadcastReceiver mBroadcastReceiver;
     private OneSplitViewActivity mOneSplitViewActivity;
-    private Intent mIntent;
     private Intent mIntent_FinishFlag = new Intent();
     private TextView mAuthorityTime;
     private TextView mAuthorityExpired;
     private File mSaveFile;
+    private TextView mLeftMargin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
+//        app.setIntent(new Intent());
+//        UsbUtils.checkUsb(this);//U盘在已插入时，才打开软件，此时执行main
         setContentView(R.layout.activity_main);
 
+        if (app.getCurrentActivity() != null) {
+            app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+            Log.d(TAG,"this is 关闭了正在播放的分屏资源");
+        }
+
+        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+        if (app.getSource() != null) {
+            app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
+        }
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
         initSource();//资源初始化放在如上
-        LogUtils.e(app.isAuthority_state());
         setDialog();
+
+//        if (app.isImportState()) {
+//            app.getIntent().setPackage("cn.ghzn.player");//手动模拟U盘接入时触发的状态
+//            app.getIntent().setAction("USB IS CONNECTING");
+//            sendBroadcast(app.getIntent());
+//            Log.d(TAG,"this is 成功发送U盘接入时的模拟状态");
+//        }
     }
 
     private void initSource() {
-        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
+
         Log.d(TAG,"this is first app.setLicenceDir" + app.getLicenceDir());
         app.setLicenceDir(getFilePath(this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
         app.setCreateTime(System.currentTimeMillis());
@@ -100,20 +124,24 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
             //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+
             LogUtils.e(app.getCreateTime() > app.getSource().getCreate_time());
-            LogUtils.e(app.getEnd_time() > app.getCreate_time());
             LogUtils.e((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference());
-            //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
-            LogUtils.e(app.getRelative_time() > app.getCreate_time());//1.防止本地或服务器时间大于授权到期相对时间；
-            if (app.getCreateTime() > app.getSource().getCreate_time() && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()) {
+            LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.防止本地或服务器时间大于授权到期相对时间；
+            Log.d(TAG,"app.getRelative_time() :" + app.getRelative_time());
+            Log.d(TAG,"app.getCreateTime()>>> :" + app.getCreateTime());
+
+            if (app.getCreateTime() > app.getSource().getCreate_time()
+                    && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
+                    && app.getRelative_time() > app.getCreateTime()) {
                 app.getDevice().setAuthority_state(true);
-                turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)
+                turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
             } else {
                 Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
                 app.getDevice().setAuthority_state(false);
             }
             daoManager.getSession().getDeviceDao().update(app.getDevice());
-            Log.d(TAG,"this is device.state:" + app.getDevice().getAuthority_state());
+//            daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
         }
     }
 
@@ -127,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
             daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
             LogUtils.e(app.getDevice().getAuthority_state());
         }
-        Log.d(TAG,"this is if(app.getDevice() == null)");
         initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
         LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
@@ -162,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
         app.setSplit_view(source.getSplit_view());
         app.setSplit_mode(source.getSplit_mode());
         app.setSon_source(source.getSon_source());
-//        app.setCreate_time(source.getCreate_time());
+
         app.setLicenceDir(source.getLicense_dir());//程序执行时，U盘未插入，此时内容为空;将txt文本的绝对地址从数据库中取出再赋值给全局变量
     }
 
@@ -179,6 +206,19 @@ public class MainActivity extends AppCompatActivity {
         app.setAuthorization(device.getAuthorization());
         app.setAuthority_time(device.getAuthority_time());
         app.setAuthority_expired(device.getAuthority_expired());
+
+        Log.d(TAG,"this is app.getRelative_time()" + app.getRelative_time());
+
+        if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无，
+            app.setAuthorityName("未授权");
+        } else {
+            Log.d(TAG,"this is enter else");
+            if (app.isAuthority_state()) {
+                app.setAuthorityName("已授权");
+            } else {
+                app.setAuthorityName("授权过期");
+            }
+        }
 
         LogUtils.e(mDeviceName);
         Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
@@ -201,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        mAuthorityState.setText("授权状态：" + app.isAuthority_state());
+        mAuthorityState.setText("授权状态：" + app.getAuthorityName());
         mAuthorityState.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -222,13 +262,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mGestureDetector.onTouchEvent(event);
-                return false;
+                return true;
             }
         });
         mLocalTime.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mGestureDetector.onTouchEvent(event);//设置好mGes后，此行为调用mGes的触屏事件
+                return true;
+            }
+        });
+        mLeftMargin.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mGestureDetector.onTouchEvent(event);
                 return true;
             }
         });
@@ -353,6 +400,7 @@ public class MainActivity extends AppCompatActivity {
         mAuthorityTime = (TextView) this.findViewById(R.id.AuthorityTime);
         mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
+        mLeftMargin = (TextView) this.findViewById(R.id.leftMargin);
     }
 
     public void playBtn(View view) {
@@ -807,8 +855,8 @@ public class MainActivity extends AppCompatActivity {
 
             mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
-                Log.d(TAG, "U盘的机器码或授权码已存在，无法导出到U盘指定文件处");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
-                Toast.makeText(this,"U盘的机器码或授权码已存在，无法导出到U盘指定文件处",Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
+                Toast.makeText(this,"U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件",Toast.LENGTH_LONG).show();
             } else {
                 FileOutputStream outStream = null;
                 try {
@@ -831,8 +879,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
-                Log.d(TAG, "终端的机器码或授权码已存在，无法导出到本地指定文件处");
-                Toast.makeText(this,"终端的机器码或授权码已存在，无法导出到本地指定文件处",Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "设备的机器码或授权码已存在，若需再次请删除本地的Licence.txt文件");
+                Toast.makeText(this,"设备的机器码或授权码已存在，若需再次生成请删除本地的Licence.txt文件",Toast.LENGTH_LONG).show();
             } else {
                 FileOutputStream outStream = null;
                 try {
@@ -855,6 +903,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        app.setPlayFlag(0);
+    }
 
     @Override
     protected void onDestroy() {

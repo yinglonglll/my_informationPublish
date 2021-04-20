@@ -3,12 +3,14 @@ package cn.ghzn.player;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
@@ -45,7 +47,7 @@ public class MyApplication extends Application {
     //变量声明
     private Device mDevice;
     private Source mSource;//表示数据库source表
-    private boolean extraState = false;//表示由ImportActivity跳转的标志，意为U盘接入状态；与importState功能大概一致--多余
+    private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
     private String sonSource;//存储所有子文件夹绝对地址
     private long startTime;
     private long endTime;
@@ -63,12 +65,15 @@ public class MyApplication extends Application {
     private static Context mContext;
     private Activity currentActivity;
     private Map<String,Object> mMap;
+    private File file;
+    private Intent intent;
 
 
     //标志状态声明
     private boolean finishState = false;//activity的结束广播状态
     private boolean importState = false;//U盘导入状态
-    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；
+    private boolean mediaPlayState = true;//作用：在activity销毁时，使监听内容无效化。
+    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；实际效果为对图片播放的控制
     private int forMat1 = 0;//控件1的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
     private int forMat2 = 0;
     private int forMat3 = 0;
@@ -81,6 +86,7 @@ public class MyApplication extends Application {
     private int listNum2 = 0;
     private int listNum3 = 0;
     private int listNum4 = 0;
+    private String AuthorityName = "未连接";
     private ImageView imageView_1;
     private ImageView imageView_2;
     private ImageView imageView_3;
@@ -105,6 +111,38 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+    public Intent getIntent() {
+        return intent;
+    }
+
+    public void setIntent(Intent intent) {
+        this.intent = intent;
+    }
+
+    public boolean isMediaPlayState() {
+        return mediaPlayState;
+    }
+
+    public void setMediaPlayState(boolean mediaPlayState) {
+        this.mediaPlayState = mediaPlayState;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    public String getAuthorityName() {
+        return AuthorityName;
+    }
+
+    public void setAuthorityName(String authorityName) {
+        AuthorityName = authorityName;
     }
 
     public int getFileCounts() {
