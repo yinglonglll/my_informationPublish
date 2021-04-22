@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -48,6 +49,10 @@ public class ThreeSplitViewActivity extends Activity {
     ArrayList arrayList1;//控件区1地址
     ArrayList arrayList2;//控件区2地址
     ArrayList arrayList3;//控件区2地址
+    boolean isFreeFlag1 = true;
+    boolean isFreeFlag2 = true;
+    boolean isFreeFlag3 = true;
+    ArrayList[] Recursive = new ArrayList[3];//先声明--仅用于存储递归时的参数
 
 
 
@@ -55,12 +60,10 @@ public class ThreeSplitViewActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app.setCurrentActivity(this);
-        getWindow().setFormat(PixelFormat.TRANSPARENT);
         app.setMediaPlayState(true);
-        Log.d(TAG,"this is 跳转成功");
-
-        Log.d(TAG,">>>>>>>>>>>>>>>>>>>>>>>>");
-        LogUtils.e(app.getFile());
+        app.setPlaySonImageFlag(true);
+        getWindow().setFormat(PixelFormat.TRANSPARENT);
+        initFreeFlag();//线程被取消时，无法恢复控件状态，此处进行初始化
 
         if (app.isExtraState()) {
             Intent intent = getIntent();
@@ -142,6 +145,21 @@ public class ThreeSplitViewActivity extends Activity {
         //todo:3.成功执行，数据为有效数据，才把信息存储到数据库中，完成更新；以便没U盘插入时，直接执行另外一个activity，取出赋值，
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void initFreeFlag() {
+        app.setPlaySonImageFlag(true);
+        isFreeFlag1 = true;
+        isFreeFlag2 = true;
+        isFreeFlag3 = true;
+    }
+
     private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
@@ -156,22 +174,19 @@ public class ThreeSplitViewActivity extends Activity {
         return source;
     }
 
-    boolean isFreeFlag1 = true;
-    boolean isFreeFlag2 = true;
-    boolean isFreeFlag3 = true;
-    ArrayList[] Recursive = new ArrayList[3];//先声明--仅用于存储递归时的参数
+
     private void playSonImage(ArrayList arrayList1,ArrayList arrayList2,ArrayList arrayList3){
         Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
         Recursive[1] = arrayList2;
         Recursive[2] = arrayList3;
-
-        if (isFreeFlag1) {
-            Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
-            if (app.getListNum1() >= arrayList1.size()) {
-                app.setListNum1(0);//循环要求，仅重置变量为0功能
+        if (app.isPlaySonImageFlag()) {
+            if (isFreeFlag1) {
+                Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
+                if (app.getListNum1() >= arrayList1.size()) {
+                    app.setListNum1(0);//循环要求，仅重置变量为0功能
 //                playSonImage(Recursive[0],Recursive[1],Recursive[2]);
 //            finish();
-            }
+                }
                 Log.d(TAG,"开始执行执行播放程序");
                 app.setFile(new File(arrayList1.get(app.getListNum1()).toString()));
                 if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
@@ -179,10 +194,10 @@ public class ThreeSplitViewActivity extends Activity {
                     app.setForMat1(1);//记录此时控件播放为图片
                     isFreeFlag1 = false;//进入图片赋值程序，先设为忙线状态
 
-                        app.getImageView_1().setImageURI(Uri.fromFile(app.getFile()));
-                        app.getImageView_1().setVisibility(View.VISIBLE);
-                        app.getVideoView_1().setVisibility(View.GONE);
-                        app.setListNum1(app.getListNum1() + 1);
+                    app.getImageView_1().setImageURI(Uri.fromFile(app.getFile()));
+                    app.getImageView_1().setVisibility(View.VISIBLE);
+                    app.getVideoView_1().setVisibility(View.GONE);
+                    app.setListNum1(app.getListNum1() + 1);
 
                     app.getHandler().postDelayed(mRunnable = new Runnable(){
                         @Override
@@ -223,14 +238,12 @@ public class ThreeSplitViewActivity extends Activity {
                     }
 
                 }
-        }
-        if (isFreeFlag2) {
-            Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
-            if (app.getListNum2() >= arrayList2.size()) {
-                app.setListNum2(0);
-//                playSonImage(Recursive[0],Recursive[1],Recursive[2]);
-//            finish();
             }
+            if (isFreeFlag2) {
+                Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
+                if (app.getListNum2() >= arrayList2.size()) {
+                    app.setListNum2(0);
+                }
                 Log.d(TAG,"开始执行执行播放程序");
                 app.setFile(new File(arrayList2.get(app.getListNum2()).toString()));
                 if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
@@ -238,10 +251,10 @@ public class ThreeSplitViewActivity extends Activity {
                     app.setForMat2(1);
                     isFreeFlag2 = false;//执行图片赋值程序，进入忙线状态
 
-                        app.getImageView_2().setImageURI(Uri.fromFile(app.getFile()));
-                        app.getImageView_2().setVisibility(View.VISIBLE);
-                        app.getVideoView_2().setVisibility(View.GONE);
-                        app.setListNum2(app.getListNum2() + 1);
+                    app.getImageView_2().setImageURI(Uri.fromFile(app.getFile()));
+                    app.getImageView_2().setVisibility(View.VISIBLE);
+                    app.getVideoView_2().setVisibility(View.GONE);
+                    app.setListNum2(app.getListNum2() + 1);
 
                     app.getHandler().postDelayed(mRunnable = new Runnable() {
                         @Override
@@ -283,14 +296,14 @@ public class ThreeSplitViewActivity extends Activity {
                         });
                     }
                 }
-        }
-        if (isFreeFlag3) {
-            Log.d(TAG,"this is 此时空闲，进入设置控件3资源");
-            if (app.getListNum3() >= arrayList3.size()) {
-                app.setListNum3(0);
+            }
+            if (isFreeFlag3) {
+                Log.d(TAG,"this is 此时空闲，进入设置控件3资源");
+                if (app.getListNum3() >= arrayList3.size()) {
+                    app.setListNum3(0);
 //                playSonImage(Recursive[0],Recursive[1],Recursive[2]);
 //            finish();
-            }
+                }
                 Log.d(TAG,"开始执行执行播放程序");
                 app.setFile(new File(arrayList3.get(app.getListNum3()).toString()));
                 if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
@@ -298,10 +311,10 @@ public class ThreeSplitViewActivity extends Activity {
                     app.setForMat3(1);
                     isFreeFlag3 = false;//执行图片赋值程序，进入忙线状态
 
-                        app.getImageView_3().setImageURI(Uri.fromFile(app.getFile()));
-                        app.getImageView_3().setVisibility(View.VISIBLE);
-                        app.getVideoView_3().setVisibility(View.GONE);
-                        app.setListNum3(app.getListNum3() + 1);
+                    app.getImageView_3().setImageURI(Uri.fromFile(app.getFile()));
+                    app.getImageView_3().setVisibility(View.VISIBLE);
+                    app.getVideoView_3().setVisibility(View.GONE);
+                    app.setListNum3(app.getListNum3() + 1);
 
                     app.getHandler().postDelayed(mRunnable = new Runnable(){
                         @Override
@@ -344,6 +357,7 @@ public class ThreeSplitViewActivity extends Activity {
                     }
                 }
             }
+        }
     }
 
 
@@ -827,19 +841,16 @@ public class ThreeSplitViewActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        app.setPlayFlag(0);
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG,"this is onStop()");
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        app.setMediaPlayState(false);
-        if (mBroadcastReceiver != null) {
-            unregisterReceiver(mBroadcastReceiver);
-        }
-        //todo：新添加Activity销毁时，取消handler，取消视频监听，之前是进行代码较少，在线程或监听之前提前占据了控件，使得正常播放
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG,"this is onPause()");
+
         if (app.getRunnable1() != null) {
             app.getHandler().removeCallbacks(app.getRunnable1());
         }
@@ -849,7 +860,22 @@ public class ThreeSplitViewActivity extends Activity {
         if (app.getRunnable3() != null) {
             app.getHandler().removeCallbacks(app.getRunnable3());
         }
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG,"this is onResume()");
+        app.setPlayFlag(0);
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG,"this is onDestroy()");
+        app.setMediaPlayState(false);
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
     }
 }

@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -66,6 +67,7 @@ public class TwoSplitViewActivity extends Activity {
         app.setCurrentActivity(this);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
         app.setMediaPlayState(true);
+        app.setPlaySonImageFlag(true);
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {//若是U盘插入时，文件为不合规定，此时U盘也仍未插入状态true
             Intent intent = getIntent();
@@ -140,6 +142,13 @@ public class TwoSplitViewActivity extends Activity {
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
         //todo:3.成功执行，数据为有效数据，才把信息存储到数据库中，完成更新；以便没U盘插入时，直接执行另外一个activity，取出赋值{KEY:A,B,ghznPlayer内所有文件的绝对地址以寻资源的地址键值对，}
+    }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
@@ -400,13 +409,14 @@ public class TwoSplitViewActivity extends Activity {
     private void playSonImage(ArrayList arrayList1,ArrayList arrayList2){
         Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
         Recursive[1] = arrayList2;
-        if (isFreeFlag1) {
-            Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
-            if (app.getListNum1() >= arrayList1.size()) {
-                app.setListNum1(0);//循环要求，仅重置变量为0功能
+        if (app.isPlaySonImageFlag()) {
+            if (isFreeFlag1) {
+                Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
+                if (app.getListNum1() >= arrayList1.size()) {
+                    app.setListNum1(0);//循环要求，仅重置变量为0功能
 //                playSonImage(Recursive[0],Recursive[1]);
 //            finish();
-            }
+                }
                 Log.d(TAG,"开始执行执行播放程序");
                 app.setFile(new File(arrayList1.get(app.getListNum1()).toString()));
                 if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
@@ -460,15 +470,15 @@ public class TwoSplitViewActivity extends Activity {
                         });
                     }
                 }
-        }
+            }
 
-        if (isFreeFlag2) {
-            Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
-            if (app.getListNum2() >= arrayList2.size()) {
-                app.setListNum2(0);
+            if (isFreeFlag2) {
+                Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
+                if (app.getListNum2() >= arrayList2.size()) {
+                    app.setListNum2(0);
 //                playSonImage(Recursive[0],Recursive[1]);
 //            finish();
-            }
+                }
                 Log.d(TAG,"开始执行执行播放程序");
                 app.setFile(new File(arrayList2.get(app.getListNum2()).toString()));
                 if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
@@ -524,6 +534,7 @@ public class TwoSplitViewActivity extends Activity {
                     }
                 }
             }
+        }
     }
 
 //    private void playSonImage1(ArrayList arrayList){

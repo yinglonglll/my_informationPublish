@@ -37,12 +37,12 @@ public class MacUtils {
             return strMac;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Log.e("=====", "7.0以上");
-            if (!TextUtils.isEmpty(getMacAddress())) {
+            /*if (!TextUtils.isEmpty(getMacAddress())) {//避免有网络时获取ip地址作为mac地址，使得无网络获取的是本地MAC与有网络时IP地址不一致，需将其注释掉。注释后都获取MAC地址
                 Log.e("=====", "7.0以上1");
 //                Toast.makeText(context, "7.0以上1", Toast.LENGTH_SHORT).show();
                 strMac = getMacAddress();
                 return strMac;
-            } else if (!TextUtils.isEmpty(getMachineHardwareAddress())) {
+            } else */if (!TextUtils.isEmpty(getMachineHardwareAddress())) {
                 Log.e("=====", "7.0以上2");
 //                Toast.makeText(context, "7.0以上2", Toast.LENGTH_SHORT).show();
                 strMac = getMachineHardwareAddress();

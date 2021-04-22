@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -41,7 +42,6 @@ import static cn.ghzn.player.MainActivity.*;
 import static cn.ghzn.player.util.InfoUtils.getDeviceId;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
-import static java.lang.Thread.sleep;
 
 public class OneSplitViewActivity extends Activity {
     private static final String TAG = "OneSplitViewActivity";
@@ -56,6 +56,7 @@ public class OneSplitViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         app.setCurrentActivity(this);
         app.setMediaPlayState(true);
+        app.setPlaySonImageFlag(true);
         Log.d(TAG,"this is 跳转成功");
 
         if (app.isExtraState()) {//外部导入状态为真
@@ -139,6 +140,13 @@ public class OneSplitViewActivity extends Activity {
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
     }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
     public OneSplitViewActivity() {
         super();
@@ -192,15 +200,13 @@ public class OneSplitViewActivity extends Activity {
         }
     }
     public void playSonImage(){
-
-        if (app.getListNum1() >= arrayList.size()) {
-            app.setListNum1(0);//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
+        if (app.isPlaySonImageFlag()) {
+            if (app.getListNum1() >= arrayList.size()) {
+                app.setListNum1(0);//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
 //            if (app.isFinishFlag()) {
 //                finish();
 //            }
-//            playSonImage();1111
-//        } else {1111
-        }
+            }
             Log.d(TAG,"开始执行执行播放程序");
 
             app.setFile(new File(arrayList.get(app.getListNum1()).toString()));
@@ -250,7 +256,7 @@ public class OneSplitViewActivity extends Activity {
                     });
                 }
             }
-//        }1111
+        }
     }
 
     public void setDialog(Context context) {

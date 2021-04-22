@@ -44,32 +44,41 @@ public class MyApplication extends Application {
     private long first_time;
     private long relative_time;
 
-    //变量声明
+    //全局变量声明--赋一值全局用
     private Device mDevice;
     private Source mSource;//表示数据库source表
-    private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
+    private static Context mContext;
+    private Map<String,Object> mMap;
     private String sonSource;//存储所有子文件夹绝对地址
+    private String licenceDir;//本地调用license文件的地址
+    private String extraPath;
+    private String filesParent;
     private long startTime;
     private long endTime;
     private long timeDiff;
     private long delayMillis = 5000;
-    private boolean playSonImageFlag =true;
-    private String licenceDir;//本地调用license文件的地址
-    private String extraPath;
     private long createTime;//记录当前的本地时间，而create_time是成功播放资源才记录的本地时间，不成功则不记录
     private int fileCounts;
-    private String filesParent;
+    private int listNum1 = 0;
+    private int listNum2 = 0;
+    private int listNum3 = 0;
+    private int listNum4 = 0;
 
+    //临时全局变量--暂无
 
-    //对象声明
-    private static Context mContext;
+    //全局对象声明
     private Activity currentActivity;
-    private Map<String,Object> mMap;
+    private android.os.Handler handler = new Handler();
+
+    //临时全局对象--一赋一用后就闲置，可重复赋值--取代临时对象
     private File file;
     private Intent intent;
+    private String[] strings;
 
 
     //标志状态声明
+    private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
+    private boolean playSonImageFlag =true;
     private boolean finishState = false;//activity的结束广播状态
     private boolean importState = false;//U盘导入状态
     private boolean mediaPlayState = true;//作用：在activity销毁时，使监听内容无效化。
@@ -81,11 +90,7 @@ public class MyApplication extends Application {
     //private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
 
 
-    //控件相关声明
-    private int listNum1 = 0;
-    private int listNum2 = 0;
-    private int listNum3 = 0;
-    private int listNum4 = 0;
+    //控件相关声明--分类优先级大于全局变量
     private String AuthorityName = "未连接";
     private ImageView imageView_1;
     private ImageView imageView_2;
@@ -96,7 +101,6 @@ public class MyApplication extends Application {
     private CustomVideoView videoView_3;
     private CustomVideoView videoView_4;
     private View view;//存储菜单布局的VIew
-    private android.os.Handler handler = new Handler();
     private Runnable runnable1;
     private Runnable runnable2;
     private Runnable runnable3;
@@ -111,6 +115,14 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+    public String[] getStrings() {
+        return strings;
+    }
+
+    public void setStrings(String[] strings) {
+        this.strings = strings;
     }
 
     public Intent getIntent() {

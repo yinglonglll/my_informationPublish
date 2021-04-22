@@ -13,8 +13,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -46,13 +48,15 @@ public class FourSplitViewActivity extends Activity {
     ArrayList arrayList2;//控件区2地址
     ArrayList arrayList3;//控件区3地址
     ArrayList arrayList4;//控件区4地址
+    private View view;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        app.setCurrentActivity(this);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
         app.setMediaPlayState(true);
+        app.setPlaySonImageFlag(true);
+        app.setCurrentActivity(this);
         Log.d(TAG,"this is 跳转成功");
         if (app.isExtraState()) {
             Intent intent = getIntent();
@@ -133,6 +137,13 @@ public class FourSplitViewActivity extends Activity {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
+    }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {//重写back为无效按键
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明

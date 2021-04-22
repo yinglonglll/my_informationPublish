@@ -14,14 +14,15 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
 
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_ghzn"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_ghzn"
         android:supportsRtl="true"
         android:hardwareAccelerated="false"
         android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -55,6 +56,12 @@
                 <!-- 完全拔出 -->
                 <action android:name="android.intent.action.MEDIA_REMOVED" />
                 <data android:scheme="file" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".receiver.BootUpReceiver" >
+            <intent-filter >
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <category android:name="android.intent.category.HOME"/>
             </intent-filter>
         </receiver>
     </application>

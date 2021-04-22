@@ -76,15 +76,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
-//        app.setIntent(new Intent());
-//        UsbUtils.checkUsb(this);//U盘在已插入时，才打开软件，此时执行main
+        UsbUtils.checkUsb(this);//通过USB协议检查出USB是什么类型设备
         setContentView(R.layout.activity_main);
 
         if (app.getCurrentActivity() != null) {
             app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
             Log.d(TAG,"this is 关闭了正在播放的分屏资源");
         }
-
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
         if (app.getSource() != null) {
             app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
@@ -95,12 +93,15 @@ public class MainActivity extends AppCompatActivity {
         initSource();//资源初始化放在如上
         setDialog();
 
-//        if (app.isImportState()) {
-//            app.getIntent().setPackage("cn.ghzn.player");//手动模拟U盘接入时触发的状态
-//            app.getIntent().setAction("USB IS CONNECTING");
-//            sendBroadcast(app.getIntent());
-//            Log.d(TAG,"this is 成功发送U盘接入时的模拟状态");
-//        }
+        if (app.isImportState()) {
+            app.setStrings(UsbUtils.getVolumePaths(this));//通过获取U盘挂载状态检查所有存储的绝对地址，
+            for(String str : app.getStrings()){
+                if (!str.equals("/storage/emulated/0")) {
+                    app.setExtraPath(str + "/Android/data/cn.ghzn.player/files/");
+                    UsbUtils.checkUsbFileForm(this,str);
+                }
+            }
+        }
     }
 
     private void initSource() {
@@ -318,8 +319,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLongPress(MotionEvent e) {
                 Log.d(TAG,"OnLongPressTap");
-
                 AlertDialogs.show();
+
                 //解决右键退出AlertDialogs的bug：The specified child already has a parent. You must call removeView() on the child's parent first. The specified child already has a parent. You must call removeView() on the child's parent first.
                 AlertDialogs.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -335,6 +336,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG,"this is to done Dismiss()");
                     }
                 });
+
+
             }
 
             @Override
@@ -408,7 +411,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
         Toast.makeText(this,"重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
-
         switch (app.getSplit_view()){//文件数就是分屏数
             case "1"://一分屏时，三种状态下触发对对应控件进行操作
                 if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -807,9 +809,9 @@ public class MainActivity extends AppCompatActivity {
             case "4":
                 if (app.getPlayFlag() == 0) {
                     app.setFinishState(true);
+                    app.setPlaySonImageFlag(false);
                     mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
-                    app.setPlaySonImageFlag(false);
 
                     setContentView(R.layout.activity_main);
                     initView();//找到layout控件
@@ -852,8 +854,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (app.isImportState()) {
             //todo:实现将授权文件生成到U盘目录下，取U盘绝对地址进行赋值
-
-            mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
+            mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象；存在误删Android/.../files系列文件夹，找不到对象
             if (mSaveFile.exists()) {
                 Log.d(TAG, "U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
                 Toast.makeText(this,"U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件",Toast.LENGTH_LONG).show();

@@ -62,11 +62,11 @@ public class ImportActivity extends Activity {
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
 
         if (mMatch) {//需找到有路径，路径为有效
-            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
-                LogUtils.e(TAG,app.getCurrentActivity());
-                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
-                Log.d(TAG,"this is kill curActivity");
-            }
+//            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
+//                LogUtils.e(TAG,app.getCurrentActivity());
+//                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+//                Log.d(TAG,"this is kill curActivity");
+//            }
             turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
         } else {
             Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对");//禁止从U盘导入的跳转
