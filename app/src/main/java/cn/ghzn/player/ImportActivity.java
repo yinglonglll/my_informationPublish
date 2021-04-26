@@ -37,18 +37,6 @@ public class ImportActivity extends Activity {
     private boolean mMatch;
     private MainActivity mMain;
 
-    public static Runnable getRunnable() {
-        return mRunnable;
-    }
-
-    public static int getFilesCount() {
-        return filesCount;
-    }
-
-    public static Map getMap1() {
-        return map1;
-    }
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
         super.onCreate(savedInstanceState);
@@ -62,17 +50,44 @@ public class ImportActivity extends Activity {
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
 
         if (mMatch) {//需找到有路径，路径为有效
-//            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
-//                LogUtils.e(TAG,app.getCurrentActivity());
-//                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
-//                Log.d(TAG,"this is kill curActivity");
-//            }
+            //fixme:逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
+            if (app.getRunnable1() != null) {
+                app.getHandler().removeCallbacks(app.getRunnable1());
+            }
+            if (app.getRunnable2() != null) {
+                app.getHandler().removeCallbacks(app.getRunnable2());
+            }
+            if (app.getRunnable3() != null) {
+                app.getHandler().removeCallbacks(app.getRunnable3());
+            }
+            if (app.getRunnable4() != null) {
+                app.getHandler().removeCallbacks(app.getRunnable4());
+            }
+            app.setMediaPlayState(false);//不知如何取消视频监听，但通过状态量，使监听后执行无效功能
+
+            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
+                LogUtils.e(TAG,app.getCurrentActivity());
+                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+                Log.d(TAG,"this is kill curActivity");
+            }
             turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
         } else {
             Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对");//禁止从U盘导入的跳转
             Toast.makeText(this,"您的ghznPlayer文件夹内格式不对",Toast.LENGTH_SHORT).show();
         }
         finish();
+    }
+
+    public static Runnable getRunnable() {
+        return mRunnable;
+    }
+
+    public static int getFilesCount() {
+        return filesCount;
+    }
+
+    public static Map getMap1() {
+        return map1;
     }
 
 

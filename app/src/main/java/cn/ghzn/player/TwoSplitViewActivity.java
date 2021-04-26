@@ -713,7 +713,7 @@ public class TwoSplitViewActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        app.setPlayFlag(0);
+//        app.setPlayFlag(0);
     }
 
     @Override
@@ -724,12 +724,12 @@ public class TwoSplitViewActivity extends Activity {
             unregisterReceiver(mBroadcastReceiver);
         }
 
-        if (app.getRunnable1() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable1());
-        }
-        if (app.getRunnable2() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable2());
-        }
+//        if (app.getRunnable1() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable1());
+//        }
+//        if (app.getRunnable2() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable2());
+//        }
     }
 
 }

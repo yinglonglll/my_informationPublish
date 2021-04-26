@@ -538,7 +538,7 @@ public class FourSplitViewActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        app.setPlayFlag(0);
+//        app.setPlayFlag(0);
     }
 
     @Override
@@ -549,19 +549,17 @@ public class FourSplitViewActivity extends Activity {
             unregisterReceiver(mBroadcastReceiver);
         }
 
-        if (app.getRunnable1() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable1());
-        }
-        if (app.getRunnable2() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable2());
-        }
-        if (app.getRunnable3() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable3());
-        }
-        if (app.getRunnable4() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable4());
-        }
-
-
+//        if (app.getRunnable1() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable1());
+//        }
+//        if (app.getRunnable2() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable2());
+//        }
+//        if (app.getRunnable3() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable3());
+//        }
+//        if (app.getRunnable4() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable4());
+//        }
     }
 }

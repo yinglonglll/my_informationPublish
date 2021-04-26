@@ -63,7 +63,7 @@ public class ThreeSplitViewActivity extends Activity {
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
         getWindow().setFormat(PixelFormat.TRANSPARENT);
-        initFreeFlag();//线程被取消时，无法恢复控件状态，此处进行初始化
+//        initFreeFlag();//线程被取消时，无法恢复控件状态，此处进行初始化
 
         if (app.isExtraState()) {
             Intent intent = getIntent();
@@ -850,30 +850,20 @@ public class ThreeSplitViewActivity extends Activity {
     protected void onPause() {
         super.onPause();
         Log.d(TAG,"this is onPause()");
-
-        if (app.getRunnable1() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable1());
-        }
-        if (app.getRunnable2() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable2());
-        }
-        if (app.getRunnable3() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable3());
-        }
+        app.setPlayFlag(0);//导入新资源时优先触发onPause()，故避免取消线程未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         Log.d(TAG,"this is onResume()");
-        app.setPlayFlag(0);
+//        app.setPlayFlag(0);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG,"this is onDestroy()");
-        app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }

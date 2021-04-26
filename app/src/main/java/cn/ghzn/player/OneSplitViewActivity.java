@@ -301,7 +301,7 @@ public class OneSplitViewActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        app.setPlayFlag(0);
+//        app.setPlayFlag(0);
     }
 
     @Override
@@ -312,9 +312,9 @@ public class OneSplitViewActivity extends Activity {
             unregisterReceiver(mBroadcastReceiver);
         }
 
-        if (app.getRunnable1() != null) {
-            app.getHandler().removeCallbacks(app.getRunnable1());
-        }
+//        if (app.getRunnable1() != null) {
+//            app.getHandler().removeCallbacks(app.getRunnable1());
+//        }
     }
 
 }
