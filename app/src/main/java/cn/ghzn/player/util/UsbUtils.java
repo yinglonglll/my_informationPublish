@@ -155,33 +155,34 @@ public class UsbUtils {
                         Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(app.getmContext()));
 
                         Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
+
                         app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
-
-
                         app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
                         app.setEnd_time((long) app.getMap().get("endTime"));
 
                         //todo:设置显示授权时间和授权失效时间
                         LogUtils.e(app.getAuthority_time());
                         if (app.getAuthority_time().equals("无")) {//仅执行一次的第一次初始化--数据库的授权时间默认为无
-                            app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
-                            app.setTime_difference(app.getEnd_time() - app.getStart_time());//记录两时间戳的差值
-                            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
-//                                df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));//加上这一行代码之后，将当前时间转化为世界时间，但不适用此处
-                            //todo：这里是授权文件的时间，如果电脑的时间不是准确的，则本地加时间差。
-                            if (app.getStart_time() < app.getCreateTime()) {//获取本地时间为准还是以服务器时间为准
-                                Log.d(TAG, "this is 本地时间是服务器时间");
-                                app.setAuthority_time(df.format(new Date(app.getStart_time())));
-                                app.setAuthority_expired(df.format(new Date(app.getEnd_time())));
-                                app.setRelative_time(app.getEnd_time());//将服务器时间设为设为授权到期时间
-                            } else {
-                                Log.d(TAG, "this is 本地时间不是服务器时间");
-                                app.setAuthority_time(df.format(new Date(app.getCreateTime())));
-                                app.setAuthority_expired(df.format(new Date(app.getCreateTime() + app.getTime_difference())));
-                                app.setRelative_time(app.getCreateTime() + app.getTime_difference());//将本地时间设为授权到期时间
+                            setAuthorityTimes();
+                        }else{
+                            switch (app.getAuthorityName()){
+                                case "已授权":
+                                    //判断是否重复的授权时间段信息，是则退出，否则更新
+                                    if (app.getSource().getEnd_time() == app.getEnd_time()) {
+                                        Log.d(TAG,"this is 重复的授权过期时间");
+                                        break;
+                                    }else{//不同授权过期时间则进行更新
+                                        Log.d(TAG,"this is 更新授权时间");
+                                        setAuthorityTimes();
+                                    }
+                                    break;
+                                case "授权过期":
+                                    Log.d(TAG,"this is 授权过期，更新授权时间");
+                                    setAuthorityTimes();
+                                    break;
+                                default:
+                                    break;
                             }
-                            Log.d(TAG, "this is app.getAuthority_time() :" + app.getAuthority_time());
-                            Log.d(TAG, "this is app.getEnd_time() :" + app.getAuthority_expired());
                         }
 
                         //todo:获取并存储授权信息的内容，再进行对内容的取出，用于判断授权状态以限制其他操作---嵌入跳转功能
@@ -197,7 +198,7 @@ public class UsbUtils {
                             Log.d(TAG, "this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
                             app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
                             if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
-                                    && app.getCreateTime() > app.getSource().getCreate_time()
+                                    && app.getCreateTime() > app.getCreate_time() //保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前
                                     && app.getRelative_time() > app.getCreateTime()) {//1.第一次导入资源时间与当前时间差<授权时间段；2.当前时间一定大于上一次的当前时间；3.设置相对过期时间，当前时间过了就不允许播放
                                 Toast.makeText(context, "this is 后续资源导入", Toast.LENGTH_SHORT).show();
                                 app.setAuthority_state(true);
@@ -230,6 +231,25 @@ public class UsbUtils {
         } else {
             Toast.makeText(context, "path为空，未接入U盘", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "U盘未接入");
+        }
+    }
+
+    private static void setAuthorityTimes() {
+        app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
+        app.setTime_difference(app.getEnd_time() - app.getStart_time());//记录两时间戳的差值
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+//                                df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));//加上这一行代码之后，将当前时间转化为世界时间，但不适用此处
+        //todo：这里是授权文件的时间，如果电脑的时间不是准确的，则本地加时间差。
+        if (app.getStart_time() < app.getCreateTime()) {//获取本地时间为准还是以服务器时间为准
+            Log.d(TAG, "this is 本地时间是服务器时间");
+            app.setAuthority_time(df.format(new Date(app.getStart_time())));
+            app.setAuthority_expired(df.format(new Date(app.getEnd_time())));
+            app.setRelative_time(app.getEnd_time());//将服务器时间设为设为授权到期时间
+        } else {
+            Log.d(TAG, "this is 本地时间不是服务器时间");
+            app.setAuthority_time(df.format(new Date(app.getCreateTime())));
+            app.setAuthority_expired(df.format(new Date(app.getCreateTime() + app.getTime_difference())));
+            app.setRelative_time(app.getCreateTime() + app.getTime_difference());//将本地时间设为授权到期时间
         }
     }
 

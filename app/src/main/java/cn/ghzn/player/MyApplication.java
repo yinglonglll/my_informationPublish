@@ -63,6 +63,7 @@ public class MyApplication extends Application {
     private int listNum2 = 0;
     private int listNum3 = 0;
     private int listNum4 = 0;
+    private boolean setSourcePlayer = true;//对标MainActivity的98行的问题，暂时的缓和办法
 
     //临时全局变量--暂无
 
@@ -115,6 +116,14 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+    public boolean isSetSourcePlayer() {
+        return setSourcePlayer;
+    }
+
+    public void setSetSourcePlayer(boolean setSourcePlayer) {
+        this.setSourcePlayer = setSourcePlayer;
     }
 
     public String[] getStrings() {

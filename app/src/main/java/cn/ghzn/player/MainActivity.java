@@ -93,7 +93,8 @@ public class MainActivity extends AppCompatActivity {
         initSource();//资源初始化放在如上
         setDialog();
 
-        if (app.isImportState()) {
+        //LogUtils.e(app.getCurrentActivity());
+        if (app.isImportState() && app.isSetSourcePlayer()) {//仅允许在初次资源导入时，U盘插入顺序与软件打开顺序无关；在已导入资源的情况下，必须在播放的情况下，再插入U盘进行资源变更。
             app.setStrings(UsbUtils.getVolumePaths(this));//通过获取U盘挂载状态检查所有存储的绝对地址，
             for(String str : app.getStrings()){
                 if (!str.equals("/storage/emulated/0")) {
@@ -136,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                     && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
                     && app.getRelative_time() > app.getCreateTime()) {
                 app.getDevice().setAuthority_state(true);
+                app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
                 turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
             } else {
                 Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
@@ -210,14 +212,15 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG,"this is app.getRelative_time()" + app.getRelative_time());
 
-        if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无，
+        if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
             app.setAuthorityName("未授权");
         } else {
             Log.d(TAG,"this is enter else");
-            if (app.isAuthority_state()) {
+            if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
                 app.setAuthorityName("已授权");
             } else {
                 app.setAuthorityName("授权过期");
+                app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
             }
         }
 
