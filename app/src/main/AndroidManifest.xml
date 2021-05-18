@@ -59,7 +59,7 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".receiver.BootUpReceiver" >
-            <intent-filter >
+            <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <category android:name="android.intent.category.HOME"/>
             </intent-filter>

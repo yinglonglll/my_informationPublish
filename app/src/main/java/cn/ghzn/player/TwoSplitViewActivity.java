@@ -130,11 +130,11 @@ public class TwoSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
-                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
-                app.getDevice().setAuthority_time(app.getAuthority_time());
-                app.getDevice().setAuthority_expired(app.getAuthority_expired());
-                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
-                Log.d(TAG,"this is done 数据存储");
+//                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
+//                app.getDevice().setAuthority_time(app.getAuthority_time());
+//                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+//                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
+//                Log.d(TAG,"this is done 数据存储");
 
             }
         }else {

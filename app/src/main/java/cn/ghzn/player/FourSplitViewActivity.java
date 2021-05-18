@@ -125,13 +125,12 @@ public class FourSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
-                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
-                app.getDevice().setAuthority_time(app.getAuthority_time());
-                app.getDevice().setAuthority_expired(app.getAuthority_expired());
-                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
-                Log.d(TAG,"this is done 数据存储");
-//                MainActivity main = new MainActivity();
-//                main.initAuthorXml();
+//                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
+//                app.getDevice().setAuthority_time(app.getAuthority_time());
+//                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+//                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
+//                Log.d(TAG,"this is done 数据存储");
+
             }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");

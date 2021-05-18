@@ -24,7 +24,8 @@ public class BootUpReceiver extends BroadcastReceiver {
         if(intent.getAction().equals(action_boot))
         {
             Log.d("onReceive:", "Boot system");
-            Intent startIntent = new Intent(context, MainActivity.class);
+            //Intent startIntent = new Intent(context, MainActivity.class);
+            Intent startIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(startIntent);
         }

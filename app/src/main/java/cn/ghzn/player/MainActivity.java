@@ -44,6 +44,7 @@ import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.InfoUtils;
 import cn.ghzn.player.util.UsbUtils;
+import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     public final static DaoManager daoManager = DaoManager.getInstance();//找到单例(唯一数据库对象，只管取来用)
     private static final String TAG = "MainActivity";
     private static boolean isSave;
-    private View view;
+    private View viewLp;
 
     GestureDetector mGestureDetector;
     private TextView mDeviceName;
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
             app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
             Log.d(TAG,"this is 关闭了正在播放的分屏资源");
         }
+
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
         if (app.getSource() != null) {
             app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
@@ -329,10 +331,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
                         Log.d(TAG,"this is to do on Dismiss()");
-                        if (view != null) {
-                            ViewGroup parentView = (ViewGroup) view.getParent();
+                        if (viewLp != null) {
+                            ViewGroup parentView = (ViewGroup) viewLp.getParent();
                             if (parentView != null) {
-                                parentView.removeView(view);
+                                parentView.removeView(viewLp);
                                 Log.d(TAG,"this is to doing ：parentView.removeView(view)");
                             }
                         }
@@ -847,63 +849,76 @@ public class MainActivity extends AppCompatActivity {
 
     public void exitBtn(View view) {
         Log.d(TAG,"this is exitBtn");
-        app.getCurrentActivity().finish();//先finish掉(可采用循环finish，但activity少没必要)，然后再退出，不然退不出
+        LogUtils.e(app.getCurrentActivity());
+        app.setSetSourcePlayer(false);
+        if(app.getCurrentActivity() != null){
+            app.getCurrentActivity().finish();//先finish掉(可采用循环finish，但activity少没必要)，然后再退出，不然退不出
+        }
         finish();
         System.exit(0);
     }
 
-    public void machineIdOutBtn(View view) {
+    public void machineIdOutBtn(final View view) {
         Log.d(TAG,"this is MachineIdOutBtn");
 
         if (app.isImportState()) {
             //todo:实现将授权文件生成到U盘目录下，取U盘绝对地址进行赋值
+            Log.d(TAG,"this is 将机器码导出到U盘中");
             mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象；存在误删Android/.../files系列文件夹，找不到对象
             if (mSaveFile.exists()) {
                 Log.d(TAG, "U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
                 Toast.makeText(this,"U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件",Toast.LENGTH_LONG).show();
             } else {
-                FileOutputStream outStream = null;
-                try {
-                    outStream = new FileOutputStream(mSaveFile);
-                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
-                    outStream.close();
-                    outStream.flush();
-                    isSave = true;
-                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
-                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
-
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                machineIdOut();
             }
         } else {
+            Log.d(TAG,"this is 将机器码导出到本地中");
             mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
-                Log.d(TAG, "设备的机器码或授权码已存在，若需再次请删除本地的Licence.txt文件");
-                Toast.makeText(this,"设备的机器码或授权码已存在，若需再次生成请删除本地的Licence.txt文件",Toast.LENGTH_LONG).show();
+//                Log.d(TAG, "设备的机器码或授权码已存在，正在删除本地的Licence.txt文件中");
+//                Toast.makeText(this,"设备的机器码或授权码已存在，正在删除本地的Licence.txt文件中",Toast.LENGTH_LONG).show();
+//                ViewImportUtils.deleteFile(mSaveFile);
+//                machineIdOut();
+                //弹窗提示是否删除本地已存在的licence文件，删除后自动导出。
+                new AlertDialog.Builder(this)
+                        .setTitle("提醒")
+                        .setMessage("本地目录中已存在授权码或机器码文件Licence.txt，请问是否删除该文件并导出机器码?")
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ViewImportUtils.deleteFile(mSaveFile);
+                                machineIdOut();
+                            }
+                        })
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .create().show();
             } else {
-                FileOutputStream outStream = null;
-                try {
-                    outStream = new FileOutputStream(mSaveFile);
-                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
-                    outStream.close();
-                    outStream.flush();
-                    isSave = true;
-                    Log.d(TAG,"this is 文件已经保存啦！赶快去查看吧!");
-                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
-
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                machineIdOut();
             }
+        }
+    }
+
+    private void machineIdOut() {
+        FileOutputStream outStream = null;
+        try {
+            outStream = new FileOutputStream(mSaveFile);
+            outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+            outStream.close();
+            outStream.flush();
+            isSave = true;
+            Log.d(TAG, "this is 文件已经保存啦！赶快去查看吧!");
+            Toast.makeText(this, "导出机器码成功", Toast.LENGTH_SHORT).show();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

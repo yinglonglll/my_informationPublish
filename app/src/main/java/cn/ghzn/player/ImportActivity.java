@@ -352,23 +352,19 @@ public class ImportActivity extends Activity {
 
     /**
      * @description:
-     * 当出现资源文件的格式不正确或资源格式文件正确时，复制失败时(几乎不常见)，恢复最初的状态，
-     * 有currentActivity则跳转回去，无则跳转回MainActivity
+     * 当出现资源文件的格式不正确或资源格式文件正确时，复制失败时(几乎不常见)，恢复最初的状态，即上一次播放失败，设create_time为0；
+     * 有currentActivity则跳转回去，无则默认原本的MainActivity
      */
     private void returnOriginalActivity() {
         mMatch = false;//不是以上述格式为结尾的。设此路径为无效路径
+        app.setCreate_time(0);
         Intent ci;//第一次放入资源时，此时软件是没有分屏记录的，故先跳转到mainActivity
         if(app.getCurrentActivity() != null) {//非第一次放入错误后缀格式文件
             ci = new Intent(this, app.getCurrentActivity().getClass());
             //Log.d(TAG, "this is 找到的错误文件命名格式A-B-C-D.后缀格式，即将跳转回原先播放的activity");
-        } else {//第一次放入后缀错误文件在U盘
-            ci = new Intent(this, MainActivity.class);
-            app.setSetSourcePlayer(false);//当文件格式不正确，或复制文件失败时，跳转回MainActivity都重新恢复为初始状态。
-            app.setRelative_time(0);
-            //Log.d(TAG, "this is 第一次放入后缀错误文件在U盘，找到的错误文件命名格式A-B-C-D.后缀格式");
+            Log.d(TAG, "this is 找到的文件路径是否有效？" + mMatch);
+            startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
         }
-        Log.d(TAG, "this is 找到的文件路径是否有效？" + mMatch);
-        startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
     }
 
     @Override

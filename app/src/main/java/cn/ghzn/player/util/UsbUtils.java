@@ -24,9 +24,13 @@ import java.util.Locale;
 
 import cn.ghzn.player.Constants;
 import cn.ghzn.player.ImportActivity;
+import cn.ghzn.player.MyApplication;
+import cn.ghzn.player.sqlite.device.Device;
+import cn.ghzn.player.sqlite.source.Source;
 
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.MainActivity.app;
+import static cn.ghzn.player.MainActivity.daoManager;
 import static cn.ghzn.player.util.AuthorityUtils.digest;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 
@@ -146,75 +150,102 @@ public class UsbUtils {
 
                     //导出的机器码为：AuthorityUtils.digest(MacUtils.getMac(mContext))
                     mMacStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
-                    if (mMacStrings[0].equals(digest(MacUtils.getMac(context)))) {//合法文件中mac验证身份正确--正确且符合的授权文件
-                        Log.d(TAG, "this is 合法文件中mac验证身份正确");
+                    try {
+                        if (mMacStrings[0].equals(digest(MacUtils.getMac(context)))) {//1.mac值相对应；2.加密的授权时间的加密内容统一为88个字数限制，加密规则(也可以采用两者mac值长度是否相等判断)
+                            Log.d(TAG, "this is 合法文件中mac验证身份正确");
+                            Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
+                            Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
+                            Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(MyApplication.getmContext()));
 
-                        Log.d(TAG, "this is 非法身份验证或逗号过多的非法授权文件");
-                        Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
-                        Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
-                        Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(app.getmContext()));
+                            Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
 
-                        Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
+                            app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
+                            app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
+                            app.setEnd_time((long) app.getMap().get("endTime"));
 
-                        app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
-                        app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
-                        app.setEnd_time((long) app.getMap().get("endTime"));
-
-                        //todo:设置显示授权时间和授权失效时间
-                        LogUtils.e(app.getAuthority_time());
-                        if (app.getAuthority_time().equals("无")) {//仅执行一次的第一次初始化--数据库的授权时间默认为无
-                            setAuthorityTimes();
-                        }else{
-                            switch (app.getAuthorityName()){
-                                case "已授权":
-                                    //判断是否重复的授权时间段信息，是则退出，否则更新
-                                    if (app.getSource().getEnd_time() == app.getEnd_time()) {
-                                        Log.d(TAG,"this is 重复的授权过期时间");
+                            //todo:设置显示授权时间和授权失效时间
+                            LogUtils.e(app.getAuthority_time());
+                            if (app.getAuthority_time().equals("无")) {//仅执行一次的第一次初始化--数据库的授权时间默认为无
+                                Log.d(TAG,"this is 第一次设置授权时间");
+                                setAuthorityTimes();
+                            }else{
+                                switch (app.getAuthorityName()){
+                                    case "已授权":
+                                        //判断是否重复的授权时间段信息，是则退出，否则更新
+                                        if (app.getSource().getEnd_time() == app.getEnd_time()) {
+                                            Log.d(TAG,"this is 重复的授权过期时间");
+                                            break;
+                                        }else{//不同授权过期时间则进行更新
+                                            Log.d(TAG,"this is 更新授权时间");
+                                            setAuthorityTimes();
+                                        }
                                         break;
-                                    }else{//不同授权过期时间则进行更新
-                                        Log.d(TAG,"this is 更新授权时间");
+                                    case "授权过期":
+                                        Log.d(TAG,"this is 授权过期，更新授权时间");
                                         setAuthorityTimes();
-                                    }
-                                    break;
-                                case "授权过期":
-                                    Log.d(TAG,"this is 授权过期，更新授权时间");
-                                    setAuthorityTimes();
-                                    break;
-                                default:
-                                    break;
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
-                        }
 
-                        //todo:获取并存储授权信息的内容，再进行对内容的取出，用于判断授权状态以限制其他操作---嵌入跳转功能
-                        if (app.getCreate_time() == 0) {//数据库的当前时间默认为0，用于记录每次成功播放资源时的时间
-                            Toast.makeText(context, "this is 第一次资源导入", Toast.LENGTH_SHORT).show();
-                            app.setAuthority_state(true);//此次已获取授权状态，完成授权文件的更新
+                            //todo:获取并存储授权信息的内容，再进行对内容的取出，用于判断授权状态以限制其他操作--
+                            if (app.getCreate_time() == 0) {//数据库的当前时间默认为0，用于记录每次成功播放资源时的时间
+                                Toast.makeText(context, "this is 第一次资源导入", Toast.LENGTH_SHORT).show();
+                                app.setAuthority_state(true);//此次已获取授权状态，完成授权文件的更新；并且更新相关的信息
 
-                            usbTurnActivity(context, path);
-                        } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
-                            //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
-                            LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题
-                            Log.d(TAG, "this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference()));
-                            Log.d(TAG, "this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
-                            app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
-                            if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
-                                    && app.getCreateTime() > app.getCreate_time() //保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前
-                                    && app.getRelative_time() > app.getCreateTime()) {//1.第一次导入资源时间与当前时间差<授权时间段；2.当前时间一定大于上一次的当前时间；3.设置相对过期时间，当前时间过了就不允许播放
-                                Toast.makeText(context, "this is 后续资源导入", Toast.LENGTH_SHORT).show();
-                                app.setAuthority_state(true);
+                                //仅授权文件导入时，存储相关信息
+                                app.getDevice().setAuthority_state(app.isAuthority_state());
+                                app.getDevice().setAuthority_time(app.getAuthority_time());
+                                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+
+                                if(app.getSource() == null){
+                                    app.setSource(new Source());
+                                    app.getSource().setRelative_time(app.getRelative_time());
+                                    app.getSource().setFirst_time(app.getFirst_time());
+                                    app.getSource().setTime_difference(app.getTime_difference());
+                                    daoManager.getSession().getSourceDao().insert(app.getSource());
+                                }else{
+                                    app.getSource().setRelative_time(app.getRelative_time());
+                                    daoManager.getSession().getSourceDao().update(app.getSource());
+                                }
+                                if(app.getDevice() == null){
+                                    app.setDevice(new Device());
+                                    daoManager.getSession().getDeviceDao().insert(app.getDevice());
+                                }else{
+                                    daoManager.getSession().getDeviceDao().update(app.getDevice());
+                                }
 
                                 usbTurnActivity(context, path);
-                            } else {
-                                Log.d(TAG, "this is 后续导入资源时，不在有效授权时间内");
-                                Toast.makeText(context, "this is 后续导入资源时，不在有效授权时间内", Toast.LENGTH_SHORT).show();
+                            } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
+                                //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
+                                LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题
+                                Log.d(TAG, "this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference()));
+                                Log.d(TAG, "this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
+                                app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
+                                if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
+                                        && app.getCreateTime() > app.getCreate_time() //保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前
+                                        && app.getRelative_time() > app.getCreateTime()) {//1.第一次导入资源时间与当前时间差<授权时间段；2.当前时间一定大于上一次的当前时间；3.设置相对过期时间，当前时间过了就不允许播放
+                                    Toast.makeText(context, "this is 后续资源导入", Toast.LENGTH_SHORT).show();
+                                    app.setAuthority_state(true);
+
+                                    usbTurnActivity(context, path);
+                                } else {
+                                    Log.d(TAG, "this is 后续导入资源时，不在有效授权时间内");
+                                    Toast.makeText(context, "this is 后续导入资源时，不在有效授权时间内", Toast.LENGTH_SHORT).show();
+                                }
                             }
+                        } else {
+                            Log.d(TAG, "this is 非法身份验证");
+                            Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
+                            Log.d(TAG, "this is mMacStrings[1].length() :" + mMacStrings[1].length());
+                            Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
+                            Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(app.getmContext()));
+                            Toast.makeText(context, "this is 非法身份验证", Toast.LENGTH_SHORT).show();
                         }
-                    } else {
-                        Log.d(TAG, "this is 非法身份验证或逗号过多的非法授权文件");
-                        Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
-                        Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
-                        Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(app.getmContext()));
-                        Toast.makeText(context, "this is 非法身份验证或逗号过多的非法授权文件", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        //Toast.makeText(context, "this is 合法文件中授权时间加密信息错误", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Log.d(TAG, "this is 非法授权文件");
@@ -240,21 +271,23 @@ public class UsbUtils {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 //                                df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));//加上这一行代码之后，将当前时间转化为世界时间，但不适用此处
         //todo：这里是授权文件的时间，如果电脑的时间不是准确的，则本地加时间差。
-        if (app.getStart_time() < app.getCreateTime()) {//获取本地时间为准还是以服务器时间为准
+        if (app.getStart_time() <= app.getCreateTime()) {//获取本地时间为准还是以服务器时间为准
             Log.d(TAG, "this is 本地时间是服务器时间");
             app.setAuthority_time(df.format(new Date(app.getStart_time())));
             app.setAuthority_expired(df.format(new Date(app.getEnd_time())));
             app.setRelative_time(app.getEnd_time());//将服务器时间设为设为授权到期时间
+            Log.d(TAG,"this is 授权时间设置完成 :" + app.getRelative_time());
         } else {
             Log.d(TAG, "this is 本地时间不是服务器时间");
             app.setAuthority_time(df.format(new Date(app.getCreateTime())));
             app.setAuthority_expired(df.format(new Date(app.getCreateTime() + app.getTime_difference())));
             app.setRelative_time(app.getCreateTime() + app.getTime_difference());//将本地时间设为授权到期时间
+            Log.d(TAG,"this is 授权时间设置完成 :" + app.getRelative_time());
         }
     }
 
     public static void usbTurnActivity(Context context, String path) {
-        app.setCreate_time(app.getCreateTime());//获取当前时间赋值给与数据库相关数据的"当前时间"--作为上次时导入时间
+        app.setCreate_time(app.getCreateTime());//获取当前时间赋值给与数据库相关数据的"当前时间"--作为上次时导入时间,非授权相关信息，属于播放相关信息。
         Intent i = new Intent(context, ImportActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Bundle bundle = new Bundle();
