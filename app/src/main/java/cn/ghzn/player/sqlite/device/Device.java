@@ -48,6 +48,7 @@ public class Device {
      * 终端屏幕高度
      */
     private int height;
+
     @Generated(hash = 1016804166)
     public Device(Long id, String device_name, String device_id, boolean authority_state,
             String authority_time, String authority_expired, String authorization,
@@ -134,8 +135,6 @@ public class Device {
     public void setAuthority_expired(String authority_expired) {
         this.authority_expired = authority_expired;
     }
-
-
 
 
 

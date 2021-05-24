@@ -13,29 +13,38 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.usb.UsbDevice;
 import android.icu.util.LocaleData;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.apkfuns.logutils.LogUtils;
+import com.github.mjdev.libaums.UsbMassStorageDevice;
+import com.github.mjdev.libaums.fs.UsbFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import cn.ghzn.player.receiver.USBBroadCastReceiver;
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
@@ -46,6 +55,8 @@ import cn.ghzn.player.util.InfoUtils;
 import cn.ghzn.player.util.UsbUtils;
 import cn.ghzn.player.util.ViewImportUtils;
 
+import static cn.ghzn.player.Constants.LICENCE_NAME;
+import static cn.ghzn.player.Constants.MACHINE_CODE_NAME;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static java.lang.Thread.sleep;
@@ -65,12 +76,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView mAuthorityState;
     private TextClock mLocalTime;
     private BroadcastReceiver mBroadcastReceiver;
+    private BroadcastReceiver mRenovateBroadcastReceiver;
     private OneSplitViewActivity mOneSplitViewActivity;
     private Intent mIntent_FinishFlag = new Intent();
     private TextView mAuthorityTime;
     private TextView mAuthorityExpired;
-    private File mSaveFile;
+    private File mLicenceSaveFile;
+    private File mMachineCodeSaveFile;
     private TextView mLeftMargin;
+    private UsbHelper usbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +92,16 @@ public class MainActivity extends AppCompatActivity {
         requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
         app = (MyApplication)getApplication();//全局变量：
         UsbUtils.checkUsb(this);//通过USB协议检查出USB是什么类型设备
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//取消导航栏
         setContentView(R.layout.activity_main);
 
+        AutoOutPutMachineCode();
+
         if (app.getCurrentActivity() != null) {
+            LogUtils.e(app.getCurrentActivity());
             app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
             Log.d(TAG,"this is 关闭了正在播放的分屏资源");
         }
-
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
         if (app.getSource() != null) {
             app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
@@ -92,8 +109,13 @@ public class MainActivity extends AppCompatActivity {
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
+        LogUtils.e(app.getSplit_view());
         initSource();//资源初始化放在如上
+        Log.d(TAG,"this is app.getLicenceDir()>>>>1" + app.getLicenceDir());
         setDialog();
+        Log.d(TAG,"this is app.getLicenceDir()>>>>2" + app.getLicenceDir());
+
+
 
         //LogUtils.e(app.getCurrentActivity());
         if (app.isImportState() && app.isSetSourcePlayer()) {//仅允许在初次资源导入时，U盘插入顺序与软件打开顺序无关；在已导入资源的情况下，必须在播放的情况下，再插入U盘进行资源变更。
@@ -107,10 +129,70 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void AutoOutPutMachineCode() {
+        usbHelper = new UsbHelper(this, new USBBroadCastReceiver.UsbListener() {
+            @Override
+            public void insertUsb(UsbDevice device_add) {
+                Log.e(TAG, "usb insert:"+device_add.getDeviceName());
+                //检测刚接入USB，申请权限--
+                usbHelper.requestPermission(device_add);
+            }
+
+            @Override
+            public void removeUsb(UsbDevice device_remove) {
+                Log.e(TAG, "usb remove:"+device_remove.getDeviceName());
+            }
+
+            @Override
+            public void getReadUsbPermission(UsbDevice usbDevice) {
+                Log.e(TAG, "usb get read permission:"+usbDevice.getDeviceName());
+                //申请权限成功，执行文件写入--
+                UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
+                for(UsbMassStorageDevice device : devices){
+                    List<UsbFile> usbFiles = usbHelper.readDevice(device);
+                    if(usbFiles==null)break;
+                    Log.e(TAG, "find device:"+ device.getUsbDevice().getDeviceName());
+                    Log.e(TAG, usbHelper.getCurrentFolder().getAbsolutePath());
+
+                    boolean result = usbHelper.saveSDFileToUsb(getLocalFile(), usbHelper.getCurrentFolder(), new UsbHelper.DownloadProgressListener() {
+                        @Override
+                        public void downloadProgress(int progress) {
+                            Log.e(TAG, "download to usb_MachineCode.txt:"+progress);
+                        }
+                    });
+                    Log.e(TAG, "download and result :" + result);
+                    device.close();
+
+                }
+
+            }
+
+            @Override
+            public void failedReadUsb(UsbDevice usbDevice) {
+                Log.e(TAG, "usb fail read permission:"+usbDevice.getDeviceName());
+            }
+        });
+    }
+
+    private File getLocalFile(){
+        File localFile = new File("/storage/emulated/0/Android/data/cn.ghzn.player/files/ghzn/", "MachineCode.txt");
+        try {
+            FileWriter writer = new FileWriter(localFile);
+            writer.write(app.getAuthorization());//机器码导出
+            writer.flush();
+            writer.close();
+            return localFile;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private void initSource() {
 
-        Log.d(TAG,"this is first app.setLicenceDir" + app.getLicenceDir());
-        app.setLicenceDir(getFilePath(this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
+        app.setLicenceDir(getFilePath(MainActivity.this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
         app.setCreateTime(System.currentTimeMillis());
 
         File file = new File(app.getLicenceDir());
@@ -123,7 +205,8 @@ public class MainActivity extends AppCompatActivity {
 
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
         Log.d(TAG,"this is  app.setSource");
-        if (app.getSource() != null) {//资源导入进来意味着处于授权期内,还需防止修改系统时间。
+        LogUtils.e(app.getSplit_view());
+        if (app.getSource() != null &&  app.getSource().getSplit_view() != null) {//资源导入进来意味着处于授权期内,还需防止修改系统时间;资源为空时。
             initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
@@ -169,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
         mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG,"this is varReceiver");
+                Log.d(TAG,"this is varReceiver_finish掉当前的Activity的广播");
                 if (app.getCurrentActivity() != null) {
                     app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
                 }
@@ -178,11 +261,25 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction("true");
         registerReceiver(mBroadcastReceiver,filter);//注册广播
+        mRenovateBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {//一个对象未取消注册广播置null时，不可复用、
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG,"this is varReceiver_刷新主界面授权信息");
+                mAuthorityState.setText("授权状态：" + app.getAuthorityName());
+                mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
+                mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
+                if (mRenovateBroadcastReceiver != null) {//执行一次
+                    unregisterReceiver(mRenovateBroadcastReceiver);
+                }
+            }
+        });
+        IntentFilter RenovateFilter = new IntentFilter("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+        registerReceiver(mRenovateBroadcastReceiver,RenovateFilter);//注册广播
     }
 
     private void initImportSource(Source source) {
         //将读取的数据赋值给全局变量
-        app.setLicenceDir(source.getLicense_dir());//通用自动生成信息
+        //app.setLicenceDir(source.getLicense_dir());//通用自动生成信息
         app.setCreate_time(source.getCreate_time());
 
         app.setStart_time(source.getStart_time());//U盘授权文件信息
@@ -195,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
         app.setSplit_mode(source.getSplit_mode());
         app.setSon_source(source.getSon_source());
 
-        app.setLicenceDir(source.getLicense_dir());//程序执行时，U盘未插入，此时内容为空;将txt文本的绝对地址从数据库中取出再赋值给全局变量
+        //app.setLicenceDir(source.getLicense_dir());//程序执行时，U盘未插入，此时内容为空;将txt文本的绝对地址从数据库中取出再赋值给全局变量
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -286,14 +383,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-//    public void initAuthorXml(){//用于覆盖第一次读取数据库时，数据库内容为null时的值
-//        mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
-//        mAuthorityTime = (TextView) this.findViewById(R.id.AuthorityTime);
-//        mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
-//        mAuthorityState.setText("授权状态：" + app.isAuthority_state());
-//        mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
-//        mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
-//    }
 
     public void setDialog() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
@@ -388,7 +477,7 @@ public class MainActivity extends AppCompatActivity {
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
         if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
-        if(device.getAuthorization()==null)device.setAuthorization(InfoUtils.getAuthorization());
+        device.setAuthorization(InfoUtils.getAuthorization());//此处Authorization实际存储的是机器码(mac值的md5加密值)，命名错误
 //        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
         device.setSoftware_version(InfoUtils.getSoftware_version());
         device.setFirmware_version(InfoUtils.FirmwareVersion());
@@ -415,7 +504,7 @@ public class MainActivity extends AppCompatActivity {
         //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
-        Toast.makeText(this,"重新读取分屏模式文件的信息，加载读取",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
         switch (app.getSplit_view()){//文件数就是分屏数
             case "1"://一分屏时，三种状态下触发对对应控件进行操作
                 if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -671,10 +760,10 @@ public class MainActivity extends AppCompatActivity {
                     app.setPlayFlag(1);
                 } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 } else if (app.getPlayFlag() ==2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             case "2":
@@ -702,10 +791,10 @@ public class MainActivity extends AppCompatActivity {
                     app.setPlayFlag(1);
                 } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 } else if (app.getPlayFlag() ==2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             case "3":
@@ -743,10 +832,10 @@ public class MainActivity extends AppCompatActivity {
                     app.setPlayFlag(1);
                 } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 } else if (app.getPlayFlag() ==2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             case "4":
@@ -794,10 +883,10 @@ public class MainActivity extends AppCompatActivity {
                     app.setPlayFlag(1);
                 } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 } else if (app.getPlayFlag() == 2) {//停止状态
                     Log.d(TAG,"暂停按键为无效状态");
-                    Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             default:
@@ -838,7 +927,7 @@ public class MainActivity extends AppCompatActivity {
                     app.setPlayFlag(2);
                 } else if (app.getPlayFlag() ==2) {
                     Log.d(TAG,"停止按键为无效状态");
-                    Toast.makeText(this,"停止按键为无效状态",Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this,"停止按键为无效状态",Toast.LENGTH_SHORT).show();
                 }
                 break;
             default:
@@ -862,32 +951,55 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is MachineIdOutBtn");
 
         if (app.isImportState()) {
-            //todo:实现将授权文件生成到U盘目录下，取U盘绝对地址进行赋值
+            //todo:实现将机器码文件生成到U盘根目录下
             Log.d(TAG,"this is 将机器码导出到U盘中");
-            mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象；存在误删Android/.../files系列文件夹，找不到对象
-            if (mSaveFile.exists()) {
-                Log.d(TAG, "U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
-                Toast.makeText(this,"U盘的机器码或授权码已存在，若需导出机器码请先删除U盘原有的Licence.txt文件",Toast.LENGTH_LONG).show();
-            } else {
-                machineIdOut();
+            mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);//U盘ghznPlayer文件夹内授权文件绝对地址的对象；存在误删Android/.../files系列文件夹，找不到对象
+            mMachineCodeSaveFile = new File(app.getExtraPath(),MACHINE_CODE_NAME);
+
+            UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
+            for(UsbMassStorageDevice device : devices){
+                List<UsbFile> usbFiles = usbHelper.readDevice(device);
+                if(usbFiles==null)break;
+                Log.e(TAG, "find device:"+ device.getUsbDevice().getDeviceName());
+                Log.e(TAG, usbHelper.getCurrentFolder().getAbsolutePath());
+
+                boolean result = usbHelper.saveSDFileToUsb(getLocalFile(), usbHelper.getCurrentFolder(), new UsbHelper.DownloadProgressListener() {
+                    @Override
+                    public void downloadProgress(int progress) {
+                        Log.e(TAG, "download to usb_MachineCode.txt:"+progress);
+                    }
+                });
+                Log.e(TAG, "download and result :" + result);
+                if(result){
+                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+                }
+                device.close();
             }
+
+            /*if (mMachineCodeSaveFile.exists()) {
+                ViewImportUtils.deleteFile(mMachineCodeSaveFile);
+                machineIdOut(mMachineCodeSaveFile);
+                Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+            } else {
+                machineIdOut(mMachineCodeSaveFile);//U盘无机器码则导出机器码
+                Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+            }*/
         } else {
             Log.d(TAG,"this is 将机器码导出到本地中");
-            mSaveFile = new File(app.getLicenceDir(),"Licence.txt");//手机内授权文件绝对地址的对象
-            if (mSaveFile.exists()) {
-//                Log.d(TAG, "设备的机器码或授权码已存在，正在删除本地的Licence.txt文件中");
-//                Toast.makeText(this,"设备的机器码或授权码已存在，正在删除本地的Licence.txt文件中",Toast.LENGTH_LONG).show();
-//                ViewImportUtils.deleteFile(mSaveFile);
-//                machineIdOut();
+            //mLicenceSaveFile = new File(app.getLicenceDir(),LICENCE_NAME);//手机内授权文件绝对地址的对象
+            mMachineCodeSaveFile = new File(app.getLicenceDir(),MACHINE_CODE_NAME);
+
+            /*if (mLicenceSaveFile.exists()) {//为了手动删除过期的授权文件而重新导出机器码文件重新授权
                 //弹窗提示是否删除本地已存在的licence文件，删除后自动导出。
                 new AlertDialog.Builder(this)
                         .setTitle("提醒")
-                        .setMessage("本地目录中已存在授权码或机器码文件Licence.txt，请问是否删除该文件并导出机器码?")
+                        .setMessage("本地目录中已存在授权码文件Licence.txt，请问是否删除授权文件？")
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ViewImportUtils.deleteFile(mSaveFile);
-                                machineIdOut();
+                                ViewImportUtils.deleteFile(mLicenceSaveFile);
+                                machineIdOut(mMachineCodeSaveFile);
+                                Log.d(TAG, "this is 本地目录中已存在授权码文件Licence.txt，进行删除授权文件并重新导出机器码MachineCode.txt文件");
                             }
                         })
                         .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -896,13 +1008,16 @@ public class MainActivity extends AppCompatActivity {
                             }
                         })
                         .create().show();
-            } else {
-                machineIdOut();
-            }
+            } else {*/
+                ViewImportUtils.deleteFile(mMachineCodeSaveFile);
+                machineIdOut(mMachineCodeSaveFile);
+                Log.d(TAG, "this is 已重新生成机器码文件到本地目录上");
+                Toast.makeText(this,"未插入U盘，无法导出机器码到U盘上",Toast.LENGTH_LONG).show();
+            //}
         }
     }
 
-    private void machineIdOut() {
+    private void machineIdOut(File mSaveFile) {
         FileOutputStream outStream = null;
         try {
             outStream = new FileOutputStream(mSaveFile);
@@ -934,5 +1049,6 @@ public class MainActivity extends AppCompatActivity {
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
+        usbHelper.finishUsbHelper();
     }
 }

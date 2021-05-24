@@ -18,6 +18,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -64,8 +65,9 @@ public class TwoSplitViewActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         app.setCurrentActivity(this);
-        getWindow().setFormat(PixelFormat.TRANSPARENT);
+        //getWindow().setFormat(PixelFormat.TRANSPARENT);
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
         Log.d(TAG,"this is 跳转成功");

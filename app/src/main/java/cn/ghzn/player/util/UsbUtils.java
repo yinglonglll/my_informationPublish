@@ -24,6 +24,7 @@ import java.util.Locale;
 
 import cn.ghzn.player.Constants;
 import cn.ghzn.player.ImportActivity;
+import cn.ghzn.player.MainActivity;
 import cn.ghzn.player.MyApplication;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
@@ -122,7 +123,8 @@ public class UsbUtils {
             if (path.equals("file:///storage/emulated/0")) {//减少无用功运行，即不符退出即可。
                 return;
             }
-            app.setExtraPath(path.replace("file://", "") + "/Android/data/cn.ghzn.player/files/");//去除uri前缀，得到文件路径(绝对路径);记录U盘中我们新建ghznPlayer的绝对地址
+            app.setExtraPath(path.replace("file://", "") + "/");//去除uri前缀
+            //app.setExtraPath(path.replace("file://", "") + "/Android/data/cn.ghzn.player/files/");//去除uri前缀,这是自动生成的路径。
             Log.d(TAG, "this is extraPath" + app.getExtraPath());
 
             //todo:对搜寻授权码进行更新检查，保持最新的授权码
@@ -145,13 +147,14 @@ public class UsbUtils {
                 if (FileUtils.readTxt(updateLicence.getAbsolutePath()).contains(",")) {//检验U盘授权文件的合法性
                     Log.d(TAG, "this is 合法授权文件");
                     Toast.makeText(context, "this is 合法授权文件", Toast.LENGTH_SHORT).show();
-                    FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);
-
+                    FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);//会自动覆盖的复制方法
+                    //第一次授权时，将授权码复制到本地，后续检查授权信息都是依据数据库的授权信息，而不是本地的授权码。仅为备份
 
                     //导出的机器码为：AuthorityUtils.digest(MacUtils.getMac(mContext))
                     mMacStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
                     try {
                         if (mMacStrings[0].equals(digest(MacUtils.getMac(context)))) {//1.mac值相对应；2.加密的授权时间的加密内容统一为88个字数限制，加密规则(也可以采用两者mac值长度是否相等判断)
+                            //digest(MacUtils.getMac(context))本机的MAC地址值
                             Log.d(TAG, "this is 合法文件中mac验证身份正确");
                             Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
                             Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
@@ -215,6 +218,8 @@ public class UsbUtils {
                                 }else{
                                     daoManager.getSession().getDeviceDao().update(app.getDevice());
                                 }
+                                app.setAuthorityName("已授权");
+
 
                                 usbTurnActivity(context, path);
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权

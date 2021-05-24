@@ -16,6 +16,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -59,10 +60,11 @@ public class ThreeSplitViewActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         app.setCurrentActivity(this);
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
-        getWindow().setFormat(PixelFormat.TRANSPARENT);
+        //getWindow().setFormat(PixelFormat.TRANSPARENT);此方法会保留导航栏
 //        initFreeFlag();//线程被取消时，无法恢复控件状态，此处进行初始化
 
         if (app.isExtraState()) {

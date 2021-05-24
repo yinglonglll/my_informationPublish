@@ -17,6 +17,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -53,7 +54,8 @@ public class FourSplitViewActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFormat(PixelFormat.TRANSPARENT);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        //getWindow().setFormat(PixelFormat.TRANSPARENT);
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
         app.setCurrentActivity(this);
@@ -146,7 +148,7 @@ public class FourSplitViewActivity extends Activity {
     }
 
     private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
-        source.setLicense_dir(app.getLicenceDir());
+        //source.setLicense_dir(app.getLicenceDir());
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
         source.setSplit_mode(app.getSplit_mode());

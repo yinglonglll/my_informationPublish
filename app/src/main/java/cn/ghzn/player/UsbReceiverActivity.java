@@ -48,11 +48,16 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
         //2.进入import，加入加载页面，执行复制U盘程序，复制完成后判断是否成功复制(true跳转playerActivity，false跳转mainActivity；做出提示)
         //3.进入playerActivity，执行分屏逻辑和动态imageView逻辑；执行完后才退出加载页面，；
         //先执行完程序，如果没问题才跳转到对应的player布局界面
-        UsbUtils.checkUsb(context);
+        try {
+            UsbUtils.checkUsb(context);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         if (app.isImportState()) {//导入USB类型是的是U盘情况下
             Log.d(TAG,"action === " + intent.getAction());
             if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
                 String path = intent.getDataString();
+                Log.d(TAG,"this is path" + path);
                 UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件和资源文件是否都符合格式，符合则跳转
 
             }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出

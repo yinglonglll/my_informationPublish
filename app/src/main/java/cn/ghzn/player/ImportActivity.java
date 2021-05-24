@@ -1,10 +1,12 @@
 package cn.ghzn.player;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -41,6 +43,7 @@ public class ImportActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
         super.onCreate(savedInstanceState);
         app = (MyApplication)getApplication();//全局变量池：
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_progress);
 
         Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
@@ -49,6 +52,14 @@ public class ImportActivity extends Activity {
         Log.d(TAG,"extraPath的值为：" + extraPath);
         copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
 
+        //todo：经历一次分析授权与查询存储文件后，刷新主界面信息。
+
+        Log.d(TAG,"this is renovate mainActivity");
+        Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+        //intent.setComponent(new ComponentName("cn.ghzn.player","cn.ghzn.player.receive.VarReceiver"));
+        sendBroadcast(RenovateIntent);
+
+        LogUtils.e(mMatch);
         if (mMatch) {//需找到有路径，路径为有效
             //fixme:逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
             if (app.getRunnable1() != null) {
@@ -72,8 +83,8 @@ public class ImportActivity extends Activity {
             }
             turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
         } else {
-            Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对");//禁止从U盘导入的跳转
-            Toast.makeText(this,"您的ghznPlayer文件夹内格式不对",Toast.LENGTH_SHORT).show();
+            Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹");//禁止从U盘导入的跳转，如果文件夹为空，那就意味着不存在不对的情况。
+            Toast.makeText(this,"您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹",Toast.LENGTH_SHORT).show();
         }
         finish();
     }
@@ -200,6 +211,9 @@ public class ImportActivity extends Activity {
             } else {
                 Log.d(TAG, "this is 子文件夹数量为0");
                 Toast.makeText(this,"ghznPlayer文件夹内没有文件",Toast.LENGTH_SHORT).show();
+                //todo:执行更新授权状态信息：
+
+
             }
         }
     }
@@ -248,7 +262,7 @@ public class ImportActivity extends Activity {
             File[] files = extraDirectory.listFiles();//查找给定目录中的所有文件和目录(listFiles()得到的结果类似相对路径)
             LogUtils.e(files);
             //初始化状态变量
-            mMatch = false;
+            mMatch = false;//无ghznPlayer文件夹则默认false
             String source = "";
             mTarget = "";
             if (files != null&& files.length != 0) {
@@ -267,11 +281,13 @@ public class ImportActivity extends Activity {
                             }
                             File[] ufs = uf.listFiles();//存放多个A-B-C文件夹对象的数组
                             uFileCount = ufs.length;//取子文件数
+
                             Log.d(TAG,"this is uFileCount :" + uFileCount);
 
                             if (uFileCount != 0) {//非空情况下，遍历检测每个子文件夹的命名是否符合分屏
                                 String B1 = null;
-                                int C = 1;
+                                int CSum = 0;
+                                int count = 0;
                                 for (File son_ufs : ufs) {//A-B-C文件夹对象
                                     String[] uss = son_ufs.getName().split("\\-");//将每个名字拆分
                                     if (B1 == null) {//取第一次为参照物对比第二次第三次的值
@@ -292,11 +308,53 @@ public class ImportActivity extends Activity {
                                         returnOriginalActivity();
                                         break;
                                     }
-                                    if (!uss[2].equals(String.valueOf(C++))) {
+                                    CSum += Integer.parseInt(uss[2]);//终端的分屏模式子文件并不是有序排列，故需检查。
+                                    count++;
+                                    if(count == uFileCount){
+                                        switch (CSum){
+                                            case 1:
+                                                if(uFileCount == 1){//case 1仅仅代表总和正确，还需对应文件书正确
+                                                    Log.d(TAG,"this is 一分屏的C命名正确");
+                                                }else{
+                                                    Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                                    returnOriginalActivity();
+                                                }
+                                                break;
+                                            case 3:
+                                                if(uFileCount == 2){
+                                                    Log.d(TAG,"this is 二分屏的C命名正确");
+                                                }else{
+                                                    returnOriginalActivity();
+                                                    Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                                }
+                                                break;
+                                            case 6:
+                                                if (uFileCount == 3) {
+                                                    Log.d(TAG, "this is 三分屏的C命名正确");
+                                                } else {
+                                                    returnOriginalActivity();
+                                                    Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                                }
+                                                break;
+                                            case 10:
+                                                if (uFileCount == 4) {
+                                                    Log.d(TAG, "this is 四分屏的C命名正确");
+                                                } else {
+                                                    returnOriginalActivity();
+                                                    Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                                }
+                                                break;
+                                            default:
+                                                Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
+                                                returnOriginalActivity();
+                                                break;
+                                        }
+                                    }
+                                   /* if (!uss[2].equals(String.valueOf(C++))) {//存在命名模式C在中断设备不是以顺序排序的方式进行排序
                                         Log.d(TAG,"this is 找到的错误文件命名格式C，即将跳转回原先播放的activity");
                                         returnOriginalActivity();
                                         break;
-                                    }
+                                    }*/
                                     //todo:自定义--对子文件夹资源中全部的资源后缀名6种进行检查，如图片，jpg，png，jpeg;视频：MP4，avi，3gp。
                                     File[] son_ufss = son_ufs.listFiles();
                                     if (son_ufss != null) {
@@ -325,7 +383,7 @@ public class ImportActivity extends Activity {
                         break;
                     } else {
                         Log.d(TAG, "Not find extra program:");
-
+                        //Toast.makeText(this,"没有找到ghznPlayer文件夹",Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -366,6 +424,7 @@ public class ImportActivity extends Activity {
             startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
         }
     }
+
 
     @Override
     protected void onDestroy() {

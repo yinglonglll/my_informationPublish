@@ -38,6 +38,7 @@ dependencies {
     implementation 'com.apkfuns.logutils:library:1.0.4'
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
     debugCompile 'com.amitshekhar.android:debug-db:1.0.0' //输入ip以读取数据库
+    implementation 'me.jahnen:libaums:0.8.0'
 
 
 }

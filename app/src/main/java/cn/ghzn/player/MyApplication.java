@@ -43,6 +43,7 @@ public class MyApplication extends Application {
     private long time_difference;
     private long first_time;
     private long relative_time;
+    private String first_machineCodeOut;
 
     //全局变量声明--赋一值全局用
     private Device mDevice;
@@ -116,6 +117,15 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+    }
+
+
+    public String getFirst_machineCodeOut() {
+        return first_machineCodeOut;
+    }
+
+    public void setFirst_machineCodeOut(String first_machineCodeOut) {
+        this.first_machineCodeOut = first_machineCodeOut;
     }
 
     public boolean isSetSourcePlayer() {

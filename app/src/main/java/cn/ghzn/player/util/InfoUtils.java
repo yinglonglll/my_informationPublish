@@ -44,10 +44,16 @@ public class InfoUtils {
         return app.getAuthority_time();
     }
 
-    public static String getAuthorization() {
-//        app.setAuthorization(AuthorityUtils.digest(app.getDevice_Id()));//重新生成一次mac加密设备ID作为授权码；
+    public static String getAuthorization() {//机器码就是加密的mac值,在device表初始化的时候，就给app.setAuthorization()设定值了，也就是我们只需要get()即可。
+        //当第一次生成时，直接生成，后续生成时，直接以第一次为准。
         app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
-        Log.d(TAG,"设置授权码成功");
+//        if(app.getFirst_machineCodeOut() == null){//第一次导出机器码时，将其存储在数据中，后续导出的机器码都是以此为准
+//            app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
+//            app.getDevice().setFirst_machineCodeOut(app.getAuthorization());//命名错误，这里的Authorization应改为MachineCode，每次获取的机器码存储在这儿
+//            daoManager.getSession().getDeviceDao().update(app.getDevice());
+//        }
+
+        Log.d(TAG,"设置机器码码成功");
         return app.getAuthorization();
     }
 
