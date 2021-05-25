@@ -708,6 +708,7 @@ public class TwoSplitViewActivity extends Activity {
 //        public void run() {
 //            Looper.prepare();
 //            playSonImage2(arrayList2);
+
 //        }
 //    }
 
