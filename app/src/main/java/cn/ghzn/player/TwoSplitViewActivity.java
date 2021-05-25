@@ -713,15 +713,21 @@ public class TwoSplitViewActivity extends Activity {
 
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        //Log.d(TAG,"this is onPause()");
+        //app.setPlayFlag(0);
+        //app.setMediaPlayState(false);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-//        app.setPlayFlag(0);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }

@@ -235,6 +235,7 @@ public class OneSplitViewActivity extends Activity {
             else if (app.getFile().getName().endsWith("mp4") || app.getFile().getName().endsWith("avi") || app.getFile().getName().endsWith("3gp")) {
                 Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + app.getFile().getAbsolutePath());
                 app.setForMat1(2);//记录此时控件播放为视频
+                Log.d(TAG,"this is isMediaPlayState()" + app.isMediaPlayState());
                 if (app.isMediaPlayState()) {
                     app.getVideoView_1().setVideoURI(Uri.fromFile(app.getFile()));
                     app.getVideoView_1().setVisibility(View.VISIBLE);
@@ -301,15 +302,23 @@ public class OneSplitViewActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        //Log.d(TAG,"this is onPause()");
+        //app.setMediaPlayState(false);
+        //app.setPlayFlag(0);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-//        app.setPlayFlag(0);
+        //Log.d(TAG,"this is onResume()");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        app.setMediaPlayState(false);
+        //app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }

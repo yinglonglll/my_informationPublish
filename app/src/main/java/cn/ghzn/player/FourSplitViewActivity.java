@@ -25,6 +25,8 @@ import android.widget.VideoView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
+import com.apkfuns.logutils.LogUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,7 +51,12 @@ public class FourSplitViewActivity extends Activity {
     ArrayList arrayList2;//控件区2地址
     ArrayList arrayList3;//控件区3地址
     ArrayList arrayList4;//控件区4地址
-    private View view;
+
+    private boolean isFreeFlag1 = true;
+    private boolean isFreeFlag2 = true;
+    private boolean isFreeFlag3 = true;
+    private boolean isFreeFlag4 = true;
+    //private View view;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,7 +67,7 @@ public class FourSplitViewActivity extends Activity {
         app.setPlaySonImageFlag(true);
         app.setCurrentActivity(this);
         Log.d(TAG,"this is 跳转成功");
-        if (app.isExtraState()) {
+        if (app.isExtraState()) {//是否由importActivity跳转而来
             Intent intent = getIntent();
             if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
                 app.setFileCounts(intent.getIntExtra("splitView",0));
@@ -71,7 +78,7 @@ public class FourSplitViewActivity extends Activity {
 
             File f = new File(app.getFilesParent());
             if (!f.exists()) {
-                f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+                f.mkdirs();
             }
             File[] files = f.listFiles();
 
@@ -82,10 +89,9 @@ public class FourSplitViewActivity extends Activity {
             Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
 
             initWidget(app.getSplit_mode());
-            Log.d(TAG,"this is initWidget(split_mode)");
 
             for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-                getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+                getMap1().put(file.getName(), file.getAbsolutePath());
             }
 
             String key = app.getSplit_view() + "-" + app.getSplit_mode();
@@ -106,7 +112,7 @@ public class FourSplitViewActivity extends Activity {
         }
 
         if (app.getSplit_view() != null) {
-            mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+            mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {//播放按钮的重播功能的广播
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     Log.d(TAG,"this is varReceiver");
@@ -115,14 +121,14 @@ public class FourSplitViewActivity extends Activity {
             });
             IntentFilter filter = new IntentFilter();
             filter.addAction("0");
-            registerReceiver(mBroadcastReceiver,filter);//注册广播
+            registerReceiver(mBroadcastReceiver,filter);
 
             playSonImage(arrayList1,arrayList2,arrayList3,arrayList4);
 
-            if (app.isExtraState()) {
+            if (app.isExtraState()) {//若是ImportActivity跳转进来，即U盘导入资源时，需保存数据。
 //                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
-                if(app.getSource() == null){//这一步多余
-                    app.setSource(new Source());//表不存在则新建赋值
+                if(app.getSource() == null){
+                    app.setSource(new Source());//表不存在则新建表并更新表内容
                     daoManager.getSession().getSourceDao().insert(getSource(app.getSource()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
@@ -162,10 +168,7 @@ public class FourSplitViewActivity extends Activity {
         return source;
     }
 
-    boolean isFreeFlag1 = true;
-    boolean isFreeFlag2 = true;
-    boolean isFreeFlag3 = true;
-    boolean isFreeFlag4 = true;
+
     ArrayList[] Recursive = new ArrayList[4];//先声明--仅用于存储递归时的参数
 
     @SuppressLint("ClickableViewAccessibility")
@@ -287,12 +290,18 @@ public class FourSplitViewActivity extends Activity {
     }
 
     private void playSonImage(ArrayList arrayList1,ArrayList arrayList2,ArrayList arrayList3,ArrayList arrayList4){
+        Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
+        Recursive[1] = arrayList2;
+        Recursive[2] = arrayList3;
+        Recursive[3] = arrayList4;
+
+        /*//打印标志位,检查播放空闲信息
+        Log.d(TAG,"this is app.isPlaySonImageFlag() "+ app.isPlaySonImageFlag());
+        Log.d(TAG,"this is 是否播放状态0？ "+ app.getPlayFlag());
+        Log.d(TAG,"this is AllisFreeFlag "+"1:"+isFreeFlag1+"2:"+isFreeFlag2+"3:"+isFreeFlag3+"4:"+isFreeFlag4);*/
+
         if (app.isPlaySonImageFlag()) {
             Log.d(TAG,"this is 进入资源播放方法");
-            Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
-            Recursive[1] = arrayList2;
-            Recursive[2] = arrayList3;
-            Recursive[3] = arrayList4;
             if (isFreeFlag1) {
                 Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
                 if (app.getListNum1() >= arrayList1.size()) {
@@ -413,7 +422,7 @@ public class FourSplitViewActivity extends Activity {
                     }
             }
             if (isFreeFlag3) {
-                Log.d(TAG,"this is 此时空闲，进入设置控件2资源");
+                Log.d(TAG,"this is 此时空闲，进入设置控件3资源");
                 if (app.getListNum3() >= arrayList3.size()) {
                     app.setListNum3(0);
 //                    playSonImage(Recursive[0],Recursive[1],Recursive[2],Recursive[3]);
@@ -422,7 +431,7 @@ public class FourSplitViewActivity extends Activity {
                     Log.d(TAG,"开始执行执行播放程序");
                     app.setFile(new File(arrayList3.get(app.getListNum3()).toString()));
                     if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
-                        Log.d(TAG,"playSonImage2执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
+                        Log.d(TAG,"playSonImage3执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
                         app.setForMat3(1);//记录此时控件播放为图片
                         isFreeFlag3 = false;//执行图片赋值程序，进入忙线状态
 
@@ -537,30 +546,25 @@ public class FourSplitViewActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        //Log.d(TAG,"this is onPause()");
+        //app.setPlayFlag(0);
+        //app.setMediaPlayState(false);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-//        app.setPlayFlag(0);
+        //Log.d(TAG,"this is onResume()");
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
-
-//        if (app.getRunnable1() != null) {
-//            app.getHandler().removeCallbacks(app.getRunnable1());
-//        }
-//        if (app.getRunnable2() != null) {
-//            app.getHandler().removeCallbacks(app.getRunnable2());
-//        }
-//        if (app.getRunnable3() != null) {
-//            app.getHandler().removeCallbacks(app.getRunnable3());
-//        }
-//        if (app.getRunnable4() != null) {
-//            app.getHandler().removeCallbacks(app.getRunnable4());
-//        }
     }
 }

@@ -181,6 +181,12 @@ public class ThreeSplitViewActivity extends Activity {
         Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
         Recursive[1] = arrayList2;
         Recursive[2] = arrayList3;
+
+        /*//打印标志位,检查播放空闲信息
+        Log.d(TAG,"this is app.isPlaySonImageFlag() "+ app.isPlaySonImageFlag());
+        Log.d(TAG,"this is 是否播放状态0？ "+ app.getPlayFlag());
+        Log.d(TAG,"this is AllisFreeFlag "+"1:"+isFreeFlag1+"2:"+isFreeFlag2+"3:"+isFreeFlag3);*/
+
         if (app.isPlaySonImageFlag()) {
             if (isFreeFlag1) {
                 Log.d(TAG,"this is 此时空闲，进入设置控件1资源");
@@ -852,14 +858,14 @@ public class ThreeSplitViewActivity extends Activity {
     protected void onPause() {
         super.onPause();
         Log.d(TAG,"this is onPause()");
-        app.setPlayFlag(0);//导入新资源时优先触发onPause()，故避免取消线程未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
+        //app.setPlayFlag(0);//导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
+        //app.setMediaPlayState(false);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG,"this is onResume()");
-//        app.setPlayFlag(0);
+        //Log.d(TAG,"this is onResume()");
     }
 
     @Override

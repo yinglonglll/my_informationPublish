@@ -69,7 +69,6 @@ public class USBBroadCastReceiver extends BroadcastReceiver {
                     }
                     break;
             }
-
     }
 
     public void setUsbListener(UsbListener usbListener) {

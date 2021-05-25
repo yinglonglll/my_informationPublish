@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//取消导航栏
         setContentView(R.layout.activity_main);
 
-        AutoOutPutMachineCode();
+        AutoOutPutMachineCode();//取消自动导出机器码，仅保留动态获取usbHelper的权限
 
         if (app.getCurrentActivity() != null) {
             LogUtils.e(app.getCurrentActivity());
@@ -122,7 +122,8 @@ public class MainActivity extends AppCompatActivity {
             app.setStrings(UsbUtils.getVolumePaths(this));//通过获取U盘挂载状态检查所有存储的绝对地址，
             for(String str : app.getStrings()){
                 if (!str.equals("/storage/emulated/0")) {
-                    app.setExtraPath(str + "/Android/data/cn.ghzn.player/files/");
+                    //app.setExtraPath(str + "/Android/data/cn.ghzn.player/files/");//设置U盘的路径
+                    app.setExtraPath(str + "/");//设置U盘的路径,以检查授权文件和资源文件
                     UsbUtils.checkUsbFileForm(this,str);
                 }
             }
@@ -147,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
             public void getReadUsbPermission(UsbDevice usbDevice) {
                 Log.e(TAG, "usb get read permission:"+usbDevice.getDeviceName());
                 //申请权限成功，执行文件写入--
-                UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
+                /*UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
                 for(UsbMassStorageDevice device : devices){
                     List<UsbFile> usbFiles = usbHelper.readDevice(device);
                     if(usbFiles==null)break;
@@ -163,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "download and result :" + result);
                     device.close();
 
-                }
+                }*/
 
             }
 
@@ -206,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
         Log.d(TAG,"this is  app.setSource");
         LogUtils.e(app.getSplit_view());
-        if (app.getSource() != null &&  app.getSource().getSplit_view() != null) {//资源导入进来意味着处于授权期内,还需防止修改系统时间;资源为空时。
+        if (app.getSource() != null &&  app.getSource().getSplit_view() != null) {//1.判断授权文件；2.判断资源文件
             initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(app.getSource());
@@ -943,6 +944,9 @@ public class MainActivity extends AppCompatActivity {
         if(app.getCurrentActivity() != null){
             app.getCurrentActivity().finish();//先finish掉(可采用循环finish，但activity少没必要)，然后再退出，不然退不出
         }
+        if(usbHelper != null){
+            usbHelper.finishUsbHelper();
+        }
         finish();
         System.exit(0);
     }
@@ -953,7 +957,7 @@ public class MainActivity extends AppCompatActivity {
         if (app.isImportState()) {
             //todo:实现将机器码文件生成到U盘根目录下
             Log.d(TAG,"this is 将机器码导出到U盘中");
-            mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);//U盘ghznPlayer文件夹内授权文件绝对地址的对象；存在误删Android/.../files系列文件夹，找不到对象
+            mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);
             mMachineCodeSaveFile = new File(app.getExtraPath(),MACHINE_CODE_NAME);
 
             UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
@@ -1049,6 +1053,6 @@ public class MainActivity extends AppCompatActivity {
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
-        usbHelper.finishUsbHelper();
+        //usbHelper.finishUsbHelper();
     }
 }

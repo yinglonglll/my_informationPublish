@@ -73,6 +73,7 @@ public class UsbHelper {
 
     public boolean requestPermission(UsbDevice usbDevice){
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+        //发送自定义广播
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
         if (!usbManager.hasPermission(usbDevice)) {
             //没有权限请求权限

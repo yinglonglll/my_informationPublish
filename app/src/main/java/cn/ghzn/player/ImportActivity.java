@@ -59,6 +59,7 @@ public class ImportActivity extends Activity {
         //intent.setComponent(new ComponentName("cn.ghzn.player","cn.ghzn.player.receive.VarReceiver"));
         sendBroadcast(RenovateIntent);
 
+
         LogUtils.e(mMatch);
         if (mMatch) {//需找到有路径，路径为有效
             //fixme:逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
@@ -74,7 +75,8 @@ public class ImportActivity extends Activity {
             if (app.getRunnable4() != null) {
                 app.getHandler().removeCallbacks(app.getRunnable4());
             }
-            app.setMediaPlayState(false);//不知如何取消视频监听，但通过状态量，使监听后执行无效功能
+            app.setPlayFlag(0);//图片线程：导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
+            app.setMediaPlayState(false);//视频监听：不知如何取消视频监听，但通过状态量，使监听后执行无效功能
 
             if (app.getCurrentActivity() != null) {//即导入分屏资源成功
                 LogUtils.e(TAG,app.getCurrentActivity());
