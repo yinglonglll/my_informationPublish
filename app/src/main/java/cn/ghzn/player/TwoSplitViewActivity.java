@@ -60,8 +60,6 @@ public class TwoSplitViewActivity extends Activity {
     private ArrayList arrayList1;//控件区1地址
     private ArrayList arrayList2;//控件区2地址
 
-
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
