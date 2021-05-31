@@ -160,12 +160,12 @@ public class UsbUtils {
                             Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
                             Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(MyApplication.getmContext()));
 
-                            Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
 
                             app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
                             app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
                             app.setEnd_time((long) app.getMap().get("endTime"));
-
+                            app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
                             //todo:设置显示授权时间和授权失效时间
                             LogUtils.e(app.getAuthority_time());
                             if (app.getAuthority_time().equals("无")) {//仅执行一次的第一次初始化--数据库的授权时间默认为无
@@ -218,16 +218,30 @@ public class UsbUtils {
                                 }else{
                                     daoManager.getSession().getDeviceDao().update(app.getDevice());
                                 }
-                                app.setAuthorityName("已授权");
-
-
-                                usbTurnActivity(context, path);
+                                //app.setAuthorityName("已授权");
+                                //第一次播放时，因为没有上一次播放记录，因此无法实现一次播放必须比上一次播放时间晚的判断要求，故在此允许播放时间范围为授权时间内
+                                if(app.getCreateTime() > app.getEnd_time() || app.getCreateTime() < app.getStart_time()){
+                                    Toast.makeText(context,"第一次授权操作错误，请根据手册进行操作",Toast.LENGTH_SHORT).show();
+                                }else{
+                                    usbTurnActivity(context, path);
+                                }
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
                                 LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题
                                 Log.d(TAG, "this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference()));
                                 Log.d(TAG, "this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());
-                                app.setCreateTime(System.currentTimeMillis());//重新设置时间差是因为多次U盘导入时，可能不再执行mainActivity的setcreateTime()
+
+                                app.getDevice().setAuthority_state(app.isAuthority_state());
+                                app.getDevice().setAuthority_time(app.getAuthority_time());
+                                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                                if(app.getDevice() == null){
+                                    app.setDevice(new Device());
+                                    daoManager.getSession().getDeviceDao().insert(app.getDevice());
+                                }else{
+                                    daoManager.getSession().getDeviceDao().update(app.getDevice());
+                                }
+                                //app.setAuthorityName("已授权");
+
                                 if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
                                         && app.getCreateTime() > app.getCreate_time() //保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前
                                         && app.getRelative_time() > app.getCreateTime()) {//1.第一次导入资源时间与当前时间差<授权时间段；2.当前时间一定大于上一次的当前时间；3.设置相对过期时间，当前时间过了就不允许播放
@@ -289,6 +303,8 @@ public class UsbUtils {
             app.setRelative_time(app.getCreateTime() + app.getTime_difference());//将本地时间设为授权到期时间
             Log.d(TAG,"this is 授权时间设置完成 :" + app.getRelative_time());
         }
+        LogUtils.e(app.getAuthority_time());
+        LogUtils.e(app.getAuthority_expired());
     }
 
     public static void usbTurnActivity(Context context, String path) {

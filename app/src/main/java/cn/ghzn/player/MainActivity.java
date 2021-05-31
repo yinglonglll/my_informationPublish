@@ -6,6 +6,8 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -38,7 +40,9 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -57,6 +61,7 @@ import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.Constants.MACHINE_CODE_NAME;
+import static cn.ghzn.player.MyApplication.cld;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static java.lang.Thread.sleep;
@@ -266,12 +271,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG,"this is varReceiver_刷新主界面授权信息");
+
+                if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
+                    app.setAuthorityName("未授权");
+                } else {
+                    Log.d(TAG,"this is enter 刷新授权状态");
+                    if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
+                        app.setAuthorityName("已授权");
+                    } else {
+                        app.setAuthorityName("授权过期");
+                        app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
+                    }
+                }
                 mAuthorityState.setText("授权状态：" + app.getAuthorityName());
                 mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
                 mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
-                if (mRenovateBroadcastReceiver != null) {//执行一次
-                    unregisterReceiver(mRenovateBroadcastReceiver);
-                }
+
             }
         });
         IntentFilter RenovateFilter = new IntentFilter("cn.ghzn.player.broadcast.RENOVATE_MAIN");
@@ -505,7 +520,7 @@ public class MainActivity extends AppCompatActivity {
         //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
-        Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
         switch (app.getSplit_view()){//文件数就是分屏数
             case "1"://一分屏时，三种状态下触发对对应控件进行操作
                 if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -1030,7 +1045,7 @@ public class MainActivity extends AppCompatActivity {
             outStream.flush();
             isSave = true;
             Log.d(TAG, "this is 文件已经保存啦！赶快去查看吧!");
-            Toast.makeText(this, "导出机器码成功", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "导出机器码成功", Toast.LENGTH_SHORT).show();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -1039,6 +1054,79 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    //todo：如下三方法直接删掉即可
+
+    /**
+     * 对获取的开机时间，关机时间，当前时间进行逻辑修正：每次启动应用时，今日存储明日的开关机信息。例如：9点开机(设置，明日9点开机，今日18.00关机)
+     * ，18.00关机(设即明日18.00关机，明日9点开机)，即两个数据库变量，开机则重设开机时间存储，关机则重设关机时间。
+     * 如何更改时间？开机之后时，启动应用；若当前时间(年月日)大于关机时间（即开机的时候），则更新关机时间；若当前时间大于开机时间（也是开机的时候），则更新开机时间
+     * 关机之前，()关机后无法执行更新关机信息，
+     * 理想写法：在开关机API里的onReceiver，直接再次更改信息但应用层无法修改；那就在应用层上进行修改。
+     */
+    private int[] checkTimeFormat(int[] onTime){//以onTime为例
+        //年月日时分秒 参数位置固定；0为年，1为月，2为日，3为时，4为分；
+        Calendar c = Calendar.getInstance();
+        int hour = c.get(Calendar.HOUR_OF_DAY);
+        int minute = c.get(Calendar.MINUTE);
+        //将24制时分化为最小单位分钟
+        int onTimeMinute = onTime[3]*60 + onTime[4];
+        //int offTimeMinute = offTime[3]*60 + offTime[4];
+        int curTimeMinute = hour*60 + minute;
+
+        if(onTimeMinute < curTimeMinute && (curTimeMinute-onTimeMinute > 2)){
+            //1.更新时间设置为明天同样的时分，即更新天数即可
+            Calendar calendar = Calendar.getInstance();
+            long curMill = System.currentTimeMillis();
+            calendar.setTimeInMillis(curMill + 86400000);//当前的毫秒加上一天的毫秒数，这样直接取得下一天的日期，不用考虑日月年换算。
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH) + 1;//1月是0，故加1
+            int data = calendar.get(Calendar.DATE);
+
+            LogUtils.e(year);
+            LogUtils.e(month);
+            LogUtils.e(data);
+
+            onTime[0] = year;
+            onTime[1] = month;
+            onTime[2] = data;
+            //此时年月日已修正,返回已修正值。
+            return onTime;
+        }else if(onTimeMinute > curTimeMinute && (onTimeMinute - curTimeMinute > 2)){
+            //2.直接设置定时时间为今天的时间，年月日无问题
+            return onTime;
+        }else{
+            //其他情况处于设定时间与当前小于3分钟，以避免开关机耗时过长使得开关机完整逻辑无法实现。
+            Log.d(TAG,"this is 设定时间与当前时间差值小于2分钟，无法设定，避免开关机时常过长而无法开关机");
+            return null;
+        }
+        //每次开关机都进行重新设置定时任务。
+    }
+
+    public void setOnTimeAlarm(Context context,int[] onTime) {//带入定时的开机时间
+
+        SimpleDateFormat simpleDateFormat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date date  = null;
+        try {
+            date = simpleDateFormat1.parse(onTime[0] +"-"+onTime[1] + "-" + onTime[2] + " " + onTime[3] + ":" + onTime[4]);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        long onTimeMill = date != null ? date.getTime() : 0;
+        LogUtils.e(onTimeMill);//返回设定开机时间的毫秒数。
+        long systemTime = System.currentTimeMillis();//返回当前毫秒数
+        long time = onTimeMill-systemTime;
+        LogUtils.e(systemTime);
+        LogUtils.e(time);//返回开机时间差
+
+        /*//通过AlarmManager定时启动广播，进行更新开关机定时任务
+        AlarmManager alarmManager= (AlarmManager) context.getSystemService(context.ALARM_SERVICE);
+        Intent intentOnTime = new Intent(context, AlarmOnTimeReceiver.class);
+        intentOnTime.setAction("android.intent.action.ALARM_ON_TIME");
+        PendingIntent pIntent = PendingIntent.getBroadcast(context, 0, intentOnTime, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        //设置开机时间点的定时广播
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, time, 24*3600*1000, pIntent);*/
     }
 
     @Override
@@ -1052,6 +1140,9 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
+        }
+        if(mRenovateBroadcastReceiver != null){
+            unregisterReceiver(mRenovateBroadcastReceiver);
         }
         //usbHelper.finishUsbHelper();
     }

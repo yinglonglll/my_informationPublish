@@ -46,19 +46,17 @@ public class ImportActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_progress);
 
-        Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
-        Intent intent = getIntent();//获取意图
-        String extraPath = intent.getExtras().getString("extra_path");
-        Log.d(TAG,"extraPath的值为：" + extraPath);
-        copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
-
-        //todo：经历一次分析授权与查询存储文件后，刷新主界面信息。
-
+        //todo：经历一次分析授权刷新主界面信息。
         Log.d(TAG,"this is renovate mainActivity");
         Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
         //intent.setComponent(new ComponentName("cn.ghzn.player","cn.ghzn.player.receive.VarReceiver"));
         sendBroadcast(RenovateIntent);
 
+        Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
+        Intent intent = getIntent();//获取意图
+        String extraPath = intent.getExtras().getString("extra_path");
+        Log.d(TAG,"extraPath的值为：" + extraPath);
+        copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
 
         LogUtils.e(mMatch);
         if (mMatch) {//需找到有路径，路径为有效
@@ -359,9 +357,14 @@ public class ImportActivity extends Activity {
                                     }*/
                                     //todo:自定义--对子文件夹资源中全部的资源后缀名6种进行检查，如图片，jpg，png，jpeg;视频：MP4，avi，3gp。
                                     File[] son_ufss = son_ufs.listFiles();
+                                    LogUtils.e(son_ufss.length);
+                                    if(son_ufss.length == 0 ){
+                                        returnOriginalActivity();
+                                        break;
+                                    }
                                     if (son_ufss != null) {
                                          for (File sons_ufss : son_ufss) {//A-B-C文件夹里单个资源的对象
-
+                                             LogUtils.e(sons_ufss);
                                             if (!(sons_ufss.getName().endsWith("jpg") ||sons_ufss.getName().endsWith("jpeg")
                                                     ||sons_ufss.getName().endsWith("png")||sons_ufss.getName().endsWith("mp4")
                                                     || sons_ufss.getName().endsWith("avi") || sons_ufss.getName().endsWith("3gp"))) {
@@ -372,6 +375,10 @@ public class ImportActivity extends Activity {
                                          if (!mMatch) {//本次break退出外循环
                                              break;
                                          }
+                                    }else{
+                                        returnOriginalActivity();
+                                        LogUtils.e(mMatch);
+                                        break;
                                     }
                                 }
                             }

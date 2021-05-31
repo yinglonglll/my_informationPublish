@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
@@ -89,6 +90,15 @@ public class MyApplication extends Application {
     private int forMat2 = 0;
     private int forMat3 = 0;
     private int forMat4 = 0;
+
+    private boolean MondayState = true;//从控件中获取定时星期的确定。默认全为有效。
+    private boolean TuesdayState = true;
+    private boolean WednesdayState = true;
+    private boolean ThursdayState = true;
+    private boolean FridayState = true;
+    private boolean SaturdayState = true;
+    private boolean SundayState = true;
+
     //private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
 
 
@@ -108,6 +118,10 @@ public class MyApplication extends Application {
     private Runnable runnable3;
     private Runnable runnable4;
 
+    /**
+     * 单例初始化；5月27日编写此处
+     */
+    public static Calendar cld;
 
     @Override
     public void onCreate() {
@@ -117,8 +131,65 @@ public class MyApplication extends Application {
 
         //greenDao全局配置,只希望有一个数据库操作对象
         DaoManager.getInstance();
+        cld = Calendar.getInstance();
+
     }
 
+    public boolean isMondayState() {
+        return MondayState;
+    }
+
+    public void setMondayState(boolean mondayState) {
+        MondayState = mondayState;
+    }
+
+    public boolean isTuesdayState() {
+        return TuesdayState;
+    }
+
+    public void setTuesdayState(boolean tuesdayState) {
+        TuesdayState = tuesdayState;
+    }
+
+    public boolean isWednesdayState() {
+        return WednesdayState;
+    }
+
+    public void setWednesdayState(boolean wednesdayState) {
+        WednesdayState = wednesdayState;
+    }
+
+    public boolean isThursdayState() {
+        return ThursdayState;
+    }
+
+    public void setThursdayState(boolean thursdayState) {
+        ThursdayState = thursdayState;
+    }
+
+    public boolean isFridayState() {
+        return FridayState;
+    }
+
+    public void setFridayState(boolean fridayState) {
+        FridayState = fridayState;
+    }
+
+    public boolean isSaturdayState() {
+        return SaturdayState;
+    }
+
+    public void setSaturdayState(boolean saturdayState) {
+        SaturdayState = saturdayState;
+    }
+
+    public boolean isSundayState() {
+        return SundayState;
+    }
+
+    public void setSundayState(boolean sundayState) {
+        SundayState = sundayState;
+    }
 
     public String getFirst_machineCodeOut() {
         return first_machineCodeOut;

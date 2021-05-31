@@ -29,12 +29,12 @@
         android:textSize="15dp"
         android:onClick="machineIdOutBtn"
         android:layout_height="wrap_content"/>
-<!--    <Button-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:text="删除机器码"-->
-<!--        android:textSize="15dp"-->
-<!--        android:onClick="deleteMachineIdOutBtn"-->
-<!--        android:layout_height="wrap_content"/>-->
+    <!--<Button
+        android:layout_width="match_parent"
+        android:text="定时开关机"
+        android:textSize="15dp"
+        android:onClick="SetPowerOnOffBtn"
+        android:layout_height="wrap_content"/>-->
     <Button
         android:layout_width="match_parent"
         android:text="退出"

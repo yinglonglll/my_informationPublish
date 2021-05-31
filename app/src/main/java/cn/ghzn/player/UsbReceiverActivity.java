@@ -48,7 +48,6 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
         //2.进入import，加入加载页面，执行复制U盘程序，复制完成后判断是否成功复制(true跳转playerActivity，false跳转mainActivity；做出提示)
         //3.进入playerActivity，执行分屏逻辑和动态imageView逻辑；执行完后才退出加载页面，；
         //先执行完程序，如果没问题才跳转到对应的player布局界面
-
         try {
             UsbUtils.checkUsb(context);
         } catch (Exception e) {
