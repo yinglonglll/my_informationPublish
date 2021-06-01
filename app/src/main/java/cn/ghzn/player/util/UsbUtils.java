@@ -146,7 +146,7 @@ public class UsbUtils {
                 //todo：U盘导入后，先搜寻授权文件-验证mac-分析内容，符合则真状态，不符则假状态;授权文件以","为区分
                 if (FileUtils.readTxt(updateLicence.getAbsolutePath()).contains(",")) {//检验U盘授权文件的合法性
                     Log.d(TAG, "this is 合法授权文件");
-                    Toast.makeText(context, "this is 合法授权文件", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(context, "this is 合法授权文件", Toast.LENGTH_SHORT).show();
                     FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);//会自动覆盖的复制方法
                     //第一次授权时，将授权码复制到本地，后续检查授权信息都是依据数据库的授权信息，而不是本地的授权码。仅为备份
 
@@ -202,29 +202,36 @@ public class UsbUtils {
                                 app.getDevice().setAuthority_time(app.getAuthority_time());
                                 app.getDevice().setAuthority_expired(app.getAuthority_expired());
 
-                                if(app.getSource() == null){
-                                    app.setSource(new Source());
-                                    app.getSource().setRelative_time(app.getRelative_time());
-                                    app.getSource().setFirst_time(app.getFirst_time());
-                                    app.getSource().setTime_difference(app.getTime_difference());
-                                    daoManager.getSession().getSourceDao().insert(app.getSource());
+                                //第一次播放时，因为没有上一次播放记录，因此无法实现一次播放必须比上一次播放时间晚的判断要求，故在此允许播放时间范围为授权时间内
+                                if(app.getCreateTime() > app.getEnd_time() || app.getCreateTime() < app.getStart_time()){
+                                    Toast.makeText(context,"第一次授权操作错误，请根据手册进行操作",Toast.LENGTH_SHORT).show();
+                                    //若失败则恢复原先的初始状态
+                                    app.setAuthority_state(false);
+                                    app.setAuthority_time("无");
+                                    app.setAuthority_expired("无");
                                 }else{
-                                    app.getSource().setRelative_time(app.getRelative_time());
-                                    daoManager.getSession().getSourceDao().update(app.getSource());
+                                    //若成功则存储该授权信息并跳转
+                                    if(app.getSource() == null){
+                                        app.setSource(new Source());
+                                        app.getSource().setRelative_time(app.getRelative_time());
+                                        app.getSource().setFirst_time(app.getFirst_time());
+                                        app.getSource().setTime_difference(app.getTime_difference());
+                                        daoManager.getSession().getSourceDao().insert(app.getSource());
+                                    }else{
+                                        app.getSource().setRelative_time(app.getRelative_time());
+                                        daoManager.getSession().getSourceDao().update(app.getSource());
+                                    }
+                                    usbTurnActivity(context, path);
                                 }
+                                //存储信息
+                                Log.d(TAG,"this is 第一次导入时的存储device表");
                                 if(app.getDevice() == null){
                                     app.setDevice(new Device());
                                     daoManager.getSession().getDeviceDao().insert(app.getDevice());
                                 }else{
                                     daoManager.getSession().getDeviceDao().update(app.getDevice());
                                 }
-                                //app.setAuthorityName("已授权");
-                                //第一次播放时，因为没有上一次播放记录，因此无法实现一次播放必须比上一次播放时间晚的判断要求，故在此允许播放时间范围为授权时间内
-                                if(app.getCreateTime() > app.getEnd_time() || app.getCreateTime() < app.getStart_time()){
-                                    Toast.makeText(context,"第一次授权操作错误，请根据手册进行操作",Toast.LENGTH_SHORT).show();
-                                }else{
-                                    usbTurnActivity(context, path);
-                                }
+
                             } else {////正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 //app.getRelative_time() > app.getCreate_time() ||多余的相对时间判断
                                 LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题

@@ -38,8 +38,6 @@ import static java.lang.Thread.sleep;
 
 public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误，非activity作用，请注意！！！
     private static final String TAG = "UsbReceiverActivity";
-    private String[] mMacStrings;
-    //    private static boolean mActionFlag = false;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -54,7 +52,7 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
             e.printStackTrace();
         }
         Log.d(TAG,"this is test for ImportState");
-        LogUtils.e(TAG,app.isImportState());
+        LogUtils.e(app.isImportState());
         if (app.isImportState()) {//导入USB类型是的是U盘情况下
             Log.d(TAG,"action === " + intent.getAction());
             if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
