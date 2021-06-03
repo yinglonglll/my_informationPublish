@@ -86,7 +86,7 @@ public class UsbHelper {
 
     /**
      * 读取 USB设备列表
-     *
+     *tip：读取USB设备列表需要重新挂载以获取设备信息，故注意这个细节。
      * @return USB设备列表
      */
     public UsbMassStorageDevice[] getDeviceList() {

@@ -47,26 +47,38 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
         //3.进入playerActivity，执行分屏逻辑和动态imageView逻辑；执行完后才退出加载页面，；
         //先执行完程序，如果没问题才跳转到对应的player布局界面
         try {
-            UsbUtils.checkUsb(context);
+            if(!app.isReadDeviceState()){//来自ReadDevice的广播就屏蔽，且默认为false；
+                Log.d(TAG,"this is 判断USB设备是否为U盘的方法");
+                UsbUtils.checkUsb(context);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d(TAG,"this is test for ImportState");
         LogUtils.e(String.valueOf(app));
         if(!"null".equals(String.valueOf(app))){
             if (app.isImportState()) {//导入USB类型是的是U盘情况下
                 Log.d(TAG,"action === " + intent.getAction());
                 if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
-
                     String path = intent.getDataString();
                     Log.d(TAG,"this is path" + path);
-                    UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
+
+                    //todo：屏蔽来自UsbHelper的readDevice()方法带来的重复挂载广播。判断是来自ReadDevice的广播就屏蔽。
+                    if(!app.isReadDeviceState()){
+                        UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
+                    }
+                    app.setReadDeviceState(false);//恢复默认的非屏蔽状态
+                    Log.d(TAG,"this is 进行挂载状态时：" + app.isReadDeviceState());//正常为false
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
+                    if(!app.isReadDeviceState()){
+                        app.setImportState(false);
+                    }
+                    Log.d(TAG,"this is 取消挂载状态时：" + app.isReadDeviceState());//正常为false
                     Log.d(TAG,"U盘拔出");
-                    app.setImportState(false);
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
+                    if(!app.isReadDeviceState()){
+                        app.setImportState(false);
+                    }
                     Log.d(TAG,"U盘完全拔出");
-                    app.setImportState(false);
                 }
             }
         }

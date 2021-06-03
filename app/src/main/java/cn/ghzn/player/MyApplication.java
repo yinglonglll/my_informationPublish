@@ -99,6 +99,8 @@ public class MyApplication extends Application {
     private boolean SaturdayState = true;
     private boolean SundayState = true;
 
+    private boolean readDeviceState = false;
+
     //private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
 
 
@@ -133,6 +135,14 @@ public class MyApplication extends Application {
         DaoManager.getInstance();
         cld = Calendar.getInstance();
 
+    }
+
+    public boolean isReadDeviceState() {
+        return readDeviceState;
+    }
+
+    public void setReadDeviceState(boolean readDeviceState) {
+        this.readDeviceState = readDeviceState;
     }
 
     public boolean isMondayState() {

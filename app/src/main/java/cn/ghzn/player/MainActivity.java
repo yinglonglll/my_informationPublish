@@ -971,12 +971,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (app.isImportState()) {
             //todo:实现将机器码文件生成到U盘根目录下
+            Log.d(TAG,"this is ImportState :" + app.isImportState());
             Log.d(TAG,"this is 将机器码导出到U盘中");
             mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);
             mMachineCodeSaveFile = new File(app.getExtraPath(),MACHINE_CODE_NAME);
 
             UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
             for(UsbMassStorageDevice device : devices){
+                app.setReadDeviceState(true);//readDevice方法会先发送UNMOUNTED，再发送MOUNTED来获取设备信息。会对广播进行干扰，现进行标屏蔽。
                 List<UsbFile> usbFiles = usbHelper.readDevice(device);
                 if(usbFiles==null)break;
                 Log.e(TAG, "find device:"+ device.getUsbDevice().getDeviceName());
