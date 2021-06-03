@@ -115,8 +115,6 @@ public class UsbUtils {
 
     public static void checkUsbFileForm(Context context, String path) {
         if (path != null || app.isImportState()) {//接入的不是U盘则不会进行读取
-            Log.d(TAG, "U盘接入");
-
             Toast.makeText(context, "U盘接入，路径为：", Toast.LENGTH_SHORT).show();
             Toast.makeText(context, path, Toast.LENGTH_SHORT).show();
             Log.d(TAG, path);
@@ -124,14 +122,14 @@ public class UsbUtils {
                 return;
             }
             app.setExtraPath(path.replace("file://", "") + "/");//去除uri前缀
-            //app.setExtraPath(path.replace("file://", "") + "/Android/data/cn.ghzn.player/files/");//去除uri前缀,这是自动生成的路径。
             Log.d(TAG, "this is extraPath" + app.getExtraPath());
+            //app.setExtraPath(path.replace("file://", "") + "/Android/data/cn.ghzn.player/files/");//去除uri前缀,这是自动生成的路径。
+
 
             //todo:对搜寻授权码进行更新检查，保持最新的授权码
             File updateLicence = new File(app.getExtraPath() + LICENCE_NAME);
             if (updateLicence.exists()) {
                 Log.d(TAG, "this is 授权码存在 :" + updateLicence.getAbsolutePath());
-
                 File deleteLicence = new File(app.getLicenceDir() + LICENCE_NAME);
                 if (deleteLicence.exists()) {
                     deleteLicence.delete();
@@ -142,25 +140,28 @@ public class UsbUtils {
                     app.setLicenceDir(getFilePath(context, Constants.STOREPATH) + "/");
                     Log.d(TAG, "this is app.getLicenceDir() :" + app.getLicenceDir());
                 }
+
                 //若是非法授权文件，以“,”区分，则直接放弃读取，不执行覆盖。
                 //todo：U盘导入后，先搜寻授权文件-验证mac-分析内容，符合则真状态，不符则假状态;授权文件以","为区分
                 if (FileUtils.readTxt(updateLicence.getAbsolutePath()).contains(",")) {//检验U盘授权文件的合法性
-                    Log.d(TAG, "this is 合法授权文件");
-                    //Toast.makeText(context, "this is 合法授权文件", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG,"updateLicence.getAbsolutePath()" + updateLicence.getAbsolutePath());
                     FileUtils.copyFile(updateLicence.getAbsolutePath(), app.getLicenceDir() + LICENCE_NAME);//会自动覆盖的复制方法
                     //第一次授权时，将授权码复制到本地，后续检查授权信息都是依据数据库的授权信息，而不是本地的授权码。仅为备份
 
                     //导出的机器码为：AuthorityUtils.digest(MacUtils.getMac(mContext))
                     mMacStrings = FileUtils.readTxt(app.getLicenceDir() + LICENCE_NAME).split(",");
-                    try {
+
                         if (mMacStrings[0].equals(digest(MacUtils.getMac(context)))) {//1.mac值相对应；2.加密的授权时间的加密内容统一为88个字数限制，加密规则(也可以采用两者mac值长度是否相等判断)
                             //digest(MacUtils.getMac(context))本机的MAC地址值
                             Log.d(TAG, "this is 合法文件中mac验证身份正确");
                             Log.d(TAG, "this is mMacStrings[0] :" + mMacStrings[0]);
                             Log.d(TAG, "this is digest(MacUtils.getMac(context))" + digest(MacUtils.getMac(context)));
-                            Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(MyApplication.getmContext()));
 
-                            //Toast.makeText(context, "this is 合法文件中mac验证身份正确", Toast.LENGTH_SHORT).show();
+                            if(null == AuthorityUtils.getAuthInfo(mMacStrings[1])){
+                                Log.d(TAG,"this is 授权码时间部分错误");
+                                Toast.makeText(context,"授权码错误",Toast.LENGTH_SHORT).show();
+                                return;//先确保时间组成正确
+                            }
 
                             app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
                             app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
@@ -269,10 +270,6 @@ public class UsbUtils {
                             Log.d(TAG,"this is MacUtils.getMac(mContext)" + MacUtils.getMac(app.getmContext()));
                             Toast.makeText(context, "this is 非法身份验证", Toast.LENGTH_SHORT).show();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        //Toast.makeText(context, "this is 合法文件中授权时间加密信息错误", Toast.LENGTH_SHORT).show();
-                    }
                 } else {
                     Log.d(TAG, "this is 非法授权文件");
                     Toast.makeText(context, "this is 非法授权文件，无进行复制授权文件", Toast.LENGTH_SHORT).show();

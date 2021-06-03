@@ -52,22 +52,23 @@ public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误
             e.printStackTrace();
         }
         Log.d(TAG,"this is test for ImportState");
-        LogUtils.e(app.isImportState());
-        if (app.isImportState()) {//导入USB类型是的是U盘情况下
-            Log.d(TAG,"action === " + intent.getAction());
-            if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
+        LogUtils.e(String.valueOf(app));
+        if(!"null".equals(String.valueOf(app))){
+            if (app.isImportState()) {//导入USB类型是的是U盘情况下
+                Log.d(TAG,"action === " + intent.getAction());
+                if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
 
-                String path = intent.getDataString();
-                Log.d(TAG,"this is path" + path);
-                UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
-            }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
-                Log.d(TAG,"U盘拔出");
-                app.setImportState(false);
-            }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
-                Log.d(TAG,"U盘完全拔出");
-                app.setImportState(false);
+                    String path = intent.getDataString();
+                    Log.d(TAG,"this is path" + path);
+                    UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
+                }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
+                    Log.d(TAG,"U盘拔出");
+                    app.setImportState(false);
+                }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
+                    Log.d(TAG,"U盘完全拔出");
+                    app.setImportState(false);
+                }
             }
         }
-
     }
 }

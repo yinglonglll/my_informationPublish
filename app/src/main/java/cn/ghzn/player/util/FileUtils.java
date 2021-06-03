@@ -48,9 +48,6 @@ public class FileUtils {
     public static boolean copyFile(String source, String target){//对文件进行赋值，不能直接以目录为参数进行复制目录内所有参数；
         try {
             File targetFile = new File(target);
-//            LogUtils.e(targetFile);
-//            LogUtils.e(targetFile.getParentFile());
-//            LogUtils.e(targetFile.getParentFile().exists());
 
             if(!targetFile.getParentFile().exists()){//对单个文件复制，先判断父文件夹是否存在，要存在才一起复制过去
                 targetFile.getParentFile().mkdirs();//每次new文件时，都判断是否成功建立，不成再建立一次
@@ -67,8 +64,6 @@ public class FileUtils {
             output.close();
             input.close();
             return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,12 +130,17 @@ public class FileUtils {
         String txtStr = "";
         try {
             File txtFile = new File(path);
-            InputStreamReader isr = new InputStreamReader(new FileInputStream(txtFile), "GBK");//UTF-8
-            BufferedReader br = new BufferedReader(isr);
+            if(txtFile.isDirectory()){
+                Log.d("TestFile", "The File doesn't not exist.");
+            }else{
+                InputStreamReader isr = new InputStreamReader(new FileInputStream(txtFile), "GBK");//UTF-8
+                BufferedReader br = new BufferedReader(isr);
 
-            String mimeTypeLine = null ;
-            while ((mimeTypeLine = br.readLine()) != null) {
-                txtStr = txtStr + mimeTypeLine;//将缓存池的逐行衔接到字符串上
+                String mimeTypeLine = null ;
+                while ((mimeTypeLine = br.readLine()) != null) {
+                    txtStr = txtStr + mimeTypeLine;//将缓存池的逐行衔接到字符串上
+                }
+                isr.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
