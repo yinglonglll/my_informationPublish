@@ -56,35 +56,40 @@ public class ImportActivity extends Activity {
         Intent intent = getIntent();//获取意图
         String extraPath = intent.getExtras().getString("extra_path");
         Log.d(TAG,"extraPath的值为：" + extraPath);
-        copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
 
-        LogUtils.e(mMatch);
-        if (mMatch) {//需找到有路径，路径为有效
-            //fixme:逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
-            if (app.getRunnable1() != null) {
-                app.getHandler().removeCallbacks(app.getRunnable1());
-            }
-            if (app.getRunnable2() != null) {
-                app.getHandler().removeCallbacks(app.getRunnable2());
-            }
-            if (app.getRunnable3() != null) {
-                app.getHandler().removeCallbacks(app.getRunnable3());
-            }
-            if (app.getRunnable4() != null) {
-                app.getHandler().removeCallbacks(app.getRunnable4());
-            }
-            app.setPlayFlag(0);//图片线程：导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
-            app.setMediaPlayState(false);//视频监听：不知如何取消视频监听，但通过状态量，使监听后执行无效功能
+        //todo:授权状态下，逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
+        if(app.isAuthority_state()){//处于授权状态下才允许资源文件的更新
+            copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
+            LogUtils.e(mMatch);//打印复制结果
+            if (mMatch) {//需找到有路径，路径为有效
 
-            if (app.getCurrentActivity() != null) {//即导入分屏资源成功
-                LogUtils.e(TAG,app.getCurrentActivity());
-                app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
-                Log.d(TAG,"this is kill curActivity");
+                if (app.getRunnable1() != null) {
+                    app.getHandler().removeCallbacks(app.getRunnable1());
+                }
+                if (app.getRunnable2() != null) {
+                    app.getHandler().removeCallbacks(app.getRunnable2());
+                }
+                if (app.getRunnable3() != null) {
+                    app.getHandler().removeCallbacks(app.getRunnable3());
+                }
+                if (app.getRunnable4() != null) {
+                    app.getHandler().removeCallbacks(app.getRunnable4());
+                }
+                app.setPlayFlag(0);//图片线程：导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
+                app.setMediaPlayState(false);//视频监听：不知如何取消视频监听，但通过状态量，使监听后执行无效功能
+
+                if (app.getCurrentActivity() != null) {//即导入分屏资源成功
+                    LogUtils.e(TAG,app.getCurrentActivity());
+                    app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+                    Log.d(TAG,"this is kill curActivity");
+                }
+                turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
+            } else {
+                Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹");//禁止从U盘导入的跳转，如果文件夹为空，那就意味着不存在不对的情况。
+                Toast.makeText(this,"您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹",Toast.LENGTH_SHORT).show();
             }
-            turnActivity(mTarget);//对命名格式，文件夹数量进行检错才跳转
-        } else {
-            Log.d(TAG,"this is 您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹");//禁止从U盘导入的跳转，如果文件夹为空，那就意味着不存在不对的情况。
-            Toast.makeText(this,"您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹",Toast.LENGTH_SHORT).show();
+        }else{
+            Log.d(TAG,"this is 此时处于非授权状态下，无法更新资源文件");
         }
         finish();
     }

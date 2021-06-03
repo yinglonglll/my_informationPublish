@@ -714,14 +714,22 @@ public class TwoSplitViewActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        //Log.d(TAG,"this is onPause()");
-        //app.setPlayFlag(0);
-        //app.setMediaPlayState(false);
+        //实现视频暂停，图片不跳转。
+        app.setPlayFlag(1);
+
+        app.getVideoView_1().pause();
+        app.getVideoView_2().pause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        //实现视频恢复，图片播放
+        app.setPlayFlag(0);
+        playSonImage(arrayList1,arrayList2);
+
+        app.getVideoView_1().resume();
+        app.getVideoView_2().resume();
     }
 
     @Override

@@ -304,14 +304,20 @@ public class OneSplitViewActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        //Log.d(TAG,"this is onPause()");
-        //app.setMediaPlayState(false);
-        //app.setPlayFlag(0);
+        //实现视频暂停，图片不跳转。
+        app.setPlayFlag(1);
+
+        app.getVideoView_1().pause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        //实现视频恢复，图片播放
+        app.setPlayFlag(0);
+        playSonImage();
+
+        app.getVideoView_1().resume();
         //Log.d(TAG,"this is onResume()");
     }
 

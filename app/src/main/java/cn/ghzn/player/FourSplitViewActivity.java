@@ -278,8 +278,12 @@ public class FourSplitViewActivity extends Activity {
 
             @Override
             public void onLongPress(MotionEvent e) {
-                Log.d(TAG, "OnLongPressTap");
-                AlertDialogs.show();
+                try {
+                    Log.d(TAG, "OnLongPressTap");
+                    AlertDialogs.show();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
             }
 
             @Override
@@ -548,16 +552,27 @@ public class FourSplitViewActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        //Log.d(TAG,"this is onPause()");
-        //app.setPlayFlag(0);
-        //app.setMediaPlayState(false);
+        //实现视频暂停，图片不跳转。
+        app.setPlayFlag(1);
+
+        app.getVideoView_1().pause();
+        app.getVideoView_2().pause();
+        app.getVideoView_3().pause();
+        app.getVideoView_4().pause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         //Log.d(TAG,"this is onResume()");
+        //实现视频恢复，图片播放
+        app.setPlayFlag(0);
+        playSonImage(arrayList1,arrayList2,arrayList3,arrayList4);
 
+        app.getVideoView_1().resume();
+        app.getVideoView_2().resume();
+        app.getVideoView_3().resume();
+        app.getVideoView_4().resume();
     }
 
     @Override

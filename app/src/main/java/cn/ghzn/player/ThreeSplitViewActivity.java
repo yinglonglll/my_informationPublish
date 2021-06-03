@@ -120,7 +120,7 @@ public class ThreeSplitViewActivity extends Activity {
                 }
             });
             IntentFilter filter = new IntentFilter();
-            filter.addAction("0");
+            filter.addAction("0");//执行播放方法原理：由于视频处于暂停，即处于忙线状态，重播不会对现有视频进行干扰，而此时图片是退出忙线状态的，故此时执行此方法仅对图片有效
             registerReceiver(mBroadcastReceiver,filter);//注册广播
 
             playSonImage(arrayList1,arrayList2,arrayList3);
@@ -858,6 +858,12 @@ public class ThreeSplitViewActivity extends Activity {
     protected void onPause() {
         super.onPause();
         Log.d(TAG,"this is onPause()");
+        //实现视频暂停，图片不跳转。
+        app.setPlayFlag(1);
+
+        app.getVideoView_1().pause();
+        app.getVideoView_2().pause();
+        app.getVideoView_3().pause();
         //app.setPlayFlag(0);//导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
         //app.setMediaPlayState(false);
     }
@@ -865,7 +871,15 @@ public class ThreeSplitViewActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        //Log.d(TAG,"this is onResume()");
+        //实现视频恢复，图片播放
+        app.setPlayFlag(0);
+        playSonImage(arrayList1,arrayList2,arrayList3);
+
+        app.getVideoView_1().resume();
+        app.getVideoView_2().resume();
+        app.getVideoView_3().resume();
+
+        Log.d(TAG,"this is onResume()");
     }
 
     @Override

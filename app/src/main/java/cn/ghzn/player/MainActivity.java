@@ -224,15 +224,32 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG,"app.getRelative_time() :" + app.getRelative_time());
             Log.d(TAG,"app.getCreateTime()>>> :" + app.getCreateTime());
 
-            if (app.getCreateTime() > app.getSource().getCreate_time()
+            if (app.getCreateTime() > app.getCreate_time()////保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前//app.getSource().getCreate_time()
                     && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
-                    && app.getRelative_time() > app.getCreateTime()) {
+                    && app.getRelative_time() > app.getCreateTime()) {//1.当前时间一定大于上一次的当前时间；2.第一次导入资源时间与当前时间差<授权时间段；3.设置相对过期时间，当前时间过了就不允许播放
                 app.getDevice().setAuthority_state(true);
                 app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
                 turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
             } else {
                 Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
                 app.getDevice().setAuthority_state(false);
+
+                if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
+                    app.setAuthorityName("未授权");
+                } else {
+                    Log.d(TAG,"this is enter 刷新授权状态");
+                    if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
+                        app.setAuthorityName("已授权");
+                    } else {
+                        app.setAuthorityName("授权过期");
+                        app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
+                    }
+                }
+                //daoManager.getSession().getDeviceDao().update(app.getDevice());
+
+                mAuthorityState.setText("授权状态：" + app.getAuthorityName());
+                mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
+                mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
             }
             daoManager.getSession().getDeviceDao().update(app.getDevice());
 //            daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
@@ -283,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
                         app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
                     }
                 }
+                daoManager.getSession().getDeviceDao().update(app.getDevice());
+
                 mAuthorityState.setText("授权状态：" + app.getAuthorityName());
                 mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
                 mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
@@ -327,10 +346,12 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG,"this is app.getRelative_time()" + app.getRelative_time());
 
+
         if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
             app.setAuthorityName("未授权");
         } else {
-            Log.d(TAG,"this is enter else");
+            Log.d(TAG,"this is enter 刷新授权状态");
+            LogUtils.e(app.isAuthority_state());
             if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
                 app.setAuthorityName("已授权");
             } else {
@@ -525,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
             case "1"://一分屏时，三种状态下触发对对应控件进行操作
                 if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
 
-                    //自定义广播对象，重写监听到后执行的程序
+                    //自定义广播对象，重写监听到后执行的程序，广播在任意的内容页上
                     app.setFinishState(true);
                     mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
                     sendBroadcast(mIntent_FinishFlag);//发送广播
@@ -773,7 +794,7 @@ public class MainActivity extends AppCompatActivity {
                             app.getVideoView_1().pause();
                             break;
                     }
-                    app.setPlayFlag(1);
+                    app.setPlayFlag(1);//实现图片暂停的地方在这儿
                 } else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"暂停按键为无效状态");
                     //Toast.makeText(this,"暂停按键为无效状态",Toast.LENGTH_SHORT).show();
