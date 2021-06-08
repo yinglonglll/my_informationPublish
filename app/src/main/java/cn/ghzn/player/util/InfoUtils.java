@@ -4,6 +4,10 @@ import android.content.Context;
 import android.nfc.Tag;
 import android.util.Log;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Random;
 
 import cn.ghzn.player.Constants;
@@ -16,6 +20,17 @@ public class InfoUtils {
 
     private static final String TAG = "InfoUtils";
     private static Context mContext;//上下文，需要填上下文就直接新建一个填入参数使用即可，如下文getMac
+
+
+    public static long dateString2Mills(String dateString){
+        Calendar calendar = Calendar.getInstance();
+        try {
+            calendar.setTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).parse(dateString));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return calendar.getTimeInMillis();
+    }
 
     public static String getRandomString(int length){
         String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

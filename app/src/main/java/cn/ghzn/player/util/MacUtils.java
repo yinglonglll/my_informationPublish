@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.Tag;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,12 +21,15 @@ import java.util.Enumeration;
 
 public class MacUtils {
 
+    private static final String TAG = "MacUtils";
+
     public static String getMac(Context context) {
 
         String strMac = null;
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             Log.e("=====", "6.0以下");
+            Log.d(TAG,"this is Build.VERSION.SDK_INT" + Build.VERSION.SDK_INT);
 //            Toast.makeText(context, "6.0以下", Toast.LENGTH_SHORT).show();
             strMac = getLocalMacAddressFromWifiInfo(context);
             return strMac;
@@ -36,7 +40,7 @@ public class MacUtils {
             strMac = getMacAddress(context);
             return strMac;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Log.e("=====", "7.0以上");
+            //Log.e("=====", "7.0以上");
             /*if (!TextUtils.isEmpty(getMacAddress())) {//避免有网络时获取ip地址作为mac地址，使得无网络获取的是本地MAC与有网络时IP地址不一致，需将其注释掉。注释后都获取MAC地址
                 Log.e("=====", "7.0以上1");
 //                Toast.makeText(context, "7.0以上1", Toast.LENGTH_SHORT).show();
@@ -46,6 +50,7 @@ public class MacUtils {
                 Log.e("=====", "7.0以上2");
 //                Toast.makeText(context, "7.0以上2", Toast.LENGTH_SHORT).show();
                 strMac = getMachineHardwareAddress();
+                Log.d(TAG,"this is strMac :" + strMac);
                 return strMac;
             } else {
                 Log.e("=====", "7.0以上3");

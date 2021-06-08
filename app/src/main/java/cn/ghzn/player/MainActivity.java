@@ -108,7 +108,10 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG,"this is 关闭了正在播放的分屏资源");
         }
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
-        if (app.getSource() != null) {
+        if (app.getSource() != null && app.getSource().getRelative_time() != 0) {
+            Log.d(TAG,"Rt" +app.getRelative_time());
+            Log.d(TAG,"Rt2" +app.getSource().getRelative_time());
+
             app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
         }
         initView();//找到layout控件，初始化主界面的信息
@@ -118,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
         initSource();//资源初始化放在如上
         Log.d(TAG,"this is app.getLicenceDir()>>>>1" + app.getLicenceDir());
         setDialog();
-        Log.d(TAG,"this is app.getLicenceDir()>>>>2" + app.getLicenceDir());
 
 
 
@@ -228,31 +230,21 @@ public class MainActivity extends AppCompatActivity {
                     && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
                     && app.getRelative_time() > app.getCreateTime()) {//1.当前时间一定大于上一次的当前时间；2.第一次导入资源时间与当前时间差<授权时间段；3.设置相对过期时间，当前时间过了就不允许播放
                 app.getDevice().setAuthority_state(true);
+                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+                sendBroadcast(RenovateIntent);
+
                 app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
                 turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
             } else {
                 Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
                 app.getDevice().setAuthority_state(false);
 
-                if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
-                    app.setAuthorityName("未授权");
-                } else {
-                    Log.d(TAG,"this is enter 刷新授权状态");
-                    if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
-                        app.setAuthorityName("已授权");
-                    } else {
-                        app.setAuthorityName("授权过期");
-                        app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
-                    }
-                }
-                //daoManager.getSession().getDeviceDao().update(app.getDevice());
-
-                mAuthorityState.setText("授权状态：" + app.getAuthorityName());
-                mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
-                mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
+                /*保证修改系统时间后打开，时间不对后刷新界面信息，每次刷新界面都在在MainActivity界面，所以重写方法放在MainActivity重写就好*/
+                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+                sendBroadcast(RenovateIntent);
             }
-            daoManager.getSession().getDeviceDao().update(app.getDevice());
-//            daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
+            //daoManager.getSession().getDeviceDao().update(app.getDevice());
+            //daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
         }
     }
 
@@ -266,6 +258,8 @@ public class MainActivity extends AppCompatActivity {
             daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
             LogUtils.e(app.getDevice().getAuthority_state());
         }
+
+
         initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
         LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
@@ -346,8 +340,13 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG,"this is app.getRelative_time()" + app.getRelative_time());
 
-
-        if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
+        //fixme：若使用者修改了系统时间超过授权到期时间，则从数据库取出的上次授权状态时不对的，需source表的信息进行判断，但device里无法判断；
+        app.setCreateTime(System.currentTimeMillis());
+        LogUtils.e(InfoUtils.dateString2Mills(app.getAuthority_expired()));
+        if(app.getCreateTime() > InfoUtils.dateString2Mills(app.getAuthority_expired()) && app.getRelative_time() != 0){//非首次的简易判断
+            app.setAuthorityName("授权过期");
+        }
+        /*if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
             app.setAuthorityName("未授权");
         } else {
             Log.d(TAG,"this is enter 刷新授权状态");
@@ -358,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                 app.setAuthorityName("授权过期");
                 app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
             }
-        }
+        }*/
 
         LogUtils.e(mDeviceName);
         Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
@@ -422,6 +421,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setDialog() {
+        Log.d(TAG,"this is setDialog()");
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         app.setView(this.getLayoutInflater().inflate(R.layout.activity_dialog, null));
         alertDialog.setView(app.getView());
@@ -450,6 +450,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLongPress(MotionEvent e) {
                 Log.d(TAG,"OnLongPressTap");
+                Log.d(TAG,"this is to done Dismiss()");
                 AlertDialogs.show();
 
                 //解决右键退出AlertDialogs的bug：The specified child already has a parent. You must call removeView() on the child's parent first. The specified child already has a parent. You must call removeView() on the child's parent first.
@@ -953,8 +954,8 @@ public class MainActivity extends AppCompatActivity {
                 } else if (app.getPlayFlag() == 1) {
                     app.setFinishState(true);
                     mIntent_FinishFlag.setAction(String.valueOf(app.isFinishState()));
-                    sendBroadcast(mIntent_FinishFlag);//发送广播
-                    app.setPlaySonImageFlag(false);
+                    sendBroadcast(mIntent_FinishFlag);//发送广播，关闭当前广播
+                    app.setPlaySonImageFlag(false);//禁止自动监听U盘挂载状态
 
                     setContentView(R.layout.activity_main);
                     initView();//找到layout控件

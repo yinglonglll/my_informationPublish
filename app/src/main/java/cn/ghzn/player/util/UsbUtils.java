@@ -163,7 +163,7 @@ public class UsbUtils {
                                 usbTurnActivity(context, path);
                                 return;//先确保时间组成正确
                             }
-
+                            Log.d(TAG,"this is 授权身份与授权码都正确");
                             app.setMap(AuthorityUtils.getAuthInfo(mMacStrings[1]));
                             app.setStart_time((long) app.getMap().get("startTime"));//存储授权时间信息；暂时不设定Date显示格式
                             app.setEnd_time((long) app.getMap().get("endTime"));
@@ -209,6 +209,7 @@ public class UsbUtils {
                                     Toast.makeText(context,"第一次授权操作错误，请根据手册进行操作",Toast.LENGTH_SHORT).show();
                                     //若失败则恢复原先的初始状态
                                     app.setAuthority_state(false);
+                                    app.setRelative_time(0);
                                     app.setAuthority_time("无");
                                     app.setAuthority_expired("无");
                                 }else{

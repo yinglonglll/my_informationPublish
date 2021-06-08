@@ -1,4 +1,4 @@
-package cn.ghzn.player;
+package cn.ghzn.player.receiver;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
@@ -36,7 +36,11 @@ import static cn.ghzn.player.util.AuthorityUtils.digest;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static java.lang.Thread.sleep;
 
-public class UsbReceiverActivity extends BroadcastReceiver {//此处命名错误，非activity作用，请注意！！！
+/**
+ * 此Usb接收器实现对设备接入的监听，获取绝对路径以方法对授权文件，资源文件进行处理。
+ */
+
+public class UsbReceiver extends BroadcastReceiver {
     private static final String TAG = "UsbReceiverActivity";
 
     @Override

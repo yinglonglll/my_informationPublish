@@ -46,6 +46,7 @@ public class FourSplitViewActivity extends Activity {
     private Runnable mRunnable;
     private GestureDetector mGestureDetector;
     private BroadcastReceiver mBroadcastReceiver;
+    private View mView;
 
     ArrayList arrayList1;//控件区1地址
     ArrayList arrayList2;//控件区2地址
@@ -253,7 +254,20 @@ public class FourSplitViewActivity extends Activity {
 
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+
+        if(app.getView() != null){//若重新导入资源，原先子类app.view调用的父类可能未移除，此后则无法长按出弹窗，需先移除才可赋值view，否则报需先移除父类的错误提示，保证父类parentView为空才能正常长按
+            ViewGroup parentView = (ViewGroup) app.getView().getParent();
+            if (parentView != null) {
+                LogUtils.e(parentView);
+                parentView.removeView(app.getView());
+                Log.d(TAG,"this is parentView.removeView(app.getView())");
+            }
+        }
         alertDialog.setView(app.getView());
+        /*ViewGroup parentView = (ViewGroup) app.getView().getParent();
+        LogUtils.e(parentView);*/
+
+        Log.d(TAG,"this is parentView.removeView(app.getView())111");
         final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
             @Override
@@ -263,7 +277,6 @@ public class FourSplitViewActivity extends Activity {
 
             @Override
             public void onShowPress(MotionEvent e) {
-
             }
 
             @Override
@@ -278,14 +291,21 @@ public class FourSplitViewActivity extends Activity {
 
             @Override
             public void onLongPress(MotionEvent e) {
+                Log.d(TAG, "this is OnLongPressTap_4");
+                /*if (app.getView() != null) {
+                    ViewGroup parentView = (ViewGroup) app.getView().getParent();
+                    if (parentView != null) {
+                        parentView.removeView(app.getView());
+                        Log.d(TAG,"this is to doing ：parentView.removeView(view)");
+                    }
+                }*/
                 try {
-                    Log.d(TAG, "OnLongPressTap");
                     AlertDialogs.show();
+                    Log.d(TAG,"this is AlertDialogs.show()");
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }
             }
-
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 return false;

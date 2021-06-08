@@ -16,6 +16,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -264,7 +265,16 @@ public class OneSplitViewActivity extends Activity {
 
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-//        View View = this.getLayoutInflater().inflate(R.layout.activity_dialog, null);
+
+        if(app.getView() != null){
+            ViewGroup parentView = (ViewGroup) app.getView().getParent();
+            if (parentView != null) {
+                LogUtils.e(parentView);
+                parentView.removeView(app.getView());
+                Log.d(TAG,"this is parentView.removeView(app.getView())");
+            }
+        }
+
         alertDialog.setView(app.getView());
         final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {

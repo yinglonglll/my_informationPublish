@@ -19,7 +19,7 @@ import static cn.ghzn.player.MainActivity.app;
  *     author : yinglonglll
  *     e-mail : xxx@xx
  *     time   : 2021/05/24
- *     desc   :
+ *     desc   :1.此USB接收器实现将文件复制到U盘根目录，无对授权文件，资源文件进行处理。
  *     version: 1.0
  * </pre>
  */

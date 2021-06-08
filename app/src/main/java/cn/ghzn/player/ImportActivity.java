@@ -89,17 +89,12 @@ public class ImportActivity extends Activity {
                 Toast.makeText(this,"您的ghznPlayer文件夹内格式不对或不存在ghznPlayer文件夹",Toast.LENGTH_SHORT).show();
             }
         }else{
-            Log.d(TAG,"this is 此时处于非授权状态下，无法更新资源文件");
+            if(app.getSource() == null){
+                app.setCreate_time(0);
+                Log.d(TAG,"this is 此时处于非授权状态下，无法更新资源文件");
+            }
         }
         finish();
-    }
-
-    public static Runnable getRunnable() {
-        return mRunnable;
-    }
-
-    public static int getFilesCount() {
-        return filesCount;
     }
 
     public static Map getMap1() {

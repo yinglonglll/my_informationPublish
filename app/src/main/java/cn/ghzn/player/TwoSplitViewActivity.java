@@ -18,6 +18,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -537,126 +538,19 @@ public class TwoSplitViewActivity extends Activity {
         }
     }
 
-//    private void playSonImage1(ArrayList arrayList){
-//        Recursive1[0] = arrayList;//后使用
-//        Log.d(TAG,"this is thread1");
-//
-//        if (listNum1 >= arrayList.size()) {
-//            listNum1 = 0;//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
-//            playSonImage1(Recursive1[0]);
-////            finish();
-//        } else {
-//            Log.d(TAG,"开始执行执行播放程序");
-//
-//            final File f = new File(arrayList.get(listNum1).toString());
-//            if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
-//                Log.d(TAG,"playSonImage1执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
-//
-//                videoView_1.setVisibility(View.GONE);
-//                imageView_1.setVisibility(View.VISIBLE);
-////                imageView_2.setVisibility(View.VISIBLE);
-////                videoView_2.setVisibility(View.INVISIBLE);
-//                imageView_1.setImageURI(Uri.fromFile(f));
-////                imageView_2.setImageURI(Uri.fromFile(f));
-////                Log.d(TAG,"this is Uri.fromFile(f)" + Uri.fromFile(f));
-//
-//                mHandler = new Handler();
-//                mHandler.postDelayed(new Runnable(){
-//                    @Override
-//                    public void run() {
-//                        Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
-//                        listNum1++;
-//                        playSonImage1(Recursive1[0]);
-//                    }
-//                },3000);//3秒后结束当前图片
-//
-//            } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
-//                Log.d(TAG,"playSonImage1执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
-//
-//                imageView_1.setVisibility(View.GONE);
-//                videoView_1.setVisibility(View.VISIBLE);
-////                videoView_2.setVisibility(View.VISIBLE);
-////                imageView_2.setVisibility(View.INVISIBLE);
-//                videoView_1.setVideoURI(Uri.fromFile(f));
-////                videoView_2.setVideoPath(f.getAbsolutePath());
-////                Log.d(TAG,"this is videoView_1.setVideoURI(Uri.fromFile(f)) ：" + Uri.fromFile(f));
-//                videoView_1.start();
-////                videoView_2.start();
-////                Log.d(TAG,"this is videoView_1.start()");
-//                videoView_1.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                    @Override
-//                    public void onCompletion(MediaPlayer mp) {//图片处run()是交集，而视频处监听重写方法不是完全交集；
-////                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-//                        listNum1++;
-//                        playSonImage1(Recursive1[0]);
-//                    }
-//                });
-////                videoView_2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-////                    @Override
-////                    public void onCompletion(MediaPlayer mp) {
-////                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-////
-////                        videoView_2.setVisibility(View.GONE);
-////                        listNum++;
-////                        playSonImage();
-////                    }
-////                });
-//            }
-//        }
-//    }
-//
-//    private void playSonImage2(ArrayList arrayList){
-//        Recursive2[0] = arrayList;
-//
-//        if (listNum2 >= arrayList.size()) {
-//            listNum2 = 0;//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
-//            playSonImage1(Recursive2[0]);
-////            finish();
-//        } else {
-//            Log.d(TAG,"开始执行执行播放程序");
-//            final File f = new File(arrayList.get(listNum2).toString());
-//            if ((f.getName().endsWith("jpg") || f.getName().endsWith("jpeg")||f.getName().endsWith("png"))) {
-//                Log.d(TAG,"playSonImage2执行图片播放，添加了图片：》》》》》" + f.getAbsolutePath());
-//
-//                videoView_2.setVisibility(View.GONE);
-//                imageView_2.setVisibility(View.VISIBLE);
-//                imageView_2.setImageURI(Uri.fromFile(f));
-//
-//                Handler handler = new Handler();
-//                handler.postDelayed(new Runnable(){
-//                    @Override
-//                    public void run() {
-////                        Looper.prepare();
-//                        Log.d(TAG,"执行延迟播放图片3秒，图片位于：" + f.getAbsolutePath());
-//                        listNum2++;
-//                        playSonImage2( Recursive2[0]);
-////                        Looper.loop();
-//                    }
-//                },3000);//3秒后结束当前图片
-//            } else if (f.getName().endsWith("mp4") || f.getName().endsWith("avi") || f.getName().endsWith("3gp")) {
-//                Log.d(TAG,"playSonImage2执行视频播放，添加了视频：《《《《《" + f.getAbsolutePath());
-//
-//                imageView_2.setVisibility(View.GONE);
-//                videoView_2.setVisibility(View.VISIBLE);
-//                videoView_2.setVideoURI(Uri.fromFile(f));
-////                Log.d(TAG,"this is videoView_2.setVideoURI(Uri.fromFile(f)); ：" + Uri.fromFile(f));
-////                LogUtils.e(videoView_2);
-//                videoView_2.start();
-////                Log.d(TAG,"this is videoView_2.start()");
-//                videoView_2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                    @Override
-//                    public void onCompletion(MediaPlayer mp) {
-////                        Log.d(TAG,"执行播放完视频，视频位于：" + f.getAbsolutePath());
-//                        listNum2++;
-//                        playSonImage2(Recursive2[0]);
-//                    }
-//                });
-//            }
-//        }
-//    }
 
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+
+        if(app.getView() != null){
+            ViewGroup parentView = (ViewGroup) app.getView().getParent();
+            if (parentView != null) {
+                LogUtils.e(parentView);
+                parentView.removeView(app.getView());
+                Log.d(TAG,"this is parentView.removeView(app.getView())");
+            }
+        }
+
         alertDialog.setView(app.getView());
         final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {

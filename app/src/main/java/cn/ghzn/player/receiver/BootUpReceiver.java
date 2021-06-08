@@ -12,7 +12,7 @@ import cn.ghzn.player.MainActivity;
  *     author : yinglonglll
  *     e-mail : xxx@xx
  *     time   : 2021/04/22
- *     desc   :
+ *     desc   :此接收器实现开机自启动应用
  *     version: 1.0
  * </pre>
  */
