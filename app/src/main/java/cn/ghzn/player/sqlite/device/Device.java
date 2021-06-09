@@ -31,7 +31,7 @@ public class Device {
     /**
      * 授权码
      */
-    private String authorization;
+    private String machine_code;
     /**
      * 系统软件版本号
      */
@@ -49,9 +49,9 @@ public class Device {
      */
     private int height;
 
-    @Generated(hash = 1016804166)
+    @Generated(hash = 1784932997)
     public Device(Long id, String device_name, String device_id, boolean authority_state,
-            String authority_time, String authority_expired, String authorization,
+            String authority_time, String authority_expired, String machine_code,
             String software_version, String firmware_version, int width, int height) {
         this.id = id;
         this.device_name = device_name;
@@ -59,7 +59,7 @@ public class Device {
         this.authority_state = authority_state;
         this.authority_time = authority_time;
         this.authority_expired = authority_expired;
-        this.authorization = authorization;
+        this.machine_code = machine_code;
         this.software_version = software_version;
         this.firmware_version = firmware_version;
         this.width = width;
@@ -98,11 +98,11 @@ public class Device {
     public void setAuthority_time(String authority_time) {
         this.authority_time = authority_time;
     }
-    public String getAuthorization() {
-        return this.authorization;
+    public String getMachine_code() {
+        return this.machine_code;
     }
-    public void setAuthorization(String authorization) {
-        this.authorization = authorization;
+    public void setMachine_code(String machine_code) {
+        this.machine_code = machine_code;
     }
 
     public String getSoftware_version() {

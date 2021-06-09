@@ -6,20 +6,14 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
-import android.icu.util.LocaleData;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -45,8 +39,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import cn.ghzn.player.receiver.USBBroadCastReceiver;
 import cn.ghzn.player.receiver.VarReceiver;
@@ -54,14 +46,12 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
-import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.InfoUtils;
 import cn.ghzn.player.util.UsbUtils;
 import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.Constants.MACHINE_CODE_NAME;
-import static cn.ghzn.player.MyApplication.cld;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static java.lang.Thread.sleep;
@@ -186,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         File localFile = new File("/storage/emulated/0/Android/data/cn.ghzn.player/files/ghzn/", "MachineCode.txt");
         try {
             FileWriter writer = new FileWriter(localFile);
-            writer.write(app.getAuthorization());//机器码导出
+            writer.write(app.getMachine_code());//机器码导出
             writer.flush();
             writer.close();
             return localFile;
@@ -258,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
             daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
             LogUtils.e(app.getDevice().getAuthority_state());
         }
-
 
         initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
@@ -334,7 +323,7 @@ public class MainActivity extends AppCompatActivity {
         LogUtils.e(app.isAuthority_state());
         Log.d(TAG,"this is initImportDeviced的getDevice().getAuthority_state()" + app.getDevice().getAuthority_state());
         Log.d(TAG,"this is initImportDeviced的app.isAuthority_state()" + app.isAuthority_state());
-        app.setAuthorization(device.getAuthorization());
+        app.setMachine_code(device.getMachine_code());
         app.setAuthority_time(device.getAuthority_time());
         app.setAuthority_expired(device.getAuthority_expired());
 
@@ -515,7 +504,7 @@ public class MainActivity extends AppCompatActivity {
         if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
         if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
         if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
-        device.setAuthorization(InfoUtils.getAuthorization());//此处Authorization实际存储的是机器码(mac值的md5加密值)，命名错误
+        device.setMachine_code(InfoUtils.getMachineCode());//此处Authorization实际存储的是机器码(mac值的md5加密值)，命名错误
 //        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
         device.setSoftware_version(InfoUtils.getSoftware_version());
         device.setFirmware_version(InfoUtils.FirmwareVersion());
@@ -1064,7 +1053,7 @@ public class MainActivity extends AppCompatActivity {
         FileOutputStream outStream = null;
         try {
             outStream = new FileOutputStream(mSaveFile);
-            outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+            outStream.write(app.getMachine_code().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
             outStream.close();
             outStream.flush();
             isSave = true;

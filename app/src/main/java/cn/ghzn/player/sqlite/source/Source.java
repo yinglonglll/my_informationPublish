@@ -27,7 +27,7 @@ public class Source {
      */
     private String son_source;
     /**
-     * 每次节目导入时间；用于
+     * 每次节目导入时间；
      */
     private long create_time = 0;
     /**
@@ -51,7 +51,7 @@ public class Source {
      */
     private long relative_time;
     /**
-     * 授权文件的绝对地址
+     * 授权文件的绝对地址--无用处
      */
     private String license_dir;
     @Generated(hash = 537373540)

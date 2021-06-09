@@ -5,21 +5,16 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.Data;
 import android.view.View;
 import android.widget.ImageView;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.source.Source;
-
-import static cn.ghzn.player.util.FileUtils.getFilePath;
 
 public class MyApplication extends Application {
 
@@ -34,7 +29,7 @@ public class MyApplication extends Application {
     private boolean authority_state = false;//授权状态_
     private String authority_time;//授权文件的授权开始时间戳转换为格式化的日期时间_
     private String authority_expired;//授权到期时间_
-    private String authorization = "";//授权码_
+    private String machine_code = "";//授权码_
     private String software_version = "";
     private String firmware_version = "";
     private int width ;
@@ -642,12 +637,12 @@ public class MyApplication extends Application {
         this.authority_time = authority_time;
     }
 
-    public String getAuthorization() {
-        return authorization;
+    public String getMachine_code() {
+        return machine_code;
     }
 
-    public void setAuthorization(String authorization) {
-        this.authorization = authorization;
+    public void setMachine_code(String machine_code) {
+        this.machine_code = machine_code;
     }
 
     public String getSoftware_version() {

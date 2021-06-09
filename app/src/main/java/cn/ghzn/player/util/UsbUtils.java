@@ -309,7 +309,13 @@ public class UsbUtils {
     }
 
     private static void setAuthorityTimes() {
-        app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
+        //app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
+        if(app.getSource()!=null){//有表
+            if(app.getSource().getFirst_time() == 0){//有表的第一次授权导入
+                app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
+            }
+        }
+
         app.setTime_difference(app.getEnd_time() - app.getStart_time());//记录两时间戳的差值
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 //                                df.setTimeZone(TimeZone.getTimeZone("GMT+00:00"));//加上这一行代码之后，将当前时间转化为世界时间，但不适用此处

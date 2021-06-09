@@ -1,7 +1,6 @@
 package cn.ghzn.player.util;
 
 import android.content.Context;
-import android.nfc.Tag;
 import android.util.Log;
 
 import java.text.ParseException;
@@ -11,7 +10,6 @@ import java.util.Locale;
 import java.util.Random;
 
 import cn.ghzn.player.Constants;
-import cn.ghzn.player.MainActivity;
 import cn.ghzn.player.MyApplication;
 
 import static cn.ghzn.player.MainActivity.*;
@@ -19,8 +17,6 @@ import static cn.ghzn.player.MainActivity.*;
 public class InfoUtils {
 
     private static final String TAG = "InfoUtils";
-    private static Context mContext;//上下文，需要填上下文就直接新建一个填入参数使用即可，如下文getMac
-
 
     public static long dateString2Mills(String dateString){
         Calendar calendar = Calendar.getInstance();
@@ -49,7 +45,7 @@ public class InfoUtils {
     }
 
     public static String getDeviceId() {
-        app.setDevice_Id(MacUtils.getMac(mContext) + System.currentTimeMillis());//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
+        app.setDevice_Id(MacUtils.getMac(MyApplication.getmContext()) + System.currentTimeMillis());//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
 
         return app.getDevice_Id();
 
@@ -59,9 +55,9 @@ public class InfoUtils {
         return app.getAuthority_time();
     }
 
-    public static String getAuthorization() {//机器码就是加密的mac值,在device表初始化的时候，就给app.setAuthorization()设定值了，也就是我们只需要get()即可。
+    public static String getMachineCode() {//机器码就是加密的mac值,在device表初始化的时候，就给app.setAuthorization()设定值了，也就是我们只需要get()即可。
         //当第一次生成时，直接生成，后续生成时，直接以第一次为准。
-        app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
+        app.setMachine_code(AuthorityUtils.digest(MacUtils.getMac(MyApplication.getmContext())));//重新生成一次mac加密设备ID作为授权码；
 //        if(app.getFirst_machineCodeOut() == null){//第一次导出机器码时，将其存储在数据中，后续导出的机器码都是以此为准
 //            app.setAuthorization(AuthorityUtils.digest(MacUtils.getMac(mContext)));//重新生成一次mac加密设备ID作为授权码；
 //            app.getDevice().setFirst_machineCodeOut(app.getAuthorization());//命名错误，这里的Authorization应改为MachineCode，每次获取的机器码存储在这儿
@@ -69,7 +65,7 @@ public class InfoUtils {
 //        }
 
         Log.d(TAG,"设置机器码码成功");
-        return app.getAuthorization();
+        return app.getMachine_code();
     }
 
     public static String getSoftware_version() {

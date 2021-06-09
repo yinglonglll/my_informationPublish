@@ -30,7 +30,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         public final static Property Authority_state = new Property(3, boolean.class, "authority_state", false, "AUTHORITY_STATE");
         public final static Property Authority_time = new Property(4, String.class, "authority_time", false, "AUTHORITY_TIME");
         public final static Property Authority_expired = new Property(5, String.class, "authority_expired", false, "AUTHORITY_EXPIRED");
-        public final static Property Authorization = new Property(6, String.class, "authorization", false, "AUTHORIZATION");
+        public final static Property Machine_code = new Property(6, String.class, "machine_code", false, "MACHINE_CODE");
         public final static Property Software_version = new Property(7, String.class, "software_version", false, "SOFTWARE_VERSION");
         public final static Property Firmware_version = new Property(8, String.class, "firmware_version", false, "FIRMWARE_VERSION");
         public final static Property Width = new Property(9, int.class, "width", false, "WIDTH");
@@ -56,7 +56,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
                 "\"AUTHORITY_STATE\" INTEGER NOT NULL ," + // 3: authority_state
                 "\"AUTHORITY_TIME\" TEXT," + // 4: authority_time
                 "\"AUTHORITY_EXPIRED\" TEXT," + // 5: authority_expired
-                "\"AUTHORIZATION\" TEXT," + // 6: authorization
+                "\"MACHINE_CODE\" TEXT," + // 6: machine_code
                 "\"SOFTWARE_VERSION\" TEXT," + // 7: software_version
                 "\"FIRMWARE_VERSION\" TEXT," + // 8: firmware_version
                 "\"WIDTH\" INTEGER NOT NULL ," + // 9: width
@@ -99,9 +99,9 @@ public class DeviceDao extends AbstractDao<Device, Long> {
             stmt.bindString(6, authority_expired);
         }
  
-        String authorization = entity.getAuthorization();
-        if (authorization != null) {
-            stmt.bindString(7, authorization);
+        String machine_code = entity.getMachine_code();
+        if (machine_code != null) {
+            stmt.bindString(7, machine_code);
         }
  
         String software_version = entity.getSoftware_version();
@@ -147,9 +147,9 @@ public class DeviceDao extends AbstractDao<Device, Long> {
             stmt.bindString(6, authority_expired);
         }
  
-        String authorization = entity.getAuthorization();
-        if (authorization != null) {
-            stmt.bindString(7, authorization);
+        String machine_code = entity.getMachine_code();
+        if (machine_code != null) {
+            stmt.bindString(7, machine_code);
         }
  
         String software_version = entity.getSoftware_version();
@@ -179,7 +179,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
             cursor.getShort(offset + 3) != 0, // authority_state
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4), // authority_time
             cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5), // authority_expired
-            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6), // authorization
+            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6), // machine_code
             cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7), // software_version
             cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // firmware_version
             cursor.getInt(offset + 9), // width
@@ -196,7 +196,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         entity.setAuthority_state(cursor.getShort(offset + 3) != 0);
         entity.setAuthority_time(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
         entity.setAuthority_expired(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
-        entity.setAuthorization(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
+        entity.setMachine_code(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
         entity.setSoftware_version(cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7));
         entity.setFirmware_version(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
         entity.setWidth(cursor.getInt(offset + 9));

@@ -5,8 +5,6 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.apkfuns.logutils.LogUtils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +16,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import cn.ghzn.player.MyApplication;
+
 import static android.os.Environment.MEDIA_MOUNTED;
 import static cn.ghzn.player.MainActivity.app;
 
@@ -26,7 +26,6 @@ public class FileUtils {
     private static File mFile;
     private static boolean isSave;
     private static File mSaveFile;
-    private static Context mContext;
 
     public static String getFilePath(Context context, String dir) {
         String directoryPath = "";
@@ -77,12 +76,12 @@ public class FileUtils {
             mSaveFile = new File(app.getExtraPath(),"Licence.txt");//U盘ghznPlayer文件夹内授权文件绝对地址的对象
             if (mSaveFile.exists()) {
                 Log.d(TAG, "U盘的机器码或授权码已存在，无法导出到U盘指定文件处");//如果U盘存在授权文件，我则不将机器码往U盘复制，否则复制到U盘
-                Toast.makeText(mContext,"机器码已存在",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MyApplication.getmContext(),"机器码已存在",Toast.LENGTH_SHORT).show();
             } else {
                 FileOutputStream outStream = null;
                 try {
                     outStream = new FileOutputStream(mSaveFile);
-                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.write(app.getMachine_code().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
                     outStream.close();
                     outStream.flush();
                     isSave = true;
@@ -103,7 +102,7 @@ public class FileUtils {
                 FileOutputStream outStream = null;
                 try {
                     outStream = new FileOutputStream(mSaveFile);
-                    outStream.write(app.getAuthorization().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                    outStream.write(app.getMachine_code().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
                     outStream.close();
                     outStream.flush();
                     isSave = true;
