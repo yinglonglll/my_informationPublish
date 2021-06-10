@@ -16,12 +16,15 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextClock;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.apkfuns.logutils.LogUtils;
@@ -39,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.Inflater;
 
 import cn.ghzn.player.receiver.USBBroadCastReceiver;
 import cn.ghzn.player.receiver.VarReceiver;
@@ -70,15 +74,19 @@ public class MainActivity extends AppCompatActivity {
     private TextView mConnectionState;
     private TextView mAuthorityState;
     private TextClock mLocalTime;
+    private TextView mAuthorityTime;
+    private TextView mAuthorityExpired;
+    private TextView mLeftMargin;
+    private TimePicker timePickerStart;
+    private TimePicker timePickerEnd;
+
+
     private BroadcastReceiver mBroadcastReceiver;
     private BroadcastReceiver mRenovateBroadcastReceiver;
     private OneSplitViewActivity mOneSplitViewActivity;
     private Intent mIntent_FinishFlag = new Intent();
-    private TextView mAuthorityTime;
-    private TextView mAuthorityExpired;
     private File mLicenceSaveFile;
     private File mMachineCodeSaveFile;
-    private TextView mLeftMargin;
     private UsbHelper usbHelper;
 
     @Override
@@ -525,6 +533,16 @@ public class MainActivity extends AppCompatActivity {
         mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
         mLocalTime = (TextClock) this.findViewById(R.id.localTime);
         mLeftMargin = (TextView) this.findViewById(R.id.leftMargin);
+        LogUtils.e(mLeftMargin);
+        LogUtils.e(timePickerStart);
+        /*此界面无timePicker，故不能使用this来找控件，会报空*/
+        timePickerStart = (TimePicker) this.findViewById(R.id.timePickerStart);
+        timePickerEnd = (TimePicker)this.findViewById(R.id.timePickerEnd);
+        LogUtils.e(timePickerStart);
+        /*timePickerStart.setIs24HourView(true);
+        timePickerEnd.setIs24HourView(true);*/
+
+
     }
 
     public void playBtn(View view) {
@@ -1068,7 +1086,42 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-    //todo：如下三方法直接删掉即可
+
+    public void SetPowerOnOffBtn(View view) {
+        LogUtils.e(timePickerStart);
+        View timeView = null;
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        /*获取指定弹窗并展示出来*/
+        timeView = this.getLayoutInflater().inflate(R.layout.activity_timepicker, null);
+        alertDialog.setView(timeView);
+        alertDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                return false;//禁止所以按键导致弹窗被取消
+            }
+        });
+        alertDialog
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //todo:获取timePickerStart和End的时间；
+                String startTime = timePickerStart.getHour() + ":" + timePickerStart.getMinute();
+                String endTime = timePickerEnd.getHour() + ":" + timePickerEnd.getMinute();
+                //todo：将获取的开始时间和结束时间 传给定时开关机去设定。也可以获取此时本地时分
+                Log.d(TAG,"this is startTime :" + startTime);
+                Log.d(TAG,"this is EndTime :" + endTime);
+            }
+        })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        final AlertDialog AlertDialogs = alertDialog.create();
+        AlertDialogs.show();
+
+    }
 
     /**
      * 对获取的开机时间，关机时间，当前时间进行逻辑修正：每次启动应用时，今日存储明日的开关机信息。例如：9点开机(设置，明日9点开机，今日18.00关机)
