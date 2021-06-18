@@ -2,6 +2,20 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.greenrobot.greendao' // apply plugin
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('D:/Company/资料/签名文件/sign/扬宇/platform.keystore')
+            storePassword '123456'
+            keyAlias 'platform'
+            keyPassword '123456'
+        }
+        debug {
+            storeFile file('D:/Company/资料/签名文件/sign/扬宇/platform.keystore')
+            storePassword '123456'
+            keyAlias 'platform'
+            keyPassword '123456'
+        }
+    }
     compileSdkVersion 30
 
     defaultConfig {

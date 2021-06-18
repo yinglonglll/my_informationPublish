@@ -46,9 +46,7 @@ public class InfoUtils {
 
     public static String getDeviceId() {
         app.setDevice_Id(MacUtils.getMac(MyApplication.getmContext()) + System.currentTimeMillis());//ID明文，其中getMac码需要wifi，网络状态和INTERNET的权限
-
         return app.getDevice_Id();
-
     }
 
     public static String getAuthorityTime() {
@@ -89,6 +87,8 @@ public class InfoUtils {
     public static int getHeight() {
 //        app.setHeight(0);
         return app.getHeight();
-
+    }
+    public static boolean getSingleSplitMode(){
+        return app.isSingle_split_mode();
     }
 }

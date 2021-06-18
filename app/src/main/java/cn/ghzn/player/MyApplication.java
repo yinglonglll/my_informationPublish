@@ -40,6 +40,7 @@ public class MyApplication extends Application {
     private long first_time;
     private long relative_time;
     private String first_machineCodeOut;
+    private boolean single_split_mode=false;
 
     //全局变量声明--赋一值全局用
     private Device mDevice;
@@ -61,10 +62,6 @@ public class MyApplication extends Application {
     private int listNum3 = 0;
     private int listNum4 = 0;
     private boolean setSourcePlayer = true;//对标MainActivity的98行的问题，暂时的缓和办法
-
-    //临时全局变量--暂无
-
-    //全局对象声明
     private Activity currentActivity;
     private android.os.Handler handler = new Handler();
 
@@ -73,31 +70,18 @@ public class MyApplication extends Application {
     private Intent intent;
     private String[] strings;
 
-
     //标志状态声明
     private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
     private boolean playSonImageFlag =true;
     private boolean finishState = false;//activity的结束广播状态
     private boolean importState = false;//U盘导入状态
     private boolean mediaPlayState = true;//作用：在activity销毁时，使监听内容无效化。
-    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；实际效果为对图片播放的控制
+    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；用于对图片播放的控制
     private int forMat1 = 0;//控件1的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
-    private int forMat2 = 0;
+    private int forMat2 = 0;//控件2的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
     private int forMat3 = 0;
     private int forMat4 = 0;
-
-    private boolean MondayState = true;//从控件中获取定时星期的确定。默认全为有效。
-    private boolean TuesdayState = true;
-    private boolean WednesdayState = true;
-    private boolean ThursdayState = true;
-    private boolean FridayState = true;
-    private boolean SaturdayState = true;
-    private boolean SundayState = true;
-
-    private boolean readDeviceState = false;
-
-    //private final DaoManager daoManager = DaoManager.getInstance();//不可这么使用,app类加载时，数据库还没加载
-
+    private boolean readDeviceState = false;//用于标志屏蔽UsbReceiver里对应readDevice方法产生额外的广播挂载，取消挂载操作
 
     //控件相关声明--分类优先级大于全局变量
     private String AuthorityName = "未连接";
@@ -124,12 +108,18 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
-        mContext.getExternalFilesDirs(null);
-
-        //greenDao全局配置,只希望有一个数据库操作对象
+        mContext.getExternalFilesDirs(null);//生成文件夹：SDCard/Android/data/你的应用的包名/files/
         DaoManager.getInstance();
         cld = Calendar.getInstance();
 
+    }
+
+    public boolean isSingle_split_mode() {
+        return single_split_mode;
+    }
+
+    public void setSingle_split_mode(boolean single_split_mode) {
+        this.single_split_mode = single_split_mode;
     }
 
     public boolean isReadDeviceState() {
@@ -138,62 +128,6 @@ public class MyApplication extends Application {
 
     public void setReadDeviceState(boolean readDeviceState) {
         this.readDeviceState = readDeviceState;
-    }
-
-    public boolean isMondayState() {
-        return MondayState;
-    }
-
-    public void setMondayState(boolean mondayState) {
-        MondayState = mondayState;
-    }
-
-    public boolean isTuesdayState() {
-        return TuesdayState;
-    }
-
-    public void setTuesdayState(boolean tuesdayState) {
-        TuesdayState = tuesdayState;
-    }
-
-    public boolean isWednesdayState() {
-        return WednesdayState;
-    }
-
-    public void setWednesdayState(boolean wednesdayState) {
-        WednesdayState = wednesdayState;
-    }
-
-    public boolean isThursdayState() {
-        return ThursdayState;
-    }
-
-    public void setThursdayState(boolean thursdayState) {
-        ThursdayState = thursdayState;
-    }
-
-    public boolean isFridayState() {
-        return FridayState;
-    }
-
-    public void setFridayState(boolean fridayState) {
-        FridayState = fridayState;
-    }
-
-    public boolean isSaturdayState() {
-        return SaturdayState;
-    }
-
-    public void setSaturdayState(boolean saturdayState) {
-        SaturdayState = saturdayState;
-    }
-
-    public boolean isSundayState() {
-        return SundayState;
-    }
-
-    public void setSundayState(boolean sundayState) {
-        SundayState = sundayState;
     }
 
     public String getFirst_machineCodeOut() {

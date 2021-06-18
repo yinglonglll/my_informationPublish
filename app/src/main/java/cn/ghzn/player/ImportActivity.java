@@ -37,7 +37,6 @@ public class ImportActivity extends Activity {
     private static Runnable mRunnable;
     private static Map map1 = new HashMap();//存每次导入进来时里面的U盘文件，
     private boolean mMatch;
-    private MainActivity mMain;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
@@ -49,7 +48,6 @@ public class ImportActivity extends Activity {
         //todo：经历一次分析授权刷新主界面信息。
         Log.d(TAG,"this is renovate mainActivity");
         Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
-        //intent.setComponent(new ComponentName("cn.ghzn.player","cn.ghzn.player.receive.VarReceiver"));
         sendBroadcast(RenovateIntent);
 
         Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
@@ -96,11 +94,6 @@ public class ImportActivity extends Activity {
         }
         finish();
     }
-
-    public static Map getMap1() {
-        return map1;
-    }
-
 
     private void turnActivity(String mTarget) {
         Log.d(TAG,"this is turnActivity");
@@ -216,6 +209,30 @@ public class ImportActivity extends Activity {
 
             }
         }
+    }
+
+    /**
+     * @description:
+     * 当出现资源文件的格式不正确或资源格式文件正确时，复制失败时(几乎不常见)，恢复最初的状态，即上一次播放失败，设create_time为0；
+     * 有currentActivity则跳转回去，无则默认原本的MainActivity
+     */
+    private void returnOriginalActivity() {
+        mMatch = false;//不是以上述格式为结尾的。设此路径为无效路径
+        app.setCreate_time(0);
+        Intent ci;//第一次放入资源时，此时软件是没有分屏记录的，故先跳转到mainActivity
+        if(app.getCurrentActivity() != null) {//非第一次放入错误后缀格式文件
+            ci = new Intent(this, app.getCurrentActivity().getClass());
+            //Log.d(TAG, "this is 找到的错误文件命名格式A-B-C-D.后缀格式，即将跳转回原先播放的activity");
+            Log.d(TAG, "this is 找到的文件路径是否有效？" + mMatch);
+            startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
+        }
+    }
+
+    /**
+     *以下为非主要方法
+     */
+    public static Map getMap1() {
+        return map1;
     }
 
     private boolean copyFiles(String source,String target){//通过单个文件copyFile()来逐个复制以实现复制目录内所有内容；
@@ -416,24 +433,6 @@ public class ImportActivity extends Activity {
             }
         }
     }
-
-    /**
-     * @description:
-     * 当出现资源文件的格式不正确或资源格式文件正确时，复制失败时(几乎不常见)，恢复最初的状态，即上一次播放失败，设create_time为0；
-     * 有currentActivity则跳转回去，无则默认原本的MainActivity
-     */
-    private void returnOriginalActivity() {
-        mMatch = false;//不是以上述格式为结尾的。设此路径为无效路径
-        app.setCreate_time(0);
-        Intent ci;//第一次放入资源时，此时软件是没有分屏记录的，故先跳转到mainActivity
-        if(app.getCurrentActivity() != null) {//非第一次放入错误后缀格式文件
-            ci = new Intent(this, app.getCurrentActivity().getClass());
-            //Log.d(TAG, "this is 找到的错误文件命名格式A-B-C-D.后缀格式，即将跳转回原先播放的activity");
-            Log.d(TAG, "this is 找到的文件路径是否有效？" + mMatch);
-            startActivity(ci);//不符文件则跳转到上次有效的当前activity重新读取
-        }
-    }
-
 
     @Override
     protected void onDestroy() {

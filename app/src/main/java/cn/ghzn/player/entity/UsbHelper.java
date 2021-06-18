@@ -1,4 +1,4 @@
-package cn.ghzn.player;
+package cn.ghzn.player.entity;
 
 import android.app.PendingIntent;
 import android.content.Context;

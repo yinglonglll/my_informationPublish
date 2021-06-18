@@ -25,22 +25,39 @@
         android:layout_height="wrap_content"/>
     <Button
         android:layout_width="match_parent"
+        android:text="分屏切换"
+        android:id="@+id/btn_singleSplitMode"
+        android:onClick="singleSplitModeBtn"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:layout_width="match_parent"
         android:text="机器码导出"
         android:textSize="15dp"
         android:onClick="machineIdOutBtn"
         android:layout_height="wrap_content"/>
-    <!--<Button
+    <Button
         android:layout_width="match_parent"
         android:text="定时开关机"
         android:textSize="15dp"
         android:onClick="SetPowerOnOffBtn"
-        android:layout_height="wrap_content"/>-->
+        android:layout_height="wrap_content"/>
+    <Button
+        android:layout_width="match_parent"
+        android:text="关机"
+        android:textSize="15dp"
+        android:onClick="PowerOff"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:layout_width="match_parent"
+        android:text="重启"
+        android:textSize="15dp"
+        android:onClick="ReStart"
+        android:layout_height="wrap_content"/>
     <Button
         android:layout_width="match_parent"
         android:text="退出"
         android:textSize="15dp"
         android:onClick="exitBtn"
         android:layout_height="wrap_content"/>
-
 
 </LinearLayout>

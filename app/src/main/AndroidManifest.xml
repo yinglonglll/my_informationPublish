@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:sharedUserId="android.uid.system"
     package="cn.ghzn.player">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -35,18 +36,21 @@
 
         <activity android:name=".ImportActivity"/>
         <activity android:name=".OneSplitViewActivity"/>
-<!--        <activity android:name=".MainActivity"/>-->
         <activity android:name=".TwoSplitViewActivity"/>
         <activity android:name=".ThreeSplitViewActivity"/>
         <activity android:name=".FourSplitViewActivity"/>
         <activity android:name=".MainActivity">
-<!--        <activity android:name=".OneSplitViewActivity">-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".receiver.AlarmOnTimeReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.ALARM_ON_TIME"/>
+            </intent-filter>
+        </receiver>
         <receiver android:name=".receiver.UsbReceiver">
             <intent-filter>
                 <!-- 插入 -->

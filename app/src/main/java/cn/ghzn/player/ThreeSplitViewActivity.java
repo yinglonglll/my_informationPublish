@@ -43,20 +43,16 @@ import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
 
 public class ThreeSplitViewActivity extends Activity {
     private static final String TAG = "ThreeSplitViewActivity";
-
     private Runnable mRunnable;
     private GestureDetector mGestureDetector;
     private BroadcastReceiver mBroadcastReceiver;
-
-    ArrayList arrayList1;//控件区1地址
-    ArrayList arrayList2;//控件区2地址
-    ArrayList arrayList3;//控件区2地址
+    private ArrayList arrayList1;//控件区1地址
+    private ArrayList arrayList2;//控件区2地址
+    private ArrayList arrayList3;//控件区2地址
     boolean isFreeFlag1 = true;
     boolean isFreeFlag2 = true;
     boolean isFreeFlag3 = true;
-    ArrayList[] Recursive = new ArrayList[3];//先声明--仅用于存储递归时的参数
-
-
+    private ArrayList[] Recursive = new ArrayList[3];//先声明--仅用于存储递归时的参数
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,8 +61,6 @@ public class ThreeSplitViewActivity extends Activity {
         app.setCurrentActivity(this);
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
-        //getWindow().setFormat(PixelFormat.TRANSPARENT);此方法会保留导航栏
-//        initFreeFlag();//线程被取消时，无法恢复控件状态，此处进行初始化
 
         if (app.isExtraState()) {
             Intent intent = getIntent();
@@ -147,36 +141,6 @@ public class ThreeSplitViewActivity extends Activity {
         }
         //todo:3.成功执行，数据为有效数据，才把信息存储到数据库中，完成更新；以便没U盘插入时，直接执行另外一个activity，取出赋值，
     }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    private void initFreeFlag() {
-        app.setPlaySonImageFlag(true);
-        isFreeFlag1 = true;
-        isFreeFlag2 = true;
-        isFreeFlag3 = true;
-    }
-
-    private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
-        source.setProgram_id(getRandomString(5));
-        source.setSplit_view(app.getSplit_view());
-        source.setSplit_mode(app.getSplit_mode());
-        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象
-        source.setStart_time(app.getStart_time());
-        source.setEnd_time(app.getEnd_time());
-        source.setCreate_time(app.getCreate_time());
-        source.setFirst_time(app.getFirst_time());
-        source.setTime_difference(app.getTime_difference());
-        source.setRelative_time(app.getRelative_time());
-        return source;
-    }
-
 
     private void playSonImage(ArrayList arrayList1,ArrayList arrayList2,ArrayList arrayList3){
         Recursive[0] = arrayList1;//以赋值控件12为一个单元，整体递归：最笨的方法
@@ -369,6 +333,30 @@ public class ThreeSplitViewActivity extends Activity {
         }
     }
 
+    /**
+     *以下为非主要方法
+     */
+    private Source getSource(Source source) {//对数据库进行覆写；不能直接调用一分屏得的该方法，函数体中非静态变量声明
+        source.setProgram_id(getRandomString(5));
+        source.setSplit_view(app.getSplit_view());
+        source.setSplit_mode(app.getSplit_mode());
+        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象
+        source.setStart_time(app.getStart_time());
+        source.setEnd_time(app.getEnd_time());
+        source.setCreate_time(app.getCreate_time());
+        source.setFirst_time(app.getFirst_time());
+        source.setTime_difference(app.getTime_difference());
+        source.setRelative_time(app.getRelative_time());
+        return source;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     private void initWidget(String split_mode) {
@@ -811,6 +799,7 @@ public class ThreeSplitViewActivity extends Activity {
                 break;
         }
     }
+
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
 
@@ -859,6 +848,9 @@ public class ThreeSplitViewActivity extends Activity {
         });
     }
 
+    /**
+     * 以下为生命周期
+     */
     @Override
     protected void onStop() {
         super.onStop();

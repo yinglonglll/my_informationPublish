@@ -11,17 +11,20 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -37,13 +40,10 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.zip.Inflater;
 
+import cn.ghzn.player.entity.UsbHelper;
+import cn.ghzn.player.order.YangYuOrder;
 import cn.ghzn.player.receiver.USBBroadCastReceiver;
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
@@ -57,7 +57,6 @@ import cn.ghzn.player.util.ViewImportUtils;
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.Constants.MACHINE_CODE_NAME;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
-import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity {
@@ -69,9 +68,9 @@ public class MainActivity extends AppCompatActivity {
     private View viewLp;
 
     GestureDetector mGestureDetector;
+    private TextView mSingleSplitMode;
     private TextView mDeviceName;
     private TextView mDeviceId;
-    private TextView mConnectionState;
     private TextView mAuthorityState;
     private TextClock mLocalTime;
     private TextView mAuthorityTime;
@@ -79,11 +78,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView mLeftMargin;
     private TimePicker timePickerStart;
     private TimePicker timePickerEnd;
-
+    private Switch mSwitch;
+    private Button mSingleBtn;
 
     private BroadcastReceiver mBroadcastReceiver;
     private BroadcastReceiver mRenovateBroadcastReceiver;
-    private OneSplitViewActivity mOneSplitViewActivity;
     private Intent mIntent_FinishFlag = new Intent();
     private File mLicenceSaveFile;
     private File mMachineCodeSaveFile;
@@ -92,37 +91,44 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWritePermission();//权限：动态获取写入权限，如果静态获取失败的话
-        app = (MyApplication)getApplication();//全局变量：
-        UsbUtils.checkUsb(this);//通过USB协议检查出USB是什么类型设备
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//取消导航栏
+        requestWritePermission();//实现动态获取写入权限。避免静态获取权限失败
+        app = (MyApplication)getApplication();//实现获取Application对象，以全局以app对象调用内部的方法：
+        UsbUtils.checkUsb(this);//实现通过USB协议检查出USB是什么类型设备
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//实现取消导航栏
         setContentView(R.layout.activity_main);
-
-        AutoOutPutMachineCode();//取消自动导出机器码，仅保留动态获取usbHelper的权限
-
-        if (app.getCurrentActivity() != null) {
+        AutoOutPutMachineCode();//方法内部取消了自动导出机器码，仅保留动态获取usbHelper的权限
+        /*应用启动自动设定时任务*/
+        /*返回主界面时确保关掉上一个界面*/
+        if (app.getCurrentActivity() != null) {//实现返回主界面时，关闭先前播放的内容界面
             LogUtils.e(app.getCurrentActivity());
-            app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
+            app.getCurrentActivity().finish();
             Log.d(TAG,"this is 关闭了正在播放的分屏资源");
         }
+
         app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
         if (app.getSource() != null && app.getSource().getRelative_time() != 0) {
-            Log.d(TAG,"Rt" +app.getRelative_time());
-            Log.d(TAG,"Rt2" +app.getSource().getRelative_time());
-
+            Log.d(TAG,"app对象内的相对时间" +app.getRelative_time());
+            Log.d(TAG,"数据库中的内的相对时间" +app.getSource().getRelative_time());
             app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
         }
+
         initView();//找到layout控件，初始化主界面的信息
         initBroadReceiver();//广播监听：保证资源播放activity被finish掉
         initDevice();
-        LogUtils.e(app.getSplit_view());
         initSource();//资源初始化放在如上
-        Log.d(TAG,"this is app.getLicenceDir()>>>>1" + app.getLicenceDir());
         setDialog();
 
+        //Device device = daoManager.getSession().getDeviceDao().queryBuilder().unique();
+        if(app.getDevice() != null && app.getDevice().getPower_end_time() != null){//不可去掉device != null，无数据库时其数据无法获取
+            YangYuOrder order = new YangYuOrder();
+            order.startup_shutdow_off(this);
+            order.startup_shutdow_on(this, app.getDevice().getPower_start_time(), app.getDevice().getPower_end_time());
+            LogUtils.e("this is ----------重设定时任务----------"+"\n" + "定时开始时间为：" + app.getDevice().getPower_start_time()
+                    + "定时结束时间为：" + app.getDevice().getPower_end_time());
+        }else{
+            Log.d(TAG,"this is 定时任务无数据，无法进行定时");
+        }
 
-
-        //LogUtils.e(app.getCurrentActivity());
         if (app.isImportState() && app.isSetSourcePlayer()) {//仅允许在初次资源导入时，U盘插入顺序与软件打开顺序无关；在已导入资源的情况下，必须在播放的情况下，再插入U盘进行资源变更。
             app.setStrings(UsbUtils.getVolumePaths(this));//通过获取U盘挂载状态检查所有存储的绝对地址，
             for(String str : app.getStrings()){
@@ -133,6 +139,197 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    public void initView() {
+        /*获取当前视图控件*/
+        mSingleSplitMode = (TextView) this.findViewById(R.id.tx_SingleSplitMode);
+        mDeviceName = (TextView) this.findViewById(R.id.tx_DeviceName);
+        mDeviceId = (TextView) this.findViewById(R.id.tx_DeviceID);
+        mAuthorityState = (TextView) this.findViewById(R.id.tx_AuthorityState);
+        mAuthorityTime = (TextView) this.findViewById(R.id.tx_AuthorityTime);
+        mAuthorityExpired = (TextView) this.findViewById(R.id.tx_AuthorityExpired);
+        mLocalTime = (TextClock) this.findViewById(R.id.tc_localTime);
+        mLeftMargin = (TextView) this.findViewById(R.id.tx_leftMargin);
+        /*非当前视图在对应的控件方法中声明*/
+    }
+
+    private void initBroadReceiver() {
+        mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG,"this is varReceiver_finish掉当前的Activity的广播");
+                if (app.getCurrentActivity() != null) {
+                    app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
+                }
+            }
+        });
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("true");
+        registerReceiver(mBroadcastReceiver,filter);//注册广播
+        mRenovateBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {//一个对象未取消注册广播置null时，不可复用、
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG,"this is varReceiver_刷新主界面授权信息");
+
+                if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
+                    app.setAuthorityName("未授权");
+                } else {
+                    Log.d(TAG,"this is enter 刷新授权状态");
+                    if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
+                        app.setAuthorityName("已授权");
+                    } else {
+                        app.setAuthorityName("授权过期");
+                        app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
+                    }
+                }
+                daoManager.getSession().getDeviceDao().update(app.getDevice());
+
+                mAuthorityState.setText("授权状态：" + app.getAuthorityName());
+                mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
+                mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
+
+            }
+        });
+        IntentFilter RenovateFilter = new IntentFilter("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+        registerReceiver(mRenovateBroadcastReceiver,RenovateFilter);//注册广播
+    }
+
+    public void initDevice() {
+        /*初始化设备信息(其中部分信息是取自于全局变量进行存储)*/
+        app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
+        if(app.getDevice() == null){
+            app.setDevice(new Device());//表不存在则新建赋值
+            daoManager.getSession().getDeviceDao().insert(getDevice(app.getDevice()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+        }else{//存在则直接修改
+            LogUtils.e(app.getDevice().getAuthority_state());
+            daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
+            LogUtils.e(app.getDevice().getAuthority_state());
+        }
+
+        initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
+        Log.d(TAG,"--------设备信息---------");
+        LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
+    }
+
+    private Device getDevice(Device device){
+        if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
+        if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
+        if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
+        device.setMachine_code(InfoUtils.getMachineCode());
+//        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
+        device.setSoftware_version(InfoUtils.getSoftware_version());
+        device.setFirmware_version(InfoUtils.FirmwareVersion());
+        device.setWidth(InfoUtils.getWidth());
+        device.setHeight(InfoUtils.getHeight());
+        device.setSingle_Split_Mode(InfoUtils.getSingleSplitMode());
+        return device;
+    }
+
+    private void initSource() {
+
+        app.setLicenceDir(getFilePath(MainActivity.this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
+        app.setCreateTime(System.currentTimeMillis());
+
+        File file = new File(app.getLicenceDir());
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        Log.d(TAG,"this is app.getLicenceDir()>>>>" + app.getLicenceDir());
+//        app.getSource().setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
+//        LogUtils.e(app.getSource());//未U盘导入资源时，表为空，不可调用赋值。
+
+        //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
+        Log.d(TAG,"this is  app.setSource");
+        LogUtils.e(app.getSplit_view());
+        if (app.getSource() != null &&  app.getSource().getSplit_view() != null) {//1.判断授权文件；2.判断资源文件
+            initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
+            Log.d(TAG,"--------资源信息---------");
+            LogUtils.e(app.getSource());
+
+            //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+            LogUtils.e(app.getCreateTime() > app.getSource().getCreate_time());
+            LogUtils.e((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference());
+            LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.防止本地或服务器时间大于授权到期相对时间；
+            Log.d(TAG,"app.getRelative_time() :" + app.getRelative_time());
+            Log.d(TAG,"app.getCreateTime()>>> :" + app.getCreateTime());
+            if (app.getCreateTime() > app.getCreate_time()////保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前//app.getSource().getCreate_time()
+                    && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
+                    && app.getRelative_time() > app.getCreateTime()) {//1.当前时间一定大于上一次的当前时间；2.第一次导入资源时间与当前时间差<授权时间段；3.设置相对过期时间，当前时间过了就不允许播放
+                app.getDevice().setAuthority_state(true);
+                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+                sendBroadcast(RenovateIntent);
+                app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
+                turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
+            } else {
+                Log.d(TAG,"this is 授权过期，进入无授权状态！！！！！！！！！！");
+                app.getDevice().setAuthority_state(false);
+
+                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
+                sendBroadcast(RenovateIntent);
+            }
+            //daoManager.getSession().getDeviceDao().update(app.getDevice());
+            //daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
+        }
+    }
+
+    public void setDialog() {
+        Log.d(TAG,"this is setDialog()");
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        app.setView(this.getLayoutInflater().inflate(R.layout.activity_dialog, null));
+        alertDialog.setView(app.getView());
+        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
+        mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                Log.d(TAG,"OnLongPressTap");
+                Log.d(TAG,"this is to done Dismiss()");
+                AlertDialogs.show();
+
+                //解决右键退出AlertDialogs的bug：The specified child already has a parent. You must call removeView() on the child's parent first. The specified child already has a parent. You must call removeView() on the child's parent first.
+                AlertDialogs.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        Log.d(TAG,"this is to do on Dismiss()");
+                        if (viewLp != null) {
+                            ViewGroup parentView = (ViewGroup) viewLp.getParent();
+                            if (parentView != null) {
+                                parentView.removeView(viewLp);
+                                Log.d(TAG,"this is to doing ：parentView.removeView(view)");
+                            }
+                        }
+                        Log.d(TAG,"this is to done Dismiss()");
+                    }
+                });
+
+
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                return false;
+            }
+        });
     }
 
     private void AutoOutPutMachineCode() {
@@ -196,113 +393,198 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private void initSource() {
+    private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
+        switch (split_view) {
+            case "1":
+                Log.d(TAG,"this is case1");
+                    Intent intent1 = new Intent(this, OneSplitViewActivity.class);
+                    startActivity(intent1);
+                break;
+            case "2":
+                    Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
+                    startActivity(intent2);
+                break;
+            case "3":
+                    Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
+                    startActivity(intent3);
 
-        app.setLicenceDir(getFilePath(MainActivity.this, Constants.STOREPATH) + "/");//获取生成授权文件的文件夹地址
-        app.setCreateTime(System.currentTimeMillis());
-
-        File file = new File(app.getLicenceDir());
-        if (!file.exists()) {
-            file.mkdirs();
+                break;
+            case "4":
+                    Intent intent4 = new Intent(this, FourSplitViewActivity.class);
+                    startActivity(intent4);
+                break;
+            default:
+                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
+                break;
         }
-        Log.d(TAG,"this is app.getLicenceDir()>>>>" + app.getLicenceDir());
-//        app.getSource().setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
-//        LogUtils.e(app.getSource());//未U盘导入资源时，表为空，不可调用赋值。
+    }
 
-        //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
-        Log.d(TAG,"this is  app.setSource");
-        LogUtils.e(app.getSplit_view());
-        if (app.getSource() != null &&  app.getSource().getSplit_view() != null) {//1.判断授权文件；2.判断资源文件
-            initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
-            Log.d(TAG,"--------资源信息---------");
-            LogUtils.e(app.getSource());
-            //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；//这里为了保证有效期过期时，不能播放
+    public void machineIdOutBtn(final View view) {
+        Log.d(TAG,"this is MachineIdOutBtn");
 
-            LogUtils.e(app.getCreateTime() > app.getSource().getCreate_time());
-            LogUtils.e((app.getCreateTime()-app.getFirst_time()) < app.getTime_difference());
-            LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.防止本地或服务器时间大于授权到期相对时间；
-            Log.d(TAG,"app.getRelative_time() :" + app.getRelative_time());
-            Log.d(TAG,"app.getCreateTime()>>> :" + app.getCreateTime());
+        if (app.isImportState()) {
+            /*实现将机器码文件生成到U盘根目录下*/
+            Log.d(TAG,"this is ImportState :" + app.isImportState());
+            Log.d(TAG,"this is 将机器码导出到U盘中");
+            mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);
+            mMachineCodeSaveFile = new File(app.getExtraPath(),MACHINE_CODE_NAME);
 
-            if (app.getCreateTime() > app.getCreate_time()////保证播放时间是向前的，即授权过期时重新授权，此时数据库仍存有上次成功导入信息的时间，故重新授权时需重置上次成功导入时间；如同加速度方向向前//app.getSource().getCreate_time()
-                    && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
-                    && app.getRelative_time() > app.getCreateTime()) {//1.当前时间一定大于上一次的当前时间；2.第一次导入资源时间与当前时间差<授权时间段；3.设置相对过期时间，当前时间过了就不允许播放
-                app.getDevice().setAuthority_state(true);
-                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
-                sendBroadcast(RenovateIntent);
+            UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
+            for(UsbMassStorageDevice device : devices){
+                app.setReadDeviceState(true);//readDevice方法会先发送UNMOUNTED，再发送MOUNTED来获取设备信息。会对广播进行干扰，现进行标屏蔽。
+                List<UsbFile> usbFiles = usbHelper.readDevice(device);
+                if(usbFiles==null)break;
+                Log.e(TAG, "find device:"+ device.getUsbDevice().getDeviceName());
+                Log.e(TAG, usbHelper.getCurrentFolder().getAbsolutePath());
 
-                app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
-                turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
-            } else {
-                Log.d(TAG,"this is 授权过期，进入无授权状态《《《《《《《《《《《《《《《《《《《");
-                app.getDevice().setAuthority_state(false);
-
-                /*保证修改系统时间后打开，时间不对后刷新界面信息，每次刷新界面都在在MainActivity界面，所以重写方法放在MainActivity重写就好*/
-                Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
-                sendBroadcast(RenovateIntent);
+                boolean result = usbHelper.saveSDFileToUsb(getLocalFile(), usbHelper.getCurrentFolder(), new UsbHelper.DownloadProgressListener() {
+                    @Override
+                    public void downloadProgress(int progress) {
+                        Log.e(TAG, "download to usb_MachineCode.txt:"+progress);
+                    }
+                });
+                Log.e(TAG, "download and result :" + result);
+                if(result){
+                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
+                }
+                device.close();
             }
-            //daoManager.getSession().getDeviceDao().update(app.getDevice());
-            //daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
+        } else {
+            Log.d(TAG,"this is 将机器码导出到本地中");
+            mMachineCodeSaveFile = new File(app.getLicenceDir(),MACHINE_CODE_NAME);
+            ViewImportUtils.deleteFile(mMachineCodeSaveFile);
+            FileOutputStream outStream = null;
+            try {
+                outStream = new FileOutputStream(mMachineCodeSaveFile);
+                outStream.write(app.getMachine_code().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
+                outStream.close();
+                outStream.flush();
+                isSave = true;
+                Log.d(TAG, "this is 文件已经保存啦！赶快去查看吧!");
+                //Toast.makeText(this, "导出机器码成功", Toast.LENGTH_SHORT).show();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+                Log.d(TAG, "this is 已重新生成机器码文件到本地目录上");
+                Toast.makeText(this,"未插入U盘，无法导出机器码到U盘上",Toast.LENGTH_LONG).show();
         }
     }
 
-    public void initDevice() {
-        app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
-        if(app.getDevice() == null){
-            app.setDevice(new Device());//表不存在则新建赋值
-            daoManager.getSession().getDeviceDao().insert(getDevice(app.getDevice()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-        }else{//存在则直接修改
-            LogUtils.e(app.getDevice().getAuthority_state());
-            daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
-            LogUtils.e(app.getDevice().getAuthority_state());
+    public void SetPowerOnOffBtn(View view) {
+        final boolean timeSwitchFlag = true;
+        final SharedPreferences preferences = getSharedPreferences("user", Context.MODE_PRIVATE);
+        final View timeView = this.getLayoutInflater().inflate(R.layout.activity_timepicker, null);;
+        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+
+        /*查找非当前界面显示view的控件，需先找到布局文件，再从布局文件对象中调用方法找控件*/
+        timePickerStart = timeView.findViewById(R.id.tp_timePickerStart);
+        timePickerEnd = timeView.findViewById(R.id.tp_timePickerEnd);
+        timePickerStart.setIs24HourView(true);
+        timePickerEnd.setIs24HourView(true);
+        mSwitch = timeView.findViewById(R.id.swc_switcher);
+
+        /*从SharedPreferences获取数据*/
+        if (preferences != null) {
+            boolean powerFlag = preferences.getBoolean("timeSwitchFlag", timeSwitchFlag);
+            mSwitch.setChecked(powerFlag);
         }
-
-        initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
-        Log.d(TAG,"--------设备信息---------");
-        LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
-    }
-
-    private void initBroadReceiver() {
-        mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
+        Log.d(TAG,"this is checkState :" + mSwitch.isChecked());
+        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d(TAG,"this is varReceiver_finish掉当前的Activity的广播");
-                if (app.getCurrentActivity() != null) {
-                    app.getCurrentActivity().finish();//如果将已分屏的逻辑没finish掉，则强制finish掉，重新执行分屏，避免线程过多
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    Toast.makeText(MainActivity.this,"this is 选中状态",Toast.LENGTH_SHORT).show();
+                    //将数据保存至SharedPreferences:
+                    SharedPreferences preferences = getSharedPreferences("user", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putBoolean("timeSwitchFlag", true);
+                    editor.apply();
+                }else{
+                    Toast.makeText(MainActivity.this,"this is 非选中状态",Toast.LENGTH_SHORT).show();
+                    //将数据保存至SharedPreferences:
+                    SharedPreferences preferences = getSharedPreferences("user", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putBoolean("timeSwitchFlag", false);
+                    editor.apply();
+
+                    /*YangYuOrder order = new YangYuOrder();//按钮被关，代表关闭定时任务，需重新设置定时任务
+                    order.startup_shutdow_off(MainActivity.this);*/
                 }
             }
         });
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("true");
-        registerReceiver(mBroadcastReceiver,filter);//注册广播
-        mRenovateBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {//一个对象未取消注册广播置null时，不可复用、
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d(TAG,"this is varReceiver_刷新主界面授权信息");
 
-                if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
-                    app.setAuthorityName("未授权");
-                } else {
-                    Log.d(TAG,"this is enter 刷新授权状态");
-                    if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
-                        app.setAuthorityName("已授权");
-                    } else {
-                        app.setAuthorityName("授权过期");
-                        app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
+        alertDialog.setView(timeView);
+        alertDialog
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String startHour = timePickerStart.getHour() < 10 ? "0" + timePickerStart.getHour() : "" + timePickerStart.getHour();;
+                String startMinute = timePickerStart.getMinute() < 10 ? "0" + timePickerStart.getMinute() : ""+ timePickerStart.getMinute();;
+                String endHour = timePickerEnd.getHour() < 10 ? "0" + timePickerEnd.getHour() : "" + timePickerEnd.getHour();;
+                String endMinute = timePickerEnd.getMinute() < 10 ? "0" + timePickerEnd.getMinute() : ""+ timePickerEnd.getMinute();;
+                String startTime = startHour + ":" + startMinute + ":" + "00";
+                String endTime = endHour + ":" + endMinute + ":" + "00";
+                /*app.getDevice().setPower_start_time(startTime);
+                app.getDevice().setPower_end_time(endTime);
+                daoManager.getSession().getDeviceDao().update(app.getDevice());*/
+
+                /*Log.d(TAG,"this is startTime: " + startTime + "***" + "数据库中的startTime" + app.getDevice().getPower_start_time());
+                Log.d(TAG,"this is EndTime: " + endTime + "***" + "数据库中的startTime" + app.getDevice().getPower_end_time());*/
+                //todo：将获取的开始时间和结束时间，传给定时开关机方法去设定执行
+                if (preferences != null) {
+                    boolean powerFlag = preferences.getBoolean("timeSwitchFlag", timeSwitchFlag);
+                    YangYuOrder order = new YangYuOrder();
+                    order.startup_shutdow_off(MainActivity.this);
+                    if(powerFlag){
+                        Log.d(TAG,"this is 设置定时开关机on");
+                        order.startup_shutdow_on(MainActivity.this,startTime,endTime);
                     }
                 }
-                daoManager.getSession().getDeviceDao().update(app.getDevice());
-
-                mAuthorityState.setText("授权状态：" + app.getAuthorityName());
-                mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
-                mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
-
+                dialog.cancel();
+            }
+        })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
             }
         });
-        IntentFilter RenovateFilter = new IntentFilter("cn.ghzn.player.broadcast.RENOVATE_MAIN");
-        registerReceiver(mRenovateBroadcastReceiver,RenovateFilter);//注册广播
+        final AlertDialog AlertDialogs = alertDialog.create();
+        AlertDialogs.show();
     }
 
+    public void singleSplitModeBtn(View view) {
+        View singleView = null;
+        singleView = this.getLayoutInflater().inflate(R.layout.activity_dialog,null);
+        mSingleBtn = singleView.findViewById(R.id.btn_singleSplitMode);
+        //设置是否单屏的状态
+        if (app.isSingle_split_mode()) {
+            mSingleSplitMode.setText("分屏模式：多屏模式");
+            app.setSingle_split_mode(false);//切为多屏
+        } else {
+            mSingleSplitMode.setText("分屏状态：单屏模式");
+            app.setSingle_split_mode(true);//切为单屏
+        }
+    }
+
+    public void PowerOff(View view) {
+        YangYuOrder order = new YangYuOrder();
+        order.shutdown(MainActivity.this);
+
+    }
+
+    public void ReStart(View view) {
+        YangYuOrder order = new YangYuOrder();
+        order.reboot(MainActivity.this);
+    }
+
+    /**
+     *以下为子方法
+     */
     private void initImportSource(Source source) {
         //将读取的数据赋值给全局变量
         //app.setLicenceDir(source.getLicense_dir());//通用自动生成信息
@@ -322,42 +604,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void initImportDevice(Device device) {//不要忘记穿参数近来，自己忘记传参折腾很久，没传参时，非全局不可调用；
+    private void initImportDevice(Device device) {
 
         app.setDevice_Name(device.getDevice_name());
         app.setDevice_Id(device.getDevice_id());
         LogUtils.e(app.isAuthority_state());
         app.setAuthority_state(device.getAuthority_state());
         LogUtils.e(app.isAuthority_state());
-        Log.d(TAG,"this is initImportDeviced的getDevice().getAuthority_state()" + app.getDevice().getAuthority_state());
-        Log.d(TAG,"this is initImportDeviced的app.isAuthority_state()" + app.isAuthority_state());
         app.setMachine_code(device.getMachine_code());
         app.setAuthority_time(device.getAuthority_time());
         app.setAuthority_expired(device.getAuthority_expired());
-
-        Log.d(TAG,"this is app.getRelative_time()" + app.getRelative_time());
+        app.setSingle_split_mode(device.getSingle_Split_Mode());
 
         //fixme：若使用者修改了系统时间超过授权到期时间，则从数据库取出的上次授权状态时不对的，需source表的信息进行判断，但device里无法判断；
+        Log.d(TAG,"this is app.getRelative_time()：" + app.getRelative_time());
         app.setCreateTime(System.currentTimeMillis());
         LogUtils.e(InfoUtils.dateString2Mills(app.getAuthority_expired()));
         if(app.getCreateTime() > InfoUtils.dateString2Mills(app.getAuthority_expired()) && app.getRelative_time() != 0){//非首次的简易判断
             app.setAuthorityName("授权过期");
         }
-        /*if (app.getRelative_time() == 0) {//授权与未授权区分之一的方法在于 授权到期时间 有无；
-            app.setAuthorityName("未授权");
-        } else {
-            Log.d(TAG,"this is enter 刷新授权状态");
-            LogUtils.e(app.isAuthority_state());
-            if (app.isAuthority_state()) {//授权状态为真，则显示已授权，否则则授权过期。
-                app.setAuthorityName("已授权");
-            } else {
-                app.setAuthorityName("授权过期");
-                app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
-            }
-        }*/
 
-        LogUtils.e(mDeviceName);
-        Log.d(TAG,"device.getDevice_name()" + device.getDevice_name());
+        if(app.isSingle_split_mode()){
+            mSingleSplitMode.setText("分屏模式：单屏模式" );
+        }else{
+            mSingleSplitMode.setText("分屏模式: 多屏模式");
+        }
+        mSingleSplitMode.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mGestureDetector.onTouchEvent(event);//调用重写的手势方法
+                return true;
+            }
+        });
+
         mDeviceName.setText("设备名字:" + app.getDevice_Name());//从数据库中取已存的名字，而不是从方法中取；
         mDeviceName.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -417,136 +696,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void setDialog() {
-        Log.d(TAG,"this is setDialog()");
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        app.setView(this.getLayoutInflater().inflate(R.layout.activity_dialog, null));
-        alertDialog.setView(app.getView());
-        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
-        mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public void onShowPress(MotionEvent e) {
-
-            }
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                return false;
-            }
-
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                return false;
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                Log.d(TAG,"OnLongPressTap");
-                Log.d(TAG,"this is to done Dismiss()");
-                AlertDialogs.show();
-
-                //解决右键退出AlertDialogs的bug：The specified child already has a parent. You must call removeView() on the child's parent first. The specified child already has a parent. You must call removeView() on the child's parent first.
-                AlertDialogs.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        Log.d(TAG,"this is to do on Dismiss()");
-                        if (viewLp != null) {
-                            ViewGroup parentView = (ViewGroup) viewLp.getParent();
-                            if (parentView != null) {
-                                parentView.removeView(viewLp);
-                                Log.d(TAG,"this is to doing ：parentView.removeView(view)");
-                            }
-                        }
-                        Log.d(TAG,"this is to done Dismiss()");
-                    }
-                });
-
-
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                return false;
-            }
-        });
-    }
-
-    private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
-        switch (split_view) {
-            case "1":
-                Log.d(TAG,"this is case1");
-                    Intent intent1 = new Intent(this, OneSplitViewActivity.class);
-                    startActivity(intent1);
-                break;
-            case "2":
-                    Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
-                    startActivity(intent2);
-                break;
-            case "3":
-                    Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
-                    startActivity(intent3);
-
-                break;
-            case "4":
-                    Intent intent4 = new Intent(this, FourSplitViewActivity.class);
-                    startActivity(intent4);
-                break;
-            default:
-                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
-                break;
-        }
-    }
-
     private void requestWritePermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
 
-    private Device getDevice(Device device){
-        if(device.getDevice_name()==null)device.setDevice_name(InfoUtils.getDeviceName());
-        if(device.getDevice_id()==null)device.setDevice_id(InfoUtils.getDeviceId());
-        if(device.getAuthority_time()==null)device.setAuthority_time(InfoUtils.getAuthorityTime());
-        device.setMachine_code(InfoUtils.getMachineCode());//此处Authorization实际存储的是机器码(mac值的md5加密值)，命名错误
-//        if(device.getAuthority_expried().toString()==null)device.setAuthority_expried(InfoUtils.getAuthorityExpried());//data类数据，不知这样操作是否对
-        device.setSoftware_version(InfoUtils.getSoftware_version());
-        device.setFirmware_version(InfoUtils.FirmwareVersion());
-        device.setWidth(InfoUtils.getWidth());//默认赋值为0
-        device.setHeight(InfoUtils.getHeight());
-        return device;
-    }
-
-    public static String getDeviceName(){
-        return Constants.DEVICE_PREFIX + getRandomString(10);
-    }
-
-    public void initView() {
-        mDeviceName = (TextView) this.findViewById(R.id.DeviceName);
-        mDeviceId = (TextView) this.findViewById(R.id.DeviceID);
-        mAuthorityState = (TextView) this.findViewById(R.id.AuthorityState);
-        mAuthorityTime = (TextView) this.findViewById(R.id.AuthorityTime);
-        mAuthorityExpired = (TextView) this.findViewById(R.id.AuthorityExpired);
-        mLocalTime = (TextClock) this.findViewById(R.id.localTime);
-        mLeftMargin = (TextView) this.findViewById(R.id.leftMargin);
-        LogUtils.e(mLeftMargin);
-        LogUtils.e(timePickerStart);
-        /*此界面无timePicker，故不能使用this来找控件，会报空*/
-        timePickerStart = (TimePicker) this.findViewById(R.id.timePickerStart);
-        timePickerEnd = (TimePicker)this.findViewById(R.id.timePickerEnd);
-        LogUtils.e(timePickerStart);
-        /*timePickerStart.setIs24HourView(true);
-        timePickerEnd.setIs24HourView(true);*/
-
-
-    }
-
     public void playBtn(View view) {
-        //重新读取分屏模式文件的信息，加载读取
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
         //Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
@@ -560,7 +716,6 @@ public class MainActivity extends AppCompatActivity {
                     sendBroadcast(mIntent_FinishFlag);//发送广播
                     initDevice();
                     initSource();
-
                     setDialog();
                 }else if (app.getPlayFlag() == 1) {//暂停状态
                     Log.d(TAG,"this is app.getPlayFlag() == 1");
@@ -569,21 +724,6 @@ public class MainActivity extends AppCompatActivity {
                             app.setPlayFlag(0);
                             Log.d(TAG,"why is app.getDelayMillis()-app.getTimeDiff() :" + (app.getDelayMillis()-app.getTimeDiff())/1000);
 
-//                            long newDelayMillis = (app.getDelayMillis()-app.getTimeDiff());
-//                            Log.d(TAG,"why is app.getDelayMillis()-app.getTimeDiff() :" + app.getDelayMillis()/1000 + "-" + app.getTimeDiff()/1000 + "=" + (app.getDelayMillis()-app.getTimeDiff())/1000);
-//                            Runnable runnable;
-//                            app.getHandler().postDelayed(runnable = new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    if (app.getPlayFlag() == 0) {//只有在播放状态下才可以进行执行递归，也就是按下暂停或停止时，不会执行递归
-////                                        mOneSplitViewActivity.playSonImage();
-//                                        Log.d(TAG,"why is 进入了意图传递");
-//                                        Intent intent = new Intent();
-//                                        intent.setAction(String.valueOf(app.getPlayFlag()));
-//                                        sendBroadcast(intent);//发送广播
-//                                    }
-//                                }
-//                            },newDelayMillis);
                             Intent intent = new Intent();
                             intent.setAction(String.valueOf(app.getPlayFlag()));
                             sendBroadcast(intent);//发送广播
@@ -846,7 +986,6 @@ public class MainActivity extends AppCompatActivity {
                 if (app.getPlayFlag() == 0){
                     switch (app.getForMat1()){
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable1());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_1().pause();
@@ -856,7 +995,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     switch (app.getForMat2()) {
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable2());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_2().pause();
@@ -866,7 +1004,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     switch (app.getForMat3()) {
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable3());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_3().pause();
@@ -887,7 +1024,6 @@ public class MainActivity extends AppCompatActivity {
                 if (app.getPlayFlag() == 0){
                     switch (app.getForMat1()){
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable1());//只有在暂停的时候才可以被取消，配合delay
                             break;
                         case 2:
                             app.getVideoView_1().pause();
@@ -897,7 +1033,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     switch (app.getForMat2()) {
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable2());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_2().pause();
@@ -907,7 +1042,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     switch (app.getForMat3()) {
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable3());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_3().pause();
@@ -917,7 +1051,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     switch (app.getForMat4()) {
                         case 1:
-//                            app.getHandler().removeCallbacks(app.getRunnable4());//线程不会立即取消，而是执行完本次后才取消
                             break;
                         case 2:
                             app.getVideoView_4().pause();
@@ -995,206 +1128,9 @@ public class MainActivity extends AppCompatActivity {
         System.exit(0);
     }
 
-    public void machineIdOutBtn(final View view) {
-        Log.d(TAG,"this is MachineIdOutBtn");
-
-        if (app.isImportState()) {
-            //todo:实现将机器码文件生成到U盘根目录下
-            Log.d(TAG,"this is ImportState :" + app.isImportState());
-            Log.d(TAG,"this is 将机器码导出到U盘中");
-            mLicenceSaveFile = new File(app.getExtraPath(),LICENCE_NAME);
-            mMachineCodeSaveFile = new File(app.getExtraPath(),MACHINE_CODE_NAME);
-
-            UsbMassStorageDevice[] devices = usbHelper.getDeviceList();
-            for(UsbMassStorageDevice device : devices){
-                app.setReadDeviceState(true);//readDevice方法会先发送UNMOUNTED，再发送MOUNTED来获取设备信息。会对广播进行干扰，现进行标屏蔽。
-                List<UsbFile> usbFiles = usbHelper.readDevice(device);
-                if(usbFiles==null)break;
-                Log.e(TAG, "find device:"+ device.getUsbDevice().getDeviceName());
-                Log.e(TAG, usbHelper.getCurrentFolder().getAbsolutePath());
-
-                boolean result = usbHelper.saveSDFileToUsb(getLocalFile(), usbHelper.getCurrentFolder(), new UsbHelper.DownloadProgressListener() {
-                    @Override
-                    public void downloadProgress(int progress) {
-                        Log.e(TAG, "download to usb_MachineCode.txt:"+progress);
-                    }
-                });
-                Log.e(TAG, "download and result :" + result);
-                if(result){
-                    Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
-                }
-                device.close();
-            }
-
-            /*if (mMachineCodeSaveFile.exists()) {
-                ViewImportUtils.deleteFile(mMachineCodeSaveFile);
-                machineIdOut(mMachineCodeSaveFile);
-                Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
-            } else {
-                machineIdOut(mMachineCodeSaveFile);//U盘无机器码则导出机器码
-                Toast.makeText(this,"导出机器码成功",Toast.LENGTH_SHORT).show();
-            }*/
-        } else {
-            Log.d(TAG,"this is 将机器码导出到本地中");
-            //mLicenceSaveFile = new File(app.getLicenceDir(),LICENCE_NAME);//手机内授权文件绝对地址的对象
-            mMachineCodeSaveFile = new File(app.getLicenceDir(),MACHINE_CODE_NAME);
-
-            /*if (mLicenceSaveFile.exists()) {//为了手动删除过期的授权文件而重新导出机器码文件重新授权
-                //弹窗提示是否删除本地已存在的licence文件，删除后自动导出。
-                new AlertDialog.Builder(this)
-                        .setTitle("提醒")
-                        .setMessage("本地目录中已存在授权码文件Licence.txt，请问是否删除授权文件？")
-                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ViewImportUtils.deleteFile(mLicenceSaveFile);
-                                machineIdOut(mMachineCodeSaveFile);
-                                Log.d(TAG, "this is 本地目录中已存在授权码文件Licence.txt，进行删除授权文件并重新导出机器码MachineCode.txt文件");
-                            }
-                        })
-                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
-                        })
-                        .create().show();
-            } else {*/
-                ViewImportUtils.deleteFile(mMachineCodeSaveFile);
-                machineIdOut(mMachineCodeSaveFile);
-                Log.d(TAG, "this is 已重新生成机器码文件到本地目录上");
-                Toast.makeText(this,"未插入U盘，无法导出机器码到U盘上",Toast.LENGTH_LONG).show();
-            //}
-        }
-    }
-
-    private void machineIdOut(File mSaveFile) {
-        FileOutputStream outStream = null;
-        try {
-            outStream = new FileOutputStream(mSaveFile);
-            outStream.write(app.getMachine_code().getBytes("gbk"));//UFT-8在android不能用，只能用gbk!!!不设置的话可能会变成乱码！！！
-            outStream.close();
-            outStream.flush();
-            isSave = true;
-            Log.d(TAG, "this is 文件已经保存啦！赶快去查看吧!");
-            //Toast.makeText(this, "导出机器码成功", Toast.LENGTH_SHORT).show();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void SetPowerOnOffBtn(View view) {
-        LogUtils.e(timePickerStart);
-        View timeView = null;
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        /*获取指定弹窗并展示出来*/
-        timeView = this.getLayoutInflater().inflate(R.layout.activity_timepicker, null);
-        alertDialog.setView(timeView);
-        alertDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-            @Override
-            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                return false;//禁止所以按键导致弹窗被取消
-            }
-        });
-        alertDialog
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //todo:获取timePickerStart和End的时间；
-                String startTime = timePickerStart.getHour() + ":" + timePickerStart.getMinute();
-                String endTime = timePickerEnd.getHour() + ":" + timePickerEnd.getMinute();
-                //todo：将获取的开始时间和结束时间 传给定时开关机去设定。也可以获取此时本地时分
-                Log.d(TAG,"this is startTime :" + startTime);
-                Log.d(TAG,"this is EndTime :" + endTime);
-            }
-        })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        final AlertDialog AlertDialogs = alertDialog.create();
-        AlertDialogs.show();
-
-    }
-
     /**
-     * 对获取的开机时间，关机时间，当前时间进行逻辑修正：每次启动应用时，今日存储明日的开关机信息。例如：9点开机(设置，明日9点开机，今日18.00关机)
-     * ，18.00关机(设即明日18.00关机，明日9点开机)，即两个数据库变量，开机则重设开机时间存储，关机则重设关机时间。
-     * 如何更改时间？开机之后时，启动应用；若当前时间(年月日)大于关机时间（即开机的时候），则更新关机时间；若当前时间大于开机时间（也是开机的时候），则更新开机时间
-     * 关机之前，()关机后无法执行更新关机信息，
-     * 理想写法：在开关机API里的onReceiver，直接再次更改信息但应用层无法修改；那就在应用层上进行修改。
+     * 生命周期
      */
-    private int[] checkTimeFormat(int[] onTime){//以onTime为例
-        //年月日时分秒 参数位置固定；0为年，1为月，2为日，3为时，4为分；
-        Calendar c = Calendar.getInstance();
-        int hour = c.get(Calendar.HOUR_OF_DAY);
-        int minute = c.get(Calendar.MINUTE);
-        //将24制时分化为最小单位分钟
-        int onTimeMinute = onTime[3]*60 + onTime[4];
-        //int offTimeMinute = offTime[3]*60 + offTime[4];
-        int curTimeMinute = hour*60 + minute;
-
-        if(onTimeMinute < curTimeMinute && (curTimeMinute-onTimeMinute > 2)){
-            //1.更新时间设置为明天同样的时分，即更新天数即可
-            Calendar calendar = Calendar.getInstance();
-            long curMill = System.currentTimeMillis();
-            calendar.setTimeInMillis(curMill + 86400000);//当前的毫秒加上一天的毫秒数，这样直接取得下一天的日期，不用考虑日月年换算。
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH) + 1;//1月是0，故加1
-            int data = calendar.get(Calendar.DATE);
-
-            LogUtils.e(year);
-            LogUtils.e(month);
-            LogUtils.e(data);
-
-            onTime[0] = year;
-            onTime[1] = month;
-            onTime[2] = data;
-            //此时年月日已修正,返回已修正值。
-            return onTime;
-        }else if(onTimeMinute > curTimeMinute && (onTimeMinute - curTimeMinute > 2)){
-            //2.直接设置定时时间为今天的时间，年月日无问题
-            return onTime;
-        }else{
-            //其他情况处于设定时间与当前小于3分钟，以避免开关机耗时过长使得开关机完整逻辑无法实现。
-            Log.d(TAG,"this is 设定时间与当前时间差值小于2分钟，无法设定，避免开关机时常过长而无法开关机");
-            return null;
-        }
-        //每次开关机都进行重新设置定时任务。
-    }
-
-    public void setOnTimeAlarm(Context context,int[] onTime) {//带入定时的开机时间
-
-        SimpleDateFormat simpleDateFormat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        Date date  = null;
-        try {
-            date = simpleDateFormat1.parse(onTime[0] +"-"+onTime[1] + "-" + onTime[2] + " " + onTime[3] + ":" + onTime[4]);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        long onTimeMill = date != null ? date.getTime() : 0;
-        LogUtils.e(onTimeMill);//返回设定开机时间的毫秒数。
-        long systemTime = System.currentTimeMillis();//返回当前毫秒数
-        long time = onTimeMill-systemTime;
-        LogUtils.e(systemTime);
-        LogUtils.e(time);//返回开机时间差
-
-        /*//通过AlarmManager定时启动广播，进行更新开关机定时任务
-        AlarmManager alarmManager= (AlarmManager) context.getSystemService(context.ALARM_SERVICE);
-        Intent intentOnTime = new Intent(context, AlarmOnTimeReceiver.class);
-        intentOnTime.setAction("android.intent.action.ALARM_ON_TIME");
-        PendingIntent pIntent = PendingIntent.getBroadcast(context, 0, intentOnTime, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        //设置开机时间点的定时广播
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, time, 24*3600*1000, pIntent);*/
-    }
-
     @Override
     protected void onResume() {
         super.onResume();

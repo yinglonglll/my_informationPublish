@@ -48,11 +48,24 @@ public class Device {
      * 终端屏幕高度
      */
     private int height;
+    /**
+     * 分屏视图模式
+     */
+    private boolean single_Split_Mode;
+    /**
+     * 定时任务开始时分
+     */
+    private String power_start_time;
+    /**
+     * 定时任务结束时分
+     */
+    private String power_end_time;
 
-    @Generated(hash = 1784932997)
+    @Generated(hash = 1224239977)
     public Device(Long id, String device_name, String device_id, boolean authority_state,
             String authority_time, String authority_expired, String machine_code,
-            String software_version, String firmware_version, int width, int height) {
+            String software_version, String firmware_version, int width, int height,
+            boolean single_Split_Mode, String power_start_time, String power_end_time) {
         this.id = id;
         this.device_name = device_name;
         this.device_id = device_id;
@@ -64,6 +77,9 @@ public class Device {
         this.firmware_version = firmware_version;
         this.width = width;
         this.height = height;
+        this.single_Split_Mode = single_Split_Mode;
+        this.power_start_time = power_start_time;
+        this.power_end_time = power_end_time;
     }
     @Generated(hash = 1469582394)
     public Device() {
@@ -135,7 +151,23 @@ public class Device {
     public void setAuthority_expired(String authority_expired) {
         this.authority_expired = authority_expired;
     }
-
-
+    public boolean getSingle_Split_Mode() {
+        return this.single_Split_Mode;
+    }
+    public void setSingle_Split_Mode(boolean single_Split_Mode) {
+        this.single_Split_Mode = single_Split_Mode;
+    }
+    public String getPower_start_time() {
+        return this.power_start_time;
+    }
+    public void setPower_start_time(String power_start_time) {
+        this.power_start_time = power_start_time;
+    }
+    public String getPower_end_time() {
+        return this.power_end_time;
+    }
+    public void setPower_end_time(String power_end_time) {
+        this.power_end_time = power_end_time;
+    }
 
 }

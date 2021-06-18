@@ -70,12 +70,10 @@ public class OneSplitViewActivity extends Activity {
                 app.setFileCounts(intent.getIntExtra("splitView",0));
                 app.setFilesParent(intent.getStringExtra("filesParent"));
             }
-            LogUtils.e(app.getFileCounts());
-            LogUtils.e(app.getFilesParent());
 
-            File f = new File(app.getFilesParent());//创建文件对象需判断有无，无则创建
+            File f = new File(app.getFilesParent());
             if (!f.exists()) {
-                f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
+                f.mkdirs();
             }
             File[] files = f.listFiles();
 
@@ -111,7 +109,6 @@ public class OneSplitViewActivity extends Activity {
                     Log.d(TAG,"this is varReceiver");
                     Log.d(TAG,"why is mBroadcastReceiver:app.getListNum1()广播：" + app.getListNum1());
                     playSonImage();
-//                    unregisterReceiver(mBroadcastReceiver);
                 }
             });
             IntentFilter filter = new IntentFilter();
@@ -129,79 +126,13 @@ public class OneSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
-//                app.getDevice().setAuthority_state(app.isAuthority_state());//device表在main中一定创建，故不为null
-//                app.getDevice().setAuthority_time(app.getAuthority_time());
-//                app.getDevice().setAuthority_expired(app.getAuthority_expired());
-//                daoManager.getSession().getDeviceDao().update(app.getDevice());//更新表
-//                Log.d(TAG,"this is done 数据存储");
-//                MainActivity main = new MainActivity();
-//                main.initAuthorXml();
-
             }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
     }
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
 
-    public OneSplitViewActivity() {
-        super();
-    }
-
-    private Source getSource(Source source) {//对数据库进行覆写
-        source.setProgram_id(getRandomString(5));
-        source.setSplit_view(app.getSplit_view());
-        source.setSplit_mode(app.getSplit_mode());
-        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
-        source.setStart_time(app.getStart_time());
-        source.setEnd_time(app.getEnd_time());
-        source.setCreate_time(app.getCreate_time());
-        source.setFirst_time(app.getFirst_time());
-        source.setTime_difference(app.getTime_difference());
-        source.setRelative_time(app.getRelative_time());
-
-        return source;
-    }
-    @SuppressLint("ClickableViewAccessibility")
-    private void initWidget(String split_mode) {
-
-        switch (split_mode){//该步骤可以简写，这样写仅为了和其他activity代码相似
-            case "1":
-//                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-//                View view=inflater.inflate(R.layout.activity_splitview_one1, null);//setContent()的实际底层代码逻辑相关
-                setContentView(R.layout.activity_splitview_one1);
-                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_one1_1));//this指当前当前layout里找控件，若是去其他layout找，需要用到layout过滤器如上
-                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_one1_1));
-
-                setDialog(this);
-                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        mGestureDetector.onTouchEvent(event);
-                        return true;
-                    }
-                });
-                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        mGestureDetector.onTouchEvent(event);
-                        return true;
-                    }
-                });
-                Log.d(TAG,"this is case \"1\":");
-                break;
-            default:
-                Log.d(TAG,"this is switch(split_mode)_default");
-                break;
-        }
-    }
     public void playSonImage(){
         if (app.isPlaySonImageFlag()) {
             if (app.getListNum1() >= arrayList.size()) {
@@ -263,6 +194,10 @@ public class OneSplitViewActivity extends Activity {
         }
     }
 
+    /**
+     *以下为非主要方法
+     */
+
     public void setDialog(Context context) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
 
@@ -311,6 +246,65 @@ public class OneSplitViewActivity extends Activity {
         });
     }
 
+    private Source getSource(Source source) {//对数据库进行覆写
+        source.setProgram_id(getRandomString(5));
+        source.setSplit_view(app.getSplit_view());
+        source.setSplit_mode(app.getSplit_mode());
+        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+        source.setStart_time(app.getStart_time());
+        source.setEnd_time(app.getEnd_time());
+        source.setCreate_time(app.getCreate_time());
+        source.setFirst_time(app.getFirst_time());
+        source.setTime_difference(app.getTime_difference());
+        source.setRelative_time(app.getRelative_time());
+        return source;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void initWidget(String split_mode) {
+
+        switch (split_mode){//该步骤可以简写，这样写仅为了和其他activity代码相似
+            case "1":
+//                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+//                View view=inflater.inflate(R.layout.activity_splitview_one1, null);//setContent()的实际底层代码逻辑相关
+                setContentView(R.layout.activity_splitview_one1);
+                app.setImageView_1((ImageView)this.findViewById(R.id.imageView_one1_1));//this指当前当前layout里找控件，若是去其他layout找，需要用到layout过滤器如上
+                app.setVideoView_1((CustomVideoView)this.findViewById(R.id.videoView_one1_1));
+
+                setDialog(this);
+                app.getImageView_1().setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        mGestureDetector.onTouchEvent(event);
+                        return true;
+                    }
+                });
+                app.getVideoView_1().setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        mGestureDetector.onTouchEvent(event);
+                        return true;
+                    }
+                });
+                Log.d(TAG,"this is case \"1\":");
+                break;
+            default:
+                Log.d(TAG,"this is switch(split_mode)_default");
+                break;
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    /**
+     * 以下为生命周期
+     */
     @Override
     protected void onPause() {
         super.onPause();
