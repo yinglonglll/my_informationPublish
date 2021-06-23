@@ -55,7 +55,7 @@ public class ImportActivity extends Activity {
         String extraPath = intent.getExtras().getString("extra_path");
         Log.d(TAG,"extraPath的值为：" + extraPath);
 
-        //todo:授权状态下，逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消
+        /*授权状态下，逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消*/
         if(app.isAuthority_state()){//处于授权状态下才允许资源文件的更新
             copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
             LogUtils.e(mMatch);//打印复制结果
@@ -268,7 +268,7 @@ public class ImportActivity extends Activity {
     }
 
     private void copyExtraFile(String path){
-        String extraPath = path.replace("file://", "");//去除uri前缀，得到文件路径(绝对路径)
+        String extraPath = path.replace("file://", "");//去除uri前缀，得到U盘文件路径(绝对路径)
         Log.d(TAG,"extraPath去除url前缀的值为：" + extraPath);
 
         File extraDirectory = new File(extraPath);//找到U盘的对象
@@ -283,8 +283,8 @@ public class ImportActivity extends Activity {
             String source = "";
             mTarget = "";
             if (files != null&& files.length != 0) {
-                for(File file : files){
-                    if (file.getName().equals("ghznPlayer")) {//从U盘路径中找到我们放入的文件夹ghznPlayer，以找到文件夹的路径
+                for(File file : files){//遍历U盘根目录文件
+                    if (file.getName().equals("ghznPlayer")) {//1.从U盘路径中找到我们放入的文件夹ghznPlayer并进行检验格式和复制到本地
                         Log.d(TAG, "find extra program:" + file.getAbsolutePath());
                         mMatch = true;//标志找到--找到ghznPlayer文件路径
                         source = file.getAbsolutePath();//U盘存放目标文件ghznPlayer的绝对路径

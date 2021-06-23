@@ -37,15 +37,15 @@ public class AlarmOnTimeReceiver extends BroadcastReceiver {
             YangYuOrder order = new YangYuOrder();
             Device device = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
             LogUtils.e(device.getPower_start_time());
-            LogUtils.e(device.getPower_start_time());
+            LogUtils.e(device.getPower_end_time());
             //todo：执行定时任务的设定：取出上次修正后的定时时间，与当前时间进行对比，观察是否需要进行定时任务时间的修正，再发送到API
             if(device.getPower_start_time()!=null && device.getPower_end_time()!=null){
                 final SharedPreferences preferences = app.getSharedPreferences("user", Context.MODE_PRIVATE);
                 if (preferences != null){
                     boolean powerFlag = preferences.getBoolean("timeSwitchFlag", true);
-                    order.startup_shutdow_off(context);
                     if(powerFlag){
                         Log.d(TAG,"this is 执行延迟广播中的定时任务");
+                        order.startup_shutdow_off(context);
                         order.startup_shutdow_on(context,device.getPower_start_time(),device.getPower_end_time());
                     }
                 }

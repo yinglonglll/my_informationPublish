@@ -17,12 +17,12 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextClock;
@@ -30,6 +30,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.apkfuns.logutils.LogUtils;
 import com.github.mjdev.libaums.UsbMassStorageDevice;
 import com.github.mjdev.libaums.fs.UsbFile;
@@ -40,7 +42,12 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import cn.ghzn.player.entity.UsbHelper;
 import cn.ghzn.player.order.YangYuOrder;
@@ -76,8 +83,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView mAuthorityTime;
     private TextView mAuthorityExpired;
     private TextView mLeftMargin;
-    private TimePicker timePickerStart;
-    private TimePicker timePickerEnd;
+    private TimePicker tp_Start;
+    private TimePicker tp_End;
+    private CheckBox cb_monday;
+    private CheckBox cb_tuesday;
+    private CheckBox cb_wednesday;
+    private CheckBox cb_thursday;
+    private CheckBox cb_friday;
+    private CheckBox cb_saturday;
+    private CheckBox cb_sunday;
     private Switch mSwitch;
     private Button mSingleBtn;
 
@@ -92,13 +106,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWritePermission();//实现动态获取写入权限。避免静态获取权限失败
+
         app = (MyApplication)getApplication();//实现获取Application对象，以全局以app对象调用内部的方法：
         UsbUtils.checkUsb(this);//实现通过USB协议检查出USB是什么类型设备
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//实现取消导航栏
         setContentView(R.layout.activity_main);
         AutoOutPutMachineCode();//方法内部取消了自动导出机器码，仅保留动态获取usbHelper的权限
-        /*应用启动自动设定时任务*/
-        /*返回主界面时确保关掉上一个界面*/
+        /*应用启动自动设定时任务
+        返回主界面时确保关掉上一个界面*/
         if (app.getCurrentActivity() != null) {//实现返回主界面时，关闭先前播放的内容界面
             LogUtils.e(app.getCurrentActivity());
             app.getCurrentActivity().finish();
@@ -481,18 +496,51 @@ public class MainActivity extends AppCompatActivity {
         final AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
 
         /*查找非当前界面显示view的控件，需先找到布局文件，再从布局文件对象中调用方法找控件*/
-        timePickerStart = timeView.findViewById(R.id.tp_timePickerStart);
-        timePickerEnd = timeView.findViewById(R.id.tp_timePickerEnd);
-        timePickerStart.setIs24HourView(true);
-        timePickerEnd.setIs24HourView(true);
+        tp_Start = timeView.findViewById(R.id.tp_Start);
+        tp_End = timeView.findViewById(R.id.tp_End);
+        cb_monday = timeView.findViewById(R.id.cb_monday);
+        cb_tuesday = timeView.findViewById(R.id.cb_tuesday);
+        cb_wednesday = timeView.findViewById(R.id.cb_wednesday);
+        cb_thursday= timeView.findViewById(R.id.cb_thursday);
+        cb_friday = timeView.findViewById(R.id.cb_friday);
+        cb_saturday = timeView.findViewById(R.id.cb_saturday);
+        cb_sunday = timeView.findViewById(R.id.cb_sunday);
         mSwitch = timeView.findViewById(R.id.swc_switcher);
 
-        /*从SharedPreferences获取数据*/
+        tp_Start.setIs24HourView(true);
+        tp_End.setIs24HourView(true);
+
+        /*从SharedPreferences获取数据加载配置项--星期和定时任务开*/
         if (preferences != null) {
             boolean powerFlag = preferences.getBoolean("timeSwitchFlag", timeSwitchFlag);
             mSwitch.setChecked(powerFlag);
+            /*取字符串，转化为json，转化为map，取map的值set给单选框来恢复状态*/
+            if(preferences.getString("weekString",null) != null) {//在进行过设置后才进行取值
+                String getWeekString = preferences.getString("weekString", null);
+                Log.d(TAG,"this is getWeekString" + getWeekString);
+                HashMap<String, Boolean> weekMap = JSON.parseObject(getWeekString, new TypeReference<HashMap<String, Boolean>>() {
+                });
+                Log.d(TAG,"this is weekMap.get(\"MON\") : " + weekMap.get("MON"));
+                cb_monday.setChecked(weekMap.get("MON"));
+                cb_tuesday.setChecked(weekMap.get("TUE"));
+                cb_wednesday.setChecked(weekMap.get("WED"));
+                cb_thursday.setChecked(weekMap.get("THU"));
+                cb_friday.setChecked(weekMap.get("FRI"));
+                cb_saturday.setChecked(weekMap.get("SAT"));
+                cb_sunday.setChecked(weekMap.get("SUN"));
+            }
         }
-        Log.d(TAG,"this is checkState :" + mSwitch.isChecked());
+        /*将已设定的定时开关机时间加载到当前timePicker上*/
+        if(app.getDevice()!=null && app.getDevice().getPower_start_time()!=null){
+            String[] PowerStartTime = app.getDevice().getPower_start_time().split(":");
+            String[] PowerEndTime = app.getDevice().getPower_end_time().split(":");
+            tp_Start.setHour(Integer.parseInt(PowerStartTime[0]));//字符06转化为整型带入tp中会自动转化为6
+            tp_Start.setMinute(Integer.parseInt(PowerStartTime[1]));
+            tp_End.setHour(Integer.parseInt(PowerEndTime[0]));
+            tp_End.setMinute(Integer.parseInt(PowerEndTime[1]));
+            Log.d(TAG,"this is 设置了已定时的时间为tp的默认显示时间");
+        }
+
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -522,25 +570,80 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String startHour = timePickerStart.getHour() < 10 ? "0" + timePickerStart.getHour() : "" + timePickerStart.getHour();;
-                String startMinute = timePickerStart.getMinute() < 10 ? "0" + timePickerStart.getMinute() : ""+ timePickerStart.getMinute();;
-                String endHour = timePickerEnd.getHour() < 10 ? "0" + timePickerEnd.getHour() : "" + timePickerEnd.getHour();;
-                String endMinute = timePickerEnd.getMinute() < 10 ? "0" + timePickerEnd.getMinute() : ""+ timePickerEnd.getMinute();;
+                /*时分时间转化为xx:xx格式*/
+                String startHour = tp_Start.getHour() < 10 ? "0" + tp_Start.getHour() : "" + tp_Start.getHour();;
+                String startMinute = tp_Start.getMinute() < 10 ? "0" + tp_Start.getMinute() : ""+ tp_Start.getMinute();;
+                String endHour = tp_End.getHour() < 10 ? "0" + tp_End.getHour() : "" + tp_End.getHour();;
+                String endMinute = tp_End.getMinute() < 10 ? "0" + tp_End.getMinute() : ""+ tp_End.getMinute();;
                 String startTime = startHour + ":" + startMinute + ":" + "00";
                 String endTime = endHour + ":" + endMinute + ":" + "00";
-                /*app.getDevice().setPower_start_time(startTime);
-                app.getDevice().setPower_end_time(endTime);
-                daoManager.getSession().getDeviceDao().update(app.getDevice());*/
 
-                /*Log.d(TAG,"this is startTime: " + startTime + "***" + "数据库中的startTime" + app.getDevice().getPower_start_time());
-                Log.d(TAG,"this is EndTime: " + endTime + "***" + "数据库中的startTime" + app.getDevice().getPower_end_time());*/
+                //todo:获取单选框中的星期-->通过fastjson转为json存储在shareP中-->每次进来时恢复上次选中的状态；底逻辑：通过shareP的数据判断是否执行定时任务。
+                Map<String,Boolean> weekMap = new HashMap<>();
+                weekMap.put("MON",cb_monday.isChecked());
+                weekMap.put("TUE",cb_tuesday.isChecked());
+                weekMap.put("WED",cb_wednesday.isChecked());
+                weekMap.put("THU",cb_thursday.isChecked());
+                weekMap.put("FRI",cb_friday.isChecked());
+                weekMap.put("SAT",cb_saturday.isChecked());
+                weekMap.put("SUN",cb_sunday.isChecked());
+
+                SharedPreferences preferences = getSharedPreferences("user", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = preferences.edit();
+                String weekString = JSON.toJSONString(weekMap);//存储map信息
+                editor.putString("weekString",weekString);
+                editor.apply();
+
+                /*二.条件判断中对map的判断方法*//*
+                for(String key:WeekMap.keySet()){
+                    switch (key){
+                        case "Mon":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作mon");
+                            }
+                            break;
+                        case "TUE":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作TUE");
+                            }
+                            break;
+                        case "WED":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作WED");
+                            }
+                            break;
+                        case "THU":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作THU");
+                            }
+                            break;
+                        case "FRI":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作FRI");
+                            }
+                            break;
+                        case "SAT":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作SAT");
+                            }
+                            break;
+                        case "SUN":
+                            if(WeekMap.get(key)){
+                                Log.d(TAG,"this is 执行操作SUN");
+                            }
+                            break;
+                    }
+                }
+                String weekString = JSON.toJSONString(WeekMap);//存数据库的字符串
+                HashMap<String,Boolean> nameMap = JSON.parseObject(weekString,new TypeReference<HashMap<String,Boolean>>(){});//从数据库取出来进行转换为Map*/
+
                 //todo：将获取的开始时间和结束时间，传给定时开关机方法去设定执行
                 if (preferences != null) {
                     boolean powerFlag = preferences.getBoolean("timeSwitchFlag", timeSwitchFlag);
                     YangYuOrder order = new YangYuOrder();
-                    order.startup_shutdow_off(MainActivity.this);
                     if(powerFlag){
                         Log.d(TAG,"this is 设置定时开关机on");
+                        order.startup_shutdow_off(MainActivity.this);
                         order.startup_shutdow_on(MainActivity.this,startTime,endTime);
                     }
                 }

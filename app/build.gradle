@@ -53,6 +53,7 @@ dependencies {
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
     debugCompile 'com.amitshekhar.android:debug-db:1.0.0' //输入ip以读取数据库
     implementation 'me.jahnen:libaums:0.8.0'
+    implementation 'com.alibaba:fastjson:1.1.70.android'//json；
 
 
 }

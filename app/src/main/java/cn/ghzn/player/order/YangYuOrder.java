@@ -76,6 +76,7 @@ public class YangYuOrder extends BaseOrder{
 
     @Override
     public boolean startup_shutdow_on(Context context, String startTime, String endTime) {
+        Log.d(TAG,"this is 執行了startup_shutdow_on方法");
         try {
             Intent intent = new Intent("android.intent.action.setpoweronoff");
             String date = simpleDateFormat.format(new Date());
@@ -85,8 +86,21 @@ public class YangYuOrder extends BaseOrder{
             LogUtils.e(timeonArray);
             LogUtils.e(timeoffArray);
 
-            timeonArray = SystemUtil.checkTimeFormat(timeonArray);
-            timeoffArray = SystemUtil.checkTimeFormat(timeoffArray);
+            /*判断当前dayOfWeek是否是存储的星期时间*/
+            LogUtils.e(SystemUtil.checkTimeFormat(context,timeonArray).length);//不符默认返回1
+            if(SystemUtil.checkTimeFormat(context,timeonArray).length != 1){
+                timeonArray = SystemUtil.checkTimeFormat(context,timeonArray);
+            }else{
+                Log.d(TAG,"this is 开机时间不在dayOfWeek的时间内");
+                return false;
+            }
+            if(SystemUtil.checkTimeFormat(context,timeoffArray).length != 1){
+                timeoffArray = SystemUtil.checkTimeFormat(context,timeoffArray);
+            }else{
+                Log.d(TAG,"this is 关机时间不在dayOfWeek的时间内");
+                return false;
+            }
+
             //修正后的时间
             LogUtils.e(timeonArray);
             LogUtils.e(timeoffArray);
@@ -105,6 +119,8 @@ public class YangYuOrder extends BaseOrder{
 
                 SystemUtil.setOnTimeAlarm(context,timeonArray);//带入修正后的开机时间；
                 Log.d(TAG,"this is 将timeon和timeoff的开关机时间通过广播发送出去");
+                LogUtils.e(timeonArray);
+                LogUtils.e(timeoffArray);
                 intent.putExtra("timeon",timeonArray);
                 intent.putExtra("timeoff",timeoffArray);
                 intent.putExtra( "enable" ,true); // false

@@ -62,7 +62,7 @@ public class UsbReceiver extends BroadcastReceiver {
         if(!"null".equals(String.valueOf(app))){
             if (app.isImportState()) {//导入USB类型是的是U盘情况下
                 Log.d(TAG,"action === " + intent.getAction());
-                if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {//系统广播，无法自行发送，权限不够
+                if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {
                     String path = intent.getDataString();
                     Log.d(TAG,"this is path" + path);
 
@@ -71,12 +71,12 @@ public class UsbReceiver extends BroadcastReceiver {
                         UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
                     }
                     app.setReadDeviceState(false);//恢复默认的非屏蔽状态
-                    Log.d(TAG,"this is 进行挂载状态时：" + app.isReadDeviceState());//正常为false
+                    Log.d(TAG,"this is 进行挂载状态时,isReadDeviceState()：" + app.isReadDeviceState());//正常为false
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
                     if(!app.isReadDeviceState()){
                         app.setImportState(false);
                     }
-                    Log.d(TAG,"this is 取消挂载状态时：" + app.isReadDeviceState());//正常为false
+                    Log.d(TAG,"this is 取消挂载状态时,isReadDeviceState()：" + app.isReadDeviceState());//正常为false
                     Log.d(TAG,"U盘拔出");
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
                     if(!app.isReadDeviceState()){
