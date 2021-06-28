@@ -49,9 +49,9 @@ public class Device {
      */
     private int height;
     /**
-     * 单屏视图模式
+     * 单屏视图模式:0为单屏，1为多屏
      */
-    private boolean single_Split_Mode;
+    private int mode;
     /**
      * 定时任务开始时分
      */
@@ -61,11 +61,11 @@ public class Device {
      */
     private String power_end_time;
 
-    @Generated(hash = 1224239977)
+    @Generated(hash = 642847208)
     public Device(Long id, String device_name, String device_id, boolean authority_state,
             String authority_time, String authority_expired, String machine_code,
-            String software_version, String firmware_version, int width, int height,
-            boolean single_Split_Mode, String power_start_time, String power_end_time) {
+            String software_version, String firmware_version, int width, int height, int mode,
+            String power_start_time, String power_end_time) {
         this.id = id;
         this.device_name = device_name;
         this.device_id = device_id;
@@ -77,7 +77,7 @@ public class Device {
         this.firmware_version = firmware_version;
         this.width = width;
         this.height = height;
-        this.single_Split_Mode = single_Split_Mode;
+        this.mode = mode;
         this.power_start_time = power_start_time;
         this.power_end_time = power_end_time;
     }
@@ -151,12 +151,7 @@ public class Device {
     public void setAuthority_expired(String authority_expired) {
         this.authority_expired = authority_expired;
     }
-    public boolean getSingle_Split_Mode() {
-        return this.single_Split_Mode;
-    }
-    public void setSingle_Split_Mode(boolean single_Split_Mode) {
-        this.single_Split_Mode = single_Split_Mode;
-    }
+    
     public String getPower_start_time() {
         return this.power_start_time;
     }
@@ -168,6 +163,12 @@ public class Device {
     }
     public void setPower_end_time(String power_end_time) {
         this.power_end_time = power_end_time;
+    }
+    public int getMode() {
+        return this.mode;
+    }
+    public void setMode(int mode) {
+        this.mode = mode;
     }
 
 }

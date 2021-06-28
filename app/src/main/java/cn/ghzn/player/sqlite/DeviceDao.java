@@ -35,7 +35,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         public final static Property Firmware_version = new Property(8, String.class, "firmware_version", false, "FIRMWARE_VERSION");
         public final static Property Width = new Property(9, int.class, "width", false, "WIDTH");
         public final static Property Height = new Property(10, int.class, "height", false, "HEIGHT");
-        public final static Property Single_Split_Mode = new Property(11, boolean.class, "single_Split_Mode", false, "SINGLE__SPLIT__MODE");
+        public final static Property Mode = new Property(11, int.class, "mode", false, "MODE");
         public final static Property Power_start_time = new Property(12, String.class, "power_start_time", false, "POWER_START_TIME");
         public final static Property Power_end_time = new Property(13, String.class, "power_end_time", false, "POWER_END_TIME");
     }
@@ -64,7 +64,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
                 "\"FIRMWARE_VERSION\" TEXT," + // 8: firmware_version
                 "\"WIDTH\" INTEGER NOT NULL ," + // 9: width
                 "\"HEIGHT\" INTEGER NOT NULL ," + // 10: height
-                "\"SINGLE__SPLIT__MODE\" INTEGER NOT NULL ," + // 11: single_Split_Mode
+                "\"MODE\" INTEGER NOT NULL ," + // 11: mode
                 "\"POWER_START_TIME\" TEXT," + // 12: power_start_time
                 "\"POWER_END_TIME\" TEXT);"); // 13: power_end_time
     }
@@ -121,7 +121,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         }
         stmt.bindLong(10, entity.getWidth());
         stmt.bindLong(11, entity.getHeight());
-        stmt.bindLong(12, entity.getSingle_Split_Mode() ? 1L: 0L);
+        stmt.bindLong(12, entity.getMode());
  
         String power_start_time = entity.getPower_start_time();
         if (power_start_time != null) {
@@ -180,7 +180,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         }
         stmt.bindLong(10, entity.getWidth());
         stmt.bindLong(11, entity.getHeight());
-        stmt.bindLong(12, entity.getSingle_Split_Mode() ? 1L: 0L);
+        stmt.bindLong(12, entity.getMode());
  
         String power_start_time = entity.getPower_start_time();
         if (power_start_time != null) {
@@ -212,7 +212,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
             cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // firmware_version
             cursor.getInt(offset + 9), // width
             cursor.getInt(offset + 10), // height
-            cursor.getShort(offset + 11) != 0, // single_Split_Mode
+            cursor.getInt(offset + 11), // mode
             cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // power_start_time
             cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13) // power_end_time
         );
@@ -232,7 +232,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         entity.setFirmware_version(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
         entity.setWidth(cursor.getInt(offset + 9));
         entity.setHeight(cursor.getInt(offset + 10));
-        entity.setSingle_Split_Mode(cursor.getShort(offset + 11) != 0);
+        entity.setMode(cursor.getInt(offset + 11));
         entity.setPower_start_time(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));
         entity.setPower_end_time(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
      }

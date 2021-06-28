@@ -47,7 +47,7 @@ public class MyApplication extends Application {
     private long first_time;
     private long relative_time;
     private String first_machineCodeOut;
-    private boolean single_split_mode=false;
+    private int mode_ = 1 ;//默认为多屏模式
     /*private String single_view;
     private String single_son_source;*/
 
@@ -144,12 +144,12 @@ public class MyApplication extends Application {
         this.updateOnceSource = updateOnceSource;
     }
 
-    public boolean isSingle_split_mode() {
-        return single_split_mode;
+    public int getMode_() {
+        return mode_;
     }
 
-    public void setSingle_split_mode(boolean single_split_mode) {
-        this.single_split_mode = single_split_mode;
+    public void setMode_(int mode_) {
+        this.mode_ = mode_;
     }
 
     public boolean isReadDeviceState() {

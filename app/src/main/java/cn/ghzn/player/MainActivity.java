@@ -52,7 +52,6 @@ import cn.ghzn.player.receiver.USBBroadCastReceiver;
 import cn.ghzn.player.receiver.VarReceiver;
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
-import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
 import cn.ghzn.player.util.AuthorityUtils;
 import cn.ghzn.player.util.InfoUtils;
@@ -293,10 +292,10 @@ public class MainActivity extends AppCompatActivity {
                 Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
                 sendBroadcast(RenovateIntent);
                 app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
-                if(app.isSingle_split_mode()){
+                if(app.getMode_() == 0){
                     util.infoLog(TAG,"进入到单屏模式",null);
                     turnActivity(single.getSingle_view());//0
-                }else{
+                }else if(app.getMode_() == 1){
                     util.infoLog(TAG,"进入到多屏模式",null);
                     util.varyLog(TAG,app.getSplit_view(),"app.getSplit_view");
                     turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
@@ -693,21 +692,21 @@ public class MainActivity extends AppCompatActivity {
         singleView = this.getLayoutInflater().inflate(R.layout.activity_dialog,null);
         mSingleBtn = singleView.findViewById(R.id.btn_singleSplitMode);
         //设置是否单屏的状态
-        LogUtils.e(app.isSingle_split_mode());
-        if (app.isSingle_split_mode()) {
+        LogUtils.e(app.getMode_());
+        if (app.getMode_() == 0) {
             mSingleSplitMode.setText("分屏模式：多屏模式");
             Toast.makeText(this,"多屏模式",Toast.LENGTH_SHORT).show();
-            app.getDevice().setSingle_Split_Mode(false);
-            app.setSingle_split_mode(false);
+            app.getDevice().setMode(1);
+            app.setMode_(1);
             stopBtn(view);
             if(app.getSon_source()!=null){
                 playBtn(view);
             }
-        } else {
+        } else if(app.getMode_() == 1){
             mSingleSplitMode.setText("分屏状态：单屏模式");
             Toast.makeText(this,"单屏模式",Toast.LENGTH_SHORT).show();
-            app.getDevice().setSingle_Split_Mode(true);
-            app.setSingle_split_mode(true);
+            app.getDevice().setMode(0);
+            app.setMode_(0);
             stopBtn(view);
             LogUtils.e(app);
             LogUtils.e(single);
@@ -759,7 +758,7 @@ public class MainActivity extends AppCompatActivity {
         app.setMachine_code(device.getMachine_code());
         app.setAuthority_time(device.getAuthority_time());
         app.setAuthority_expired(device.getAuthority_expired());
-        app.setSingle_split_mode(device.getSingle_Split_Mode());
+        app.setMode_(device.getMode());
 
         //fixme：若使用者修改了系统时间超过授权到期时间，则从数据库取出的上次授权状态时不对的，需source表的信息进行判断，但device里无法判断；
         util.varyLog(TAG,app.getRelative_time(),"app.getRelative_time()");
@@ -768,9 +767,9 @@ public class MainActivity extends AppCompatActivity {
         if(app.getCreateTime() > InfoUtils.dateString2Mills(app.getAuthority_expired()) && app.getRelative_time() != 0){//非首次的简易判断
             app.setAuthorityName("授权过期");
         }
-        if(app.getDevice().getSingle_Split_Mode()){
+        if(app.getDevice().getMode() == 0){
             mSingleSplitMode.setText("分屏模式：单屏模式" );
-        }else{
+        }else if(app.getDevice().getMode() == 1){
             mSingleSplitMode.setText("分屏模式: 多屏模式");
         }
         mSingleSplitMode.setOnTouchListener(new View.OnTouchListener() {
@@ -850,7 +849,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
         //Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
-        if(app.isSingle_split_mode() && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
+        if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){
                 case "0"://一分屏时，三种状态下触发对对应控件进行操作
                     if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -894,7 +893,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }else{
-            if(app.getSon_source()!=null){
+            if(app.getMode_() == 1 && app.getSon_source()!=null){
                 switch (app.getSplit_view()){//文件数就是分屏数
                     case "1"://一分屏时，三种状态下触发对对应控件进行操作
                         if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -1119,7 +1118,7 @@ public class MainActivity extends AppCompatActivity {
     public void suspendBtn(View view) {//在播放时才为有效按钮，其他都无效
         Log.d(TAG,"this is suspendBtn");
         Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();//获取当前文件夹的命名格式中的分屏字符串，以此获得对应的控件，控件又分图片和视频子控件；即先判分屏名，再判类型
-        if(app.isSingle_split_mode() && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
+        if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){//单屏模式
                 case "0":
                     if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
@@ -1144,7 +1143,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }else{
-            if(app.getSon_source()!=null){
+            if(app.getMode_() == 1 && app.getSon_source()!=null){
                 switch (app.getSplit_view()){//多屏模式
                     case "1"://一分屏
                         if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态

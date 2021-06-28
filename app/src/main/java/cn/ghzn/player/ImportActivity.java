@@ -14,7 +14,6 @@ import com.apkfuns.logutils.LogUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import cn.ghzn.player.sqlite.DaoManager;
@@ -60,7 +59,7 @@ public class ImportActivity extends Activity {
             copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
             LogUtils.e(mMatch);//打印复制结果
             //todo：对单屏模式和多屏模式进行分类
-            if(app.isSingle_split_mode()){
+            if(app.getMode_() == 0){
                 util.infoLog(TAG,"进入到单屏模式",null);
                 cancelPreviousPlayer();
                 Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
