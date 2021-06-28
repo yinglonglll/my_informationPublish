@@ -28,7 +28,7 @@
                         android:id="@+id/imageView_four1_1"
                         android:scaleType="fitXY"
                         android:layout_height="match_parent"/>
-                    <cn.ghzn.player.CustomVideoView
+                    <cn.ghzn.player.layout.CustomVideoView
                         android:layout_width="match_parent"
                         android:id="@+id/videoView_four1_1"
                         android:layout_alignParentTop="true"
@@ -57,7 +57,7 @@
                         android:id="@+id/imageView_four1_2"
                         android:scaleType="fitXY"
                         android:layout_height="match_parent"/>
-                    <cn.ghzn.player.CustomVideoView
+                    <cn.ghzn.player.layout.CustomVideoView
                         android:layout_width="match_parent"
                         android:id="@+id/videoView_four1_2"
                         android:layout_alignParentTop="true"
@@ -92,7 +92,7 @@
                         android:id="@+id/imageView_four1_3"
                         android:scaleType="fitXY"
                         android:layout_height="match_parent"/>
-                    <cn.ghzn.player.CustomVideoView
+                    <cn.ghzn.player.layout.CustomVideoView
                         android:layout_width="match_parent"
                         android:id="@+id/videoView_four1_3"
                         android:layout_alignParentTop="true"
@@ -121,7 +121,7 @@
                         android:id="@+id/imageView_four1_4"
                         android:scaleType="fitXY"
                         android:layout_height="match_parent"/>
-                    <cn.ghzn.player.CustomVideoView
+                    <cn.ghzn.player.layout.CustomVideoView
                         android:layout_width="match_parent"
                         android:id="@+id/videoView_four1_4"
                         android:layout_alignParentTop="true"

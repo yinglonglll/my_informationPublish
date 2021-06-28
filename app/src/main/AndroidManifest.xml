@@ -39,6 +39,7 @@
         <activity android:name=".TwoSplitViewActivity"/>
         <activity android:name=".ThreeSplitViewActivity"/>
         <activity android:name=".FourSplitViewActivity"/>
+        <activity android:name=".SingleSplitViewActivity"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

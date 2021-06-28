@@ -88,7 +88,5 @@ public class InfoUtils {
 //        app.setHeight(0);
         return app.getHeight();
     }
-    public static boolean getSingleSplitMode(){
-        return app.isSingle_split_mode();
-    }
+
 }

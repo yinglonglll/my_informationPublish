@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.amitshekhar.utils.Utils;
 import com.apkfuns.logutils.LogUtils;
 
 import cn.ghzn.player.MainActivity;
@@ -14,6 +15,7 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 
 import static cn.ghzn.player.MainActivity.app;
+import static cn.ghzn.player.MyApplication.util;
 
 /**
  * <pre>
@@ -33,7 +35,7 @@ public class AlarmOnTimeReceiver extends BroadcastReceiver {
         LogUtils.e("action === " + intent.getAction());
         //保证开机时，若处于开机状态，则重置定时任务，使得定时任务循环下去
         if(intent.getAction().equals("android.intent.action.ALARM_ON_TIME")){
-            LogUtils.e("this is 执行重设定定时任务操作");
+            util.infoLog(TAG,"执行重设定定时任务操作--",null);
             YangYuOrder order = new YangYuOrder();
             Device device = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
             LogUtils.e(device.getPower_start_time());
@@ -44,7 +46,7 @@ public class AlarmOnTimeReceiver extends BroadcastReceiver {
                 if (preferences != null){
                     boolean powerFlag = preferences.getBoolean("timeSwitchFlag", true);
                     if(powerFlag){
-                        Log.d(TAG,"this is 执行延迟广播中的定时任务");
+                        util.infoLog(TAG,"执行延迟广播中的定时任务",null);
                         order.startup_shutdow_off(context);
                         order.startup_shutdow_on(context,device.getPower_start_time(),device.getPower_end_time());
                     }

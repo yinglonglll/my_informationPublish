@@ -49,7 +49,7 @@ public class Device {
      */
     private int height;
     /**
-     * 分屏视图模式
+     * 单屏视图模式
      */
     private boolean single_Split_Mode;
     /**

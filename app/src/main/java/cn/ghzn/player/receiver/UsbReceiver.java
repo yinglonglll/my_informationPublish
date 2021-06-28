@@ -32,6 +32,7 @@ import cn.ghzn.player.util.ViewImportUtils;
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.MainActivity.app;
 import static cn.ghzn.player.MainActivity.daoManager;
+import static cn.ghzn.player.MyApplication.util;
 import static cn.ghzn.player.util.AuthorityUtils.digest;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
 import static java.lang.Thread.sleep;
@@ -52,37 +53,41 @@ public class UsbReceiver extends BroadcastReceiver {
         //先执行完程序，如果没问题才跳转到对应的player布局界面
         try {
             if(!app.isReadDeviceState()){//来自ReadDevice的广播就屏蔽，且默认为false；
-                Log.d(TAG,"this is 判断USB设备是否为U盘的方法");
+                util.infoLog(TAG,"检查USB设备是否为U盘的方法","up");
                 UsbUtils.checkUsb(context);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            util.varyLog(TAG,e,"Exception e");
         }
-        LogUtils.e(String.valueOf(app));
-        if(!"null".equals(String.valueOf(app))){
+        //LogUtils.e(String.valueOf(app));
+        if(!"null".equals(String.valueOf(app))){//拔U盘可能回出现莫名全局变量app为null的情况，故屏蔽
             if (app.isImportState()) {//导入USB类型是的是U盘情况下
-                Log.d(TAG,"action === " + intent.getAction());
+                util.varyLog(TAG,intent.getAction(),"action ===");
                 if (intent.getAction().equals("android.intent.action.MEDIA_MOUNTED")) {
                     String path = intent.getDataString();
-                    Log.d(TAG,"this is path" + path);
-
+                    util.infoLog(TAG,"U盘接入",null);
+                    util.varyLog(TAG,path,"path");
                     //todo：屏蔽来自UsbHelper的readDevice()方法带来的重复挂载广播。判断是来自ReadDevice的广播就屏蔽。
                     if(!app.isReadDeviceState()){
+                        //广播真正执行的地方
                         UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
+                        app.setUpdateOnceSource(true);//U盘进来，恢复为可更新资源状态，更新一次资源或拔出后置false
                     }
                     app.setReadDeviceState(false);//恢复默认的非屏蔽状态
-                    Log.d(TAG,"this is 进行挂载状态时,isReadDeviceState()：" + app.isReadDeviceState());//正常为false
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
                     if(!app.isReadDeviceState()){
+                        //广播真正执行的地方
                         app.setImportState(false);
+                        app.setUpdateOnceSource(false);
                     }
-                    Log.d(TAG,"this is 取消挂载状态时,isReadDeviceState()：" + app.isReadDeviceState());//正常为false
-                    Log.d(TAG,"U盘拔出");
+                    util.infoLog(TAG,"U盘拔出",null);
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
                     if(!app.isReadDeviceState()){
+                        //广播真正执行的地方
                         app.setImportState(false);
+                        app.setUpdateOnceSource(false);
                     }
-                    Log.d(TAG,"U盘完全拔出");
+                    util.infoLog(TAG,"U盘完全拔出",null);
                 }
             }
         }

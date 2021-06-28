@@ -1,4 +1,4 @@
-package cn.ghzn.player;
+package cn.ghzn.player.layout;
 
 import android.content.Context;
 import android.media.MediaPlayer;

@@ -18,7 +18,7 @@
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_two6_1"
                 android:layout_height="match_parent"/>
-            <cn.ghzn.player.CustomVideoView
+            <cn.ghzn.player.layout.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_two6_1"
                 android:layout_alignParentTop="true"
@@ -42,7 +42,7 @@
                 android:scaleType="fitXY"
                 android:id="@+id/imageView_two6_2"
                 android:layout_height="match_parent"/>
-            <cn.ghzn.player.CustomVideoView
+            <cn.ghzn.player.layout.CustomVideoView
                 android:layout_width="match_parent"
                 android:id="@+id/videoView_two6_2"
                 android:layout_alignParentTop="true"

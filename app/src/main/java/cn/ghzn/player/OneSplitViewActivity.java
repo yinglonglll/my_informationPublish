@@ -6,11 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -19,39 +17,36 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.apkfuns.logutils.LogUtils;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.Delayed;
 
+import cn.ghzn.player.layout.CustomVideoView;
 import cn.ghzn.player.receiver.VarReceiver;
+import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
 
-import static androidx.core.os.HandlerCompat.postDelayed;
+import static cn.ghzn.player.Constants.SINGLE_PLAYER_NAME;
 import static cn.ghzn.player.ImportActivity.getMap1;
 import static cn.ghzn.player.MainActivity.*;
-import static cn.ghzn.player.util.InfoUtils.getDeviceId;
+import static cn.ghzn.player.MyApplication.single;
+import static cn.ghzn.player.MyApplication.util;
 import static cn.ghzn.player.util.InfoUtils.getRandomString;
 import static cn.ghzn.player.util.ViewImportUtils.getSonImage;
 
 public class OneSplitViewActivity extends Activity {
     private static final String TAG = "OneSplitViewActivity";
     private BroadcastReceiver mBroadcastReceiver;
-    private ArrayList arrayList;
-    GestureDetector mGestureDetector;//私有控件
-    private Runnable mRunnable;//目前暂时用不到，对于其他分屏的使用，可删或不变该变量
-
+    private ArrayList<String> arrayList;
+    GestureDetector mGestureDetector;
+    private Runnable mRunnable;
+    private AlertDialog AlertDialogs = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,43 +57,67 @@ public class OneSplitViewActivity extends Activity {
         app.setPlaySonImageFlag(true);
         Log.d(TAG,"this is 跳转成功");
 
-        if (app.isExtraState()) {//外部导入状态为真
-            Log.d(TAG,"app.isExtraState()" + app.isExtraState());
-            Intent intent = getIntent();
-            //以文件的数量获取分屏样式，
-            if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
-                app.setFileCounts(intent.getIntExtra("splitView",0));
-                app.setFilesParent(intent.getStringExtra("filesParent"));
+        if (app.isImportState()) {//外部导入状态为真
+
+            if(app.isUpdateOnceSource()){
+                //以文件的数量获取分屏样式，
+                if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
+                    Intent intent = getIntent();
+                    app.setFileCounts(intent.getIntExtra("splitView",0));
+                    app.setFilesParent(intent.getStringExtra("filesParent"));
+                }
+
+                File f = new File(app.getFilesParent());
+                if (!f.exists()) {
+                    f.mkdirs();
+                }
+                File[] files = f.listFiles();
+                if (files == null){
+                    util.infoLog(TAG,"一分屏内无资源文件",null);
+                    return;
+                }
+                /*取A-B-C文件信息*/
+                util.infoLog(TAG,"更新一次资源，更新一分屏资源信息",null);
+                String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
+                Log.d(TAG,"this is files[0].getName()" + files[0].getName());
+                app.setSplit_view(splits[0]);
+                app.setSplit_mode(splits[1]);
+                String split_widget = splits[2];//c
+                Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
+                for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
+                    getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+                }
+                String key = app.getSplit_view() + "-" + app.getSplit_mode();
+                arrayList = getSonImage(getMap1().get(key + "-1").toString());//将子文件夹里的地址全部赋给ArrayList的数组里
+                app.setSonSource(getMap1().get(key + "-1").toString());//data：所有存储子文件夹的地址
+                LogUtils.d(TAG,"getMap1().size()" + getMap1().size(),"Integer.parseInt(app.getSplit_view())" + Integer.parseInt(app.getSplit_view()));
+                //多屏播放的同时判断是否singlePlayer文件夹，有的话进行分析存储相关资源
+                app.setUpdateOnceSource(false);
+            }else{
+                util.infoLog(TAG,"无更新一次资源，已有资源信息",null);
+                arrayList = getSonImage(app.getSon_source());
             }
-
-            File f = new File(app.getFilesParent());
-            if (!f.exists()) {
-                f.mkdirs();
-            }
-            File[] files = f.listFiles();
-
-            String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
-            Log.d(TAG,"this is files[0].getName()" + files[0].getName());
-            app.setSplit_view(splits[0]);
-            app.setSplit_mode(splits[1]);
-            String split_widget = splits[2];//c
-            Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
-
             initWidget(app.getSplit_mode());
-            Log.d(TAG,"this is initWidget(app.getSplit_mode())");
 
-            for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-                getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+            File f1 = new File(app.getLicenceDir() + SINGLE_PLAYER_NAME);//取的时候再找一次值
+            if(f1.exists()){
+                util.infoLog(TAG,"singlePlayer文件夹存在，对其进行分析存储-->",null);
+                File[] files1 = f1.listFiles();
+                if(files1.length==0){
+                    return;//多屏模式下未导入导入多屏资源
+                }
+                util.infoLog(TAG,"仅导入单屏资源存储",null);
+                single.setSingle_view("0");
+                single.setSingle_Son_source(f1.getAbsolutePath());
+            }else{
+                util.infoLog(TAG,"本地无单屏资源文件singlePlayer，故根目录无单屏资源",null);
             }
-
-            String key = app.getSplit_view() + "-" + app.getSplit_mode();
-            arrayList = getSonImage(getMap1().get(key + "-1").toString());//将子文件夹里的地址全部赋给ArrayList的数组里
-            app.setSonSource(getMap1().get(key + "-1").toString());//data：所有存储子文件夹的地址
-            LogUtils.d(TAG,"getMap1().size()" + getMap1().size(),"Integer.parseInt(app.getSplit_view())" + Integer.parseInt(app.getSplit_view()));
 
         }else {
-            //进行数据库读取
+            /*进行数据库读取*/
             initWidget(app.getSplit_mode());
+            LogUtils.e(app.getSon_source());
+            util.varyLog(TAG,app.getSon_source(),"app.getSon_source()");
             arrayList = getSonImage(app.getSon_source());
         }
 
@@ -117,7 +136,7 @@ public class OneSplitViewActivity extends Activity {
 
             playSonImage();//参数arrayList是默认的，可含或不含参，结果都一样
             //只需要存储有效数据
-            if (app.isExtraState()) {
+            if (app.isImportState()) {
 //                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
 //            Source source = DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique();//一查新建的Device表
                 if(app.getSource() == null){//这一步多余
@@ -126,6 +145,12 @@ public class OneSplitViewActivity extends Activity {
                 }else{//存在则直接修改
                     daoManager.getSession().getSourceDao().update(getSource(app.getSource()));
                 }
+                if(single == null){
+                    single = new SingleSource();//表不存在则新建赋值
+                    daoManager.getSession().getSingleSourceDao().insert(single);//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+                }else{//存在则直接修改
+                    daoManager.getSession().getSingleSourceDao().update(single);
+        }
             }
         } else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
@@ -133,20 +158,18 @@ public class OneSplitViewActivity extends Activity {
         }
     }
 
+
     public void playSonImage(){
         if (app.isPlaySonImageFlag()) {
             if (app.getListNum1() >= arrayList.size()) {
                 app.setListNum1(0);//当文件1使用此方法用完后，由于是全局变量，找完文件夹1资源后，需置0再拿给文件夹2使用
-//            if (app.isFinishFlag()) {
-//                finish();
-//            }
             }
             Log.d(TAG,"开始执行执行播放程序");
 
             app.setFile(new File(arrayList.get(app.getListNum1()).toString()));
             if ((app.getFile().getName().endsWith("jpg") || app.getFile().getName().endsWith("jpeg")||app.getFile().getName().endsWith("png"))) {
                 Log.d(TAG,"执行图片播放，添加了图片：》》》》》" + app.getFile().getAbsolutePath());
-                app.setForMat1(1);//记录此时控件播放为图片
+                app.setWidgetAttribute1(1);//记录此时控件播放为图片
                 app.getImageView_1().setImageURI(Uri.fromFile(app.getFile()));
                 app.getImageView_1().setVisibility(View.VISIBLE);
                 app.getVideoView_1().setVisibility(View.GONE);
@@ -166,7 +189,7 @@ public class OneSplitViewActivity extends Activity {
             }
             else if (app.getFile().getName().endsWith("mp4") || app.getFile().getName().endsWith("avi") || app.getFile().getName().endsWith("3gp")) {
                 Log.d(TAG,"执行视频播放，添加了视频：《《《《《" + app.getFile().getAbsolutePath());
-                app.setForMat1(2);//记录此时控件播放为视频
+                app.setWidgetAttribute1(2);//记录此时控件播放为视频
                 Log.d(TAG,"this is isMediaPlayState()" + app.isMediaPlayState());
                 if (app.isMediaPlayState()) {
                     app.getVideoView_1().setVideoURI(Uri.fromFile(app.getFile()));
@@ -211,7 +234,7 @@ public class OneSplitViewActivity extends Activity {
         }
 
         alertDialog.setView(app.getView());
-        final AlertDialog AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
+        AlertDialogs = alertDialog.create();//如上是我自己找到新建的弹窗，下面是把新建的弹窗赋给新建的手势命令中的长按。
         mGestureDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
@@ -247,6 +270,10 @@ public class OneSplitViewActivity extends Activity {
     }
 
     private Source getSource(Source source) {//对数据库进行覆写
+        /*if(app.getSingle_son_source()!=null){
+            source.setSingle_view(app.getSingle_view());
+            source.setSingle_Son_source(app.getSingle_son_source());
+        }*/
         source.setProgram_id(getRandomString(5));
         source.setSplit_view(app.getSplit_view());
         source.setSplit_mode(app.getSplit_mode());
@@ -327,12 +354,14 @@ public class OneSplitViewActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         //app.setMediaPlayState(false);
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
-
+        if(AlertDialogs != null){
+            AlertDialogs.dismiss();
+        }
+        super.onDestroy();
 //        if (app.getRunnable1() != null) {
 //            app.getHandler().removeCallbacks(app.getRunnable1());
 //        }

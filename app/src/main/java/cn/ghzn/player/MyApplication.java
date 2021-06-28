@@ -5,6 +5,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -12,12 +13,18 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Map;
 
+import cn.ghzn.player.layout.CustomVideoView;
 import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
+import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
+import cn.ghzn.player.util.MyUtils;
+
+import static cn.ghzn.player.MainActivity.daoManager;
 
 public class MyApplication extends Application {
 
+    private static final String TAG = "MyApplication";
     //数据库数据初始化声明;
     private String program_id = "";
     private String split_view = "";
@@ -41,6 +48,8 @@ public class MyApplication extends Application {
     private long relative_time;
     private String first_machineCodeOut;
     private boolean single_split_mode=false;
+    /*private String single_view;
+    private String single_son_source;*/
 
     //全局变量声明--赋一值全局用
     private Device mDevice;
@@ -54,7 +63,7 @@ public class MyApplication extends Application {
     private long startTime;
     private long endTime;
     private long timeDiff;
-    private long delayMillis = 5000;
+    private long delayMillis = 5000;//自定义图片循环播放时间
     private long createTime;//记录当前的本地时间，而create_time是成功播放资源才记录的本地时间，不成功则不记录
     private int fileCounts;
     private int listNum1 = 0;
@@ -71,17 +80,18 @@ public class MyApplication extends Application {
     private String[] strings;
 
     //标志状态声明
-    private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
-    private boolean playSonImageFlag =true;
+    //private boolean extraState = false;//表示由ImportActivity跳转的标志，与类似U盘接入状态importState类似--不知是否多余(待测)
+    private boolean playSonImageFlag =true;//是否执行资源播放的方法
     private boolean finishState = false;//activity的结束广播状态
     private boolean importState = false;//U盘导入状态
-    private boolean mediaPlayState = true;//作用：在activity销毁时，使监听内容无效化。
-    private int playFlag = 0;//当前的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；用于对图片播放的控制
-    private int forMat1 = 0;//控件1的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
-    private int forMat2 = 0;//控件2的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
-    private int forMat3 = 0;
-    private int forMat4 = 0;
+    private boolean mediaPlayState = true;//作用：在activity销毁时，使监听内容无效化，即视频递归播放无效化。
+    private int playFlag = 0;//当前播放属性的播放状态：播放：playFlag = 0；暂停：playFlag = 1；停止：playFlag = 2；用于对图片播放的控制
+    private int widgetAttribute1 = 0;//控件1的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
+    private int widgetAttribute2 = 0;//控件2的播放属性：0：初试状态无播放属性；1：播放图片，2：播放视频 ；其中1234对应控件1234
+    private int widgetAttribute3 = 0;
+    private int widgetAttribute4 = 0;
     private boolean readDeviceState = false;//用于标志屏蔽UsbReceiver里对应readDevice方法产生额外的广播挂载，取消挂载操作
+    private boolean updateOnceSource;//用于避免接入U盘情况，单屏导入资源播放后切多屏播放和多屏导入资源播放时的冲突问题。
 
     //控件相关声明--分类优先级大于全局变量
     private String AuthorityName = "未连接";
@@ -103,15 +113,35 @@ public class MyApplication extends Application {
      * 单例初始化；5月27日编写此处
      */
     public static Calendar cld;
+    public static MyUtils util;
+    public static SingleSource single;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i(TAG,"this is HelloWorld");
         mContext = getApplicationContext();
         mContext.getExternalFilesDirs(null);//生成文件夹：SDCard/Android/data/你的应用的包名/files/
         DaoManager.getInstance();
         cld = Calendar.getInstance();
+        util = MyUtils.getInstance();
 
+        single = DaoManager.getInstance().getSession().getSingleSourceDao().queryBuilder().unique();
+        if(single == null){
+            single = new SingleSource();//表不存在则新建赋值
+            daoManager.getSession().getSingleSourceDao().insert(single);//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+        }else{//存在则直接修改
+            daoManager.getSession().getSingleSourceDao().update(single);
+        }
+
+    }
+
+    public boolean isUpdateOnceSource() {
+        return updateOnceSource;
+    }
+
+    public void setUpdateOnceSource(boolean updateOnceSource) {
+        this.updateOnceSource = updateOnceSource;
     }
 
     public boolean isSingle_split_mode() {
@@ -346,36 +376,36 @@ public class MyApplication extends Application {
         this.listNum1 = listNum1;
     }
 
-    public int getForMat1() {
-        return forMat1;
+    public int getWidgetAttribute1() {
+        return widgetAttribute1;
     }
 
-    public void setForMat1(int forMat1) {
-        this.forMat1 = forMat1;
+    public void setWidgetAttribute1(int widgetAttribute1) {
+        this.widgetAttribute1 = widgetAttribute1;
     }
 
-    public int getForMat2() {
-        return forMat2;
+    public int getWidgetAttribute2() {
+        return widgetAttribute2;
     }
 
-    public void setForMat2(int forMat2) {
-        this.forMat2 = forMat2;
+    public void setWidgetAttribute2(int widgetAttribute2) {
+        this.widgetAttribute2 = widgetAttribute2;
     }
 
-    public int getForMat3() {
-        return forMat3;
+    public int getWidgetAttribute3() {
+        return widgetAttribute3;
     }
 
-    public void setForMat3(int forMat3) {
-        this.forMat3 = forMat3;
+    public void setWidgetAttribute3(int widgetAttribute3) {
+        this.widgetAttribute3 = widgetAttribute3;
     }
 
-    public int getForMat4() {
-        return forMat4;
+    public int getWidgetAttribute4() {
+        return widgetAttribute4;
     }
 
-    public void setForMat4(int forMat4) {
-        this.forMat4 = forMat4;
+    public void setWidgetAttribute4(int widgetAttribute4) {
+        this.widgetAttribute4 = widgetAttribute4;
     }
 
     public long getDelayMillis() {
@@ -626,14 +656,6 @@ public class MyApplication extends Application {
 
     public void setSource(Source source) {
         mSource = source;
-    }
-
-    public boolean isExtraState() {
-        return extraState;
-    }
-
-    public void setExtraState(boolean extraState) {
-        this.extraState = extraState;
     }
 
     public String getProgram_id() {

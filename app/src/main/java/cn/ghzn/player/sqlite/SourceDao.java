@@ -35,7 +35,9 @@ public class SourceDao extends AbstractDao<Source, Long> {
         public final static Property Time_difference = new Property(8, long.class, "time_difference", false, "TIME_DIFFERENCE");
         public final static Property First_time = new Property(9, long.class, "first_time", false, "FIRST_TIME");
         public final static Property Relative_time = new Property(10, long.class, "relative_time", false, "RELATIVE_TIME");
-        public final static Property License_dir = new Property(11, String.class, "license_dir", false, "LICENSE_DIR");
+        public final static Property Single_view = new Property(11, String.class, "single_view", false, "SINGLE_VIEW");
+        public final static Property Single_Son_source = new Property(12, String.class, "single_Son_source", false, "SINGLE__SON_SOURCE");
+        public final static Property License_dir = new Property(13, String.class, "license_dir", false, "LICENSE_DIR");
     }
 
 
@@ -62,7 +64,9 @@ public class SourceDao extends AbstractDao<Source, Long> {
                 "\"TIME_DIFFERENCE\" INTEGER NOT NULL ," + // 8: time_difference
                 "\"FIRST_TIME\" INTEGER NOT NULL ," + // 9: first_time
                 "\"RELATIVE_TIME\" INTEGER NOT NULL ," + // 10: relative_time
-                "\"LICENSE_DIR\" TEXT);"); // 11: license_dir
+                "\"SINGLE_VIEW\" TEXT," + // 11: single_view
+                "\"SINGLE__SON_SOURCE\" TEXT," + // 12: single_Son_source
+                "\"LICENSE_DIR\" TEXT);"); // 13: license_dir
     }
 
     /** Drops the underlying database table. */
@@ -106,9 +110,19 @@ public class SourceDao extends AbstractDao<Source, Long> {
         stmt.bindLong(10, entity.getFirst_time());
         stmt.bindLong(11, entity.getRelative_time());
  
+        String single_view = entity.getSingle_view();
+        if (single_view != null) {
+            stmt.bindString(12, single_view);
+        }
+ 
+        String single_Son_source = entity.getSingle_Son_source();
+        if (single_Son_source != null) {
+            stmt.bindString(13, single_Son_source);
+        }
+ 
         String license_dir = entity.getLicense_dir();
         if (license_dir != null) {
-            stmt.bindString(12, license_dir);
+            stmt.bindString(14, license_dir);
         }
     }
 
@@ -147,9 +161,19 @@ public class SourceDao extends AbstractDao<Source, Long> {
         stmt.bindLong(10, entity.getFirst_time());
         stmt.bindLong(11, entity.getRelative_time());
  
+        String single_view = entity.getSingle_view();
+        if (single_view != null) {
+            stmt.bindString(12, single_view);
+        }
+ 
+        String single_Son_source = entity.getSingle_Son_source();
+        if (single_Son_source != null) {
+            stmt.bindString(13, single_Son_source);
+        }
+ 
         String license_dir = entity.getLicense_dir();
         if (license_dir != null) {
-            stmt.bindString(12, license_dir);
+            stmt.bindString(14, license_dir);
         }
     }
 
@@ -172,7 +196,9 @@ public class SourceDao extends AbstractDao<Source, Long> {
             cursor.getLong(offset + 8), // time_difference
             cursor.getLong(offset + 9), // first_time
             cursor.getLong(offset + 10), // relative_time
-            cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11) // license_dir
+            cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11), // single_view
+            cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // single_Son_source
+            cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13) // license_dir
         );
         return entity;
     }
@@ -190,7 +216,9 @@ public class SourceDao extends AbstractDao<Source, Long> {
         entity.setTime_difference(cursor.getLong(offset + 8));
         entity.setFirst_time(cursor.getLong(offset + 9));
         entity.setRelative_time(cursor.getLong(offset + 10));
-        entity.setLicense_dir(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
+        entity.setSingle_view(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
+        entity.setSingle_Son_source(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));
+        entity.setLicense_dir(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
      }
     
     @Override
