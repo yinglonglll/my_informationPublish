@@ -52,8 +52,7 @@ public class MyApplication extends Application {
     private String single_son_source;*/
 
     //全局变量声明--赋一值全局用
-    private Device mDevice;
-    private Source mSource;//表示数据库source表
+
     private static Context mContext;
     private Map<String,Object> mMap;
     private String sonSource;//存储所有子文件夹绝对地址
@@ -115,6 +114,8 @@ public class MyApplication extends Application {
     public static Calendar cld;
     public static MyUtils util;
     public static SingleSource single;
+    public static Device mDevice;
+    public static Source mSource;//表示数据库source表
 
     @Override
     public void onCreate() {
@@ -639,23 +640,6 @@ public class MyApplication extends Application {
 
     public void setHeight(int height) {
         this.height = height;
-    }
-
-
-    public Device getDevice() {
-        return mDevice;
-    }
-
-    public void setDevice(Device device) {
-        mDevice = device;
-    }
-
-    public Source getSource() {
-        return mSource;
-    }
-
-    public void setSource(Source source) {
-        mSource = source;
     }
 
     public String getProgram_id() {

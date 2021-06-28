@@ -10,10 +10,10 @@ android {
             keyPassword '123456'
         }
         debug {
-            storeFile file('D:/Company/资料/签名文件/sign/扬宇/platform.keystore')
-            storePassword '123456'
-            keyAlias 'platform'
-            keyPassword '123456'
+            storeFile file('D:/android-studio-ide-4.12-windows/Signed_BundleOrApk/Key_store_path/yinglonglll.jks')
+            storePassword 'yinglonglll'
+            keyAlias 'key0'
+            keyPassword 'yinglonglll'
         }
     }
     compileSdkVersion 30

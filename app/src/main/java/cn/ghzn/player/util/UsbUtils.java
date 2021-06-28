@@ -32,6 +32,8 @@ import cn.ghzn.player.sqlite.source.Source;
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.MainActivity.app;
 import static cn.ghzn.player.MainActivity.daoManager;
+import static cn.ghzn.player.MyApplication.mDevice;
+import static cn.ghzn.player.MyApplication.mSource;
 import static cn.ghzn.player.MyApplication.util;
 import static cn.ghzn.player.util.AuthorityUtils.digest;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
@@ -178,7 +180,7 @@ public class UsbUtils {
                                 switch (app.getAuthorityName()){
                                     case "已授权":
                                         //判断是否重复的授权时间段或小于原先授权时间段信息，是则退出，否则更新
-                                        if (app.getSource().getEnd_time() >= app.getEnd_time()) {
+                                        if (mSource.getEnd_time() >= app.getEnd_time()) {
                                             util.infoLog(TAG,"重复的授权过期时间",null);
                                             break;
                                         }else{//不同授权过期时间则进行更新
@@ -201,9 +203,9 @@ public class UsbUtils {
                                 app.setAuthority_state(true);//此次已获取授权状态，完成授权文件的更新；并且更新相关的信息
 
                                 //仅授权文件导入时，存储相关信息，但未更新表
-                                app.getDevice().setAuthority_state(app.isAuthority_state());
-                                app.getDevice().setAuthority_time(app.getAuthority_time());
-                                app.getDevice().setAuthority_expired(app.getAuthority_expired());
+                                mDevice.setAuthority_state(app.isAuthority_state());
+                                mDevice.setAuthority_time(app.getAuthority_time());
+                                mDevice.setAuthority_expired(app.getAuthority_expired());
 
                                 util.varyLog(TAG,app.getCreateTime(),"getCreateTime");
                                 util.varyLog(TAG,app.getEnd_time(),"getEnd_time");
@@ -219,46 +221,46 @@ public class UsbUtils {
                                     app.setAuthority_expired("无");
                                 }else{
                                     //若成功则存储该授权信息，则此时为第一次授权成功，并跳转检查资源文件
-                                    if(app.getSource() == null){
+                                    if(mSource == null){
                                         util.infoLog(TAG,"成功则存储该授权信息，则此时为第一次授权成功",null);
-                                        app.setSource(new Source());
+                                        mSource = new Source();
                                         app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
-                                        app.getSource().setRelative_time(app.getRelative_time());
-                                        app.getSource().setFirst_time(app.getFirst_time());
-                                        app.getSource().setTime_difference(app.getTime_difference());
-                                        daoManager.getSession().getSourceDao().insert(app.getSource());
+                                        mSource.setRelative_time(app.getRelative_time());
+                                        mSource.setFirst_time(app.getFirst_time());
+                                        mSource.setTime_difference(app.getTime_difference());
+                                        daoManager.getSession().getSourceDao().insert(mSource);
                                     }else{
-                                        app.getSource().setRelative_time(app.getRelative_time());
-                                        daoManager.getSession().getSourceDao().update(app.getSource());
+                                        mSource.setRelative_time(app.getRelative_time());
+                                        daoManager.getSession().getSourceDao().update(mSource);
                                     }
                                     usbTurnActivity(context, path);
                                 }
                                 //更新正确的存储信息
                                 util.infoLog(TAG,"第一次导入时的存储device表",null);
-                                if(app.getDevice() == null){
-                                    app.setDevice(new Device());
-                                    daoManager.getSession().getDeviceDao().insert(app.getDevice());
+                                if(mDevice == null){
+                                    mDevice = new Device();
+                                    daoManager.getSession().getDeviceDao().insert(mDevice);
                                 }else{
-                                    daoManager.getSession().getDeviceDao().update(app.getDevice());
+                                    daoManager.getSession().getDeviceDao().update(mDevice);
                                 }
 
                             } else {//非首次授权，无需条件限制，直接存储授权时间
                                 //正常情况下，本次导入的节目时间一定比上一次时间大；授权时间一定比当前时间大；避免修改安卓本地时间简易破解授权
                                 /*LogUtils.e(app.getRelative_time() > app.getCreateTime());//1.过了授权期就有问题
                                 Log.d(TAG, "this is app.getCreateTime()-app.getFirst_time() < app.getTime_difference() :" + ((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference()));
-                                Log.d(TAG, "this is app.getCreateTime() > app.getSource().getCreate_time() :" + (app.getCreateTime() > app.getSource().getCreate_time()) + app.getCreateTime() + ">>>" + app.getSource().getCreate_time());*/
+                                Log.d(TAG, "this is app.getCreateTime() > mSource.getCreate_time() :" + (app.getCreateTime() > mSource.getCreate_time()) + app.getCreateTime() + ">>>" + mSource.getCreate_time());*/
                                 //存储正确的授权时间信息并更新数据库
                                 util.infoLog(TAG,"非首次授权信息更新",null);
-                                if(app.getRelative_time() > app.getSource().getRelative_time() ){//授权到期时差>0才刷新授权信息
+                                if(app.getRelative_time() > mSource.getRelative_time() ){//授权到期时差>0才刷新授权信息
                                     util.infoLog(TAG,"有效授权时间，进行更新",null);
-                                    app.getDevice().setAuthority_state(app.isAuthority_state());
-                                    app.getDevice().setAuthority_time(app.getAuthority_time());
-                                    app.getDevice().setAuthority_expired(app.getAuthority_expired());
-                                    if(app.getDevice() == null){
-                                        app.setDevice(new Device());
-                                        daoManager.getSession().getDeviceDao().insert(app.getDevice());
+                                    mDevice.setAuthority_state(app.isAuthority_state());
+                                    mDevice.setAuthority_time(app.getAuthority_time());
+                                    mDevice.setAuthority_expired(app.getAuthority_expired());
+                                    if(mDevice == null){
+                                        mDevice = new Device();
+                                        daoManager.getSession().getDeviceDao().insert(mDevice);
                                     }else{
-                                        daoManager.getSession().getDeviceDao().update(app.getDevice());
+                                        daoManager.getSession().getDeviceDao().update(mDevice);
                                     }
                                     if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
                                             && app.getCreateTime() > app.getCreate_time()
@@ -289,7 +291,7 @@ public class UsbUtils {
                             util.varyLog(TAG,MacUtils.getMac(app.getmContext()),"MacUtils.getMac(app.getmContext())");
                             util.varyLog(TAG,digest(MacUtils.getMac(context)),"digest(MacUtils.getMac(context))");
                             Toast.makeText(context, "非法授权身份", Toast.LENGTH_SHORT).show();
-                            if (app.getDevice().getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
+                            if (mDevice.getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
                                 util.infoLog(TAG,"非法授权身份“，”，若存在授权状态，则进行对资源文件的更新",null);
                                 usbTurnActivity(context, path);
                             }
@@ -297,14 +299,14 @@ public class UsbUtils {
                 } else {
                     util.infoLog(TAG,"非法授权文件",null);
                     Toast.makeText(context, "非法授权文件", Toast.LENGTH_SHORT).show();
-                    if (app.getDevice().getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
+                    if (mDevice.getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
                         util.infoLog(TAG,"非法授权文件“，”，若存在授权状态，则进行对资源文件的更新",null);
                         usbTurnActivity(context, path);
                     }
                 }
             } else {
                 util.infoLog(TAG,"无授权文件，请检查授权文件",null);
-                if (app.getDevice().getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
+                if (mDevice.getAuthority_state()) {//数据库中的授权状态为真才能执行资源读取
                     util.infoLog(TAG,"无授权文件，若存在授权状态，则进行对资源文件的更新",null);
                     usbTurnActivity(context, path);
                 }
@@ -317,9 +319,9 @@ public class UsbUtils {
 
     private static void setAuthorityTimes() {
         //app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
-        LogUtils.e(app.getSource());
-        if(app.getSource()!=null){//有表
-            if(app.getSource().getFirst_time() == 0){//有表的第一次授权导入(即有资源播放的第一次)
+        LogUtils.e(mSource);
+        if(mSource!=null){//有表
+            if(mSource.getFirst_time() == 0){//有表的第一次授权导入(即有资源播放的第一次)
                 app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
             }
         }

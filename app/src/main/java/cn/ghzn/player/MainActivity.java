@@ -60,6 +60,8 @@ import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.Constants.LICENCE_NAME;
 import static cn.ghzn.player.Constants.MACHINE_CODE_NAME;
+import static cn.ghzn.player.MyApplication.mDevice;
+import static cn.ghzn.player.MyApplication.mSource;
 import static cn.ghzn.player.MyApplication.single;
 import static cn.ghzn.player.MyApplication.util;
 import static cn.ghzn.player.util.FileUtils.getFilePath;
@@ -117,9 +119,9 @@ public class MainActivity extends AppCompatActivity {
             util.infoLog(TAG,"关闭了正在播放的分屏资源",null);
         }
 
-        app.setSource(DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique());
-        if (app.getSource() != null && app.getSource().getRelative_time() != 0) {
-            app.setRelative_time(app.getSource().getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
+        mSource = DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique();
+        if (mSource != null && mSource.getRelative_time() != 0) {
+            app.setRelative_time(mSource.getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
         }
 
         initView();//找到layout控件，初始化主界面的信息
@@ -129,13 +131,13 @@ public class MainActivity extends AppCompatActivity {
         initSingleSource();
         setDialog();
 
-        if(app.getDevice() != null && app.getDevice().getPower_end_time() != null){//不可去掉device != null，无数据库时其数据无法获取
+        if(mDevice != null && mDevice.getPower_end_time() != null){//不可去掉device != null，无数据库时其数据无法获取
             YangYuOrder order = new YangYuOrder();
             order.startup_shutdow_off(this);
-            order.startup_shutdow_on(this, app.getDevice().getPower_start_time(), app.getDevice().getPower_end_time());
+            order.startup_shutdow_on(this, mDevice.getPower_start_time(), mDevice.getPower_end_time());
             LogUtils.e("this is ----------初始化定时任务----------"+"\n"
-                    + "定时开始时间为：" + app.getDevice().getPower_start_time()
-                    + "定时结束时间为：" + app.getDevice().getPower_end_time());
+                    + "定时开始时间为：" + mDevice.getPower_start_time()
+                    + "定时结束时间为：" + mDevice.getPower_end_time());
         }else{
             util.infoLog(TAG,"定时任务无数据，无法进行定时",null);
         }
@@ -219,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
                         app.setCreate_time(0);//授权为假时，为授权过期，则设置上一次的成功导入资源时间为0，模拟初始状态；比喻为只能向前的点的位置重置为初试状态的位置再重新向前。
                     }
                 }
-                daoManager.getSession().getDeviceDao().update(app.getDevice());
+                daoManager.getSession().getDeviceDao().update(mDevice);
                 mAuthorityState.setText("授权状态：" + app.getAuthorityName());
                 mAuthorityTime.setText("授权时间：" + app.getAuthority_time());
                 mAuthorityExpired.setText("授权到期：" + app.getAuthority_expired());
@@ -231,21 +233,21 @@ public class MainActivity extends AppCompatActivity {
 
     public void initDevice() {
         util.infoLog(TAG,"初始化设备信息",null);
-        app.setDevice(DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique());
-        if(app.getDevice() == null){
+        mDevice = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
+        if(mDevice == null){
             util.infoLog(TAG,"初始化设备信息--新建",null);
-            app.setDevice(new Device());//表不存在则新建赋值
-            daoManager.getSession().getDeviceDao().insert(getDevice(app.getDevice()));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
+            mDevice = new Device();//表不存在则新建赋值
+            daoManager.getSession().getDeviceDao().insert(getDevice(mDevice));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
         }else{//存在则直接修改
             util.infoLog(TAG,"初始化设备信息-更新",null);
-            LogUtils.e(app.getDevice().getAuthority_state());
-            daoManager.getSession().getDeviceDao().update(getDevice(app.getDevice()));
-            LogUtils.e(app.getDevice().getAuthority_state());
+            LogUtils.e(mDevice.getAuthority_state());
+            daoManager.getSession().getDeviceDao().update(getDevice(mDevice));
+            LogUtils.e(mDevice.getAuthority_state());
         }
 
-        initImportDevice(app.getDevice());//初始化数据且设置layout控件；从上述数据库中取信息出来显示
+        initImportDevice(mDevice);//初始化数据且设置layout控件；从上述数据库中取信息出来显示
         Log.d(TAG,"--------设备信息---------");
-        LogUtils.e(app.getDevice());//利用第三方插件打印出对象的属性和方法值；
+        LogUtils.e(mDevice);//利用第三方插件打印出对象的属性和方法值；
     }
 
     private Device getDevice(Device device){
@@ -270,17 +272,19 @@ public class MainActivity extends AppCompatActivity {
             file.mkdirs();
         }
         util.varyLog(TAG,app.getLicenceDir(),"自动生成的本地目录为LicenceDir");
-//        app.getSource().setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
-//        LogUtils.e(app.getSource());//未U盘导入资源时，表为空，不可调用赋值。
+//        mSource.setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
+//        LogUtils.e(mSource);//未U盘导入资源时，表为空，不可调用赋值。
 
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
-        if (app.getSource() != null &&  (app.getSource().getSplit_view() != null || single!=null&&single.getSingle_Son_source()!=null)) {//1.判断授权文件；2.判断资源文件
-            initImportSource(app.getSource());//初始化数据库数据到全局变量池--含device与source表
+        LogUtils.e(app);
+        LogUtils.e(single);
+        if (mSource != null &&  (mSource.getSplit_view() != null || single!=null&&single.getSingle_Son_source()!=null)) {//1.判断授权文件；2.判断资源文件
+            initImportSource(mSource);//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
-            LogUtils.e(app.getSource());
+            LogUtils.e(mSource);
 
             util.infoLog(TAG,"检查授权时间逻辑的3个条件-->",null);
-            util.varyLog(TAG,app.getCreateTime() > app.getSource().getCreate_time(),"app.getCreateTime() > app.getSource().getCreate_time()");
+            util.varyLog(TAG,app.getCreateTime() > mSource.getCreate_time(),"app.getCreateTime() > mSource.getCreate_time()");
             util.varyLog(TAG,(app.getCreateTime()-app.getFirst_time()) < app.getTime_difference(),"(app.getCreateTime()-app.getFirst_time()) < app.getTime_difference())");
             util.varyLog(TAG,app.getRelative_time() > app.getCreateTime(),"app.getRelative_time() > app.getCreateTime()");
             util.varyLog(TAG,app.getRelative_time(),"app.getRelative_time()");
@@ -288,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
             if (app.getCreateTime() > app.getCreate_time()
                     && (app.getCreateTime()-app.getFirst_time()) < app.getTime_difference()
                     && app.getRelative_time() > app.getCreateTime()) {//1.当前时间一定大于上一次的当前时间,即保证播放时间是向前的；2.第一次导入资源时间与当前时间差<授权时间段；3.设置相对过期时间，当前时间过了就不允许播放
-                app.getDevice().setAuthority_state(true);
+                mDevice.setAuthority_state(true);
                 Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
                 sendBroadcast(RenovateIntent);
                 app.setSetSourcePlayer(false);//此处若进来则进行播放，此时false，避免搜索挂载U盘的目录来重复播放
@@ -302,12 +306,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else {
                 util.infoLog(TAG,"授权过期，进入无授权状态",null);
-                app.getDevice().setAuthority_state(false);
+                mDevice.setAuthority_state(false);
                 Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
                 sendBroadcast(RenovateIntent);
             }
-            //daoManager.getSession().getDeviceDao().update(app.getDevice());
-            //daoManager.getSession().getSourceDao().update(app.getSource());//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
+            //daoManager.getSession().getDeviceDao().update(mDevice);
+            //daoManager.getSession().getSourceDao().update(mSource);//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
         }
     }
 
@@ -426,38 +430,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void turnActivity(String split_view) {//仅给数据库的数据使用的方法,无检错跳转
-        switch (split_view) {
-            case "1":
-                Log.d(TAG,"this is case1");
+        if(split_view != null){
+            switch (split_view) {
+                case "1":
+                    Log.d(TAG,"this is case1");
                     Intent intent1 = new Intent(this, OneSplitViewActivity.class);
                     startActivity(intent1);
-                break;
-            case "2":
+                    break;
+                case "2":
                     Intent intent2 = new Intent(this, TwoSplitViewActivity.class);
                     startActivity(intent2);
-                break;
-            case "3":
+                    break;
+                case "3":
                     Intent intent3 = new Intent(this,ThreeSplitViewActivity.class);
                     startActivity(intent3);
 
-                break;
-            case "4":
+                    break;
+                case "4":
                     Intent intent4 = new Intent(this, FourSplitViewActivity.class);
                     startActivity(intent4);
-                break;
-            case "0":
-                Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
-                Log.d(TAG,"this is 从主界面进入到单屏界面");
-                String splitView = "0";
-                String filesParent = "/storage/emulated/0/Android/data/cn.ghzn.player/files/ghzn/singlePlayer";
-                singleIntent.putExtra("splitView",splitView);
-                singleIntent.putExtra("filesParent",filesParent);
-                startActivity(singleIntent);
-                break;
-            default:
-                util.varyLog(TAG,split_view,"split_view");
-                Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
-                break;
+                    break;
+                case "0":
+                    Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
+                    Log.d(TAG,"this is 从主界面进入到单屏界面");
+                    String splitView = "0";
+                    String filesParent = "/storage/emulated/0/Android/data/cn.ghzn.player/files/ghzn/singlePlayer";
+                    singleIntent.putExtra("splitView",splitView);
+                    singleIntent.putExtra("filesParent",filesParent);
+                    startActivity(singleIntent);
+                    break;
+                default:
+                    util.varyLog(TAG,split_view,"split_view");
+                    Toast.makeText(this, "请勿放入过多文件，请按照教程方法的格式放入对应的文件", Toast.LENGTH_LONG).show();
+                    break;
+            }
         }
     }
 
@@ -558,9 +564,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         /*将已设定的定时开关机时间加载到当前timePicker上*/
-        if(app.getDevice()!=null && app.getDevice().getPower_start_time()!=null){
-            String[] PowerStartTime = app.getDevice().getPower_start_time().split(":");
-            String[] PowerEndTime = app.getDevice().getPower_end_time().split(":");
+        if(mDevice!=null && mDevice.getPower_start_time()!=null){
+            String[] PowerStartTime = mDevice.getPower_start_time().split(":");
+            String[] PowerEndTime = mDevice.getPower_end_time().split(":");
             tp_Start.setHour(Integer.parseInt(PowerStartTime[0]));//字符06转化为整型带入tp中会自动转化为6
             tp_Start.setMinute(Integer.parseInt(PowerStartTime[1]));
             tp_End.setHour(Integer.parseInt(PowerEndTime[0]));
@@ -696,7 +702,7 @@ public class MainActivity extends AppCompatActivity {
         if (app.getMode_() == 0) {
             mSingleSplitMode.setText("分屏模式：多屏模式");
             Toast.makeText(this,"多屏模式",Toast.LENGTH_SHORT).show();
-            app.getDevice().setMode(1);
+            mDevice.setMode(1);
             app.setMode_(1);
             stopBtn(view);
             if(app.getSon_source()!=null){
@@ -705,7 +711,7 @@ public class MainActivity extends AppCompatActivity {
         } else if(app.getMode_() == 1){
             mSingleSplitMode.setText("分屏状态：单屏模式");
             Toast.makeText(this,"单屏模式",Toast.LENGTH_SHORT).show();
-            app.getDevice().setMode(0);
+            mDevice.setMode(0);
             app.setMode_(0);
             stopBtn(view);
             LogUtils.e(app);
@@ -714,7 +720,7 @@ public class MainActivity extends AppCompatActivity {
                 playBtn(view);
             }
         }
-        daoManager.getSession().getDeviceDao().update(app.getDevice());
+        daoManager.getSession().getDeviceDao().update(mDevice);
     }
 
     public void PowerOff(View view) {
@@ -767,9 +773,9 @@ public class MainActivity extends AppCompatActivity {
         if(app.getCreateTime() > InfoUtils.dateString2Mills(app.getAuthority_expired()) && app.getRelative_time() != 0){//非首次的简易判断
             app.setAuthorityName("授权过期");
         }
-        if(app.getDevice().getMode() == 0){
+        if(mDevice.getMode() == 0){
             mSingleSplitMode.setText("分屏模式：单屏模式" );
-        }else if(app.getDevice().getMode() == 1){
+        }else if(mDevice.getMode() == 1){
             mSingleSplitMode.setText("分屏模式: 多屏模式");
         }
         mSingleSplitMode.setOnTouchListener(new View.OnTouchListener() {
@@ -848,7 +854,7 @@ public class MainActivity extends AppCompatActivity {
     public void playBtn(View view) {
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
-        //Toast.makeText(this,"执行播放，加载读取",Toast.LENGTH_SHORT).show();
+
         if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){
                 case "0"://一分屏时，三种状态下触发对对应控件进行操作

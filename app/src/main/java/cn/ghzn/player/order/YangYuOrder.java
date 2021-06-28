@@ -15,6 +15,7 @@ import cn.ghzn.player.util.SystemUtil;
 
 import static cn.ghzn.player.MainActivity.app;
 import static cn.ghzn.player.MainActivity.daoManager;
+import static cn.ghzn.player.MyApplication.mDevice;
 
 /**
  * <pre>
@@ -111,11 +112,11 @@ public class YangYuOrder extends BaseOrder{
             if(Math.abs(onTimeMinute-offTimeMinute) > 2){//设置定时任务的开关机分钟差至少大于2
                 Log.d(TAG,"this is 开关机分钟差大于2分钟");
                 //成功设置才存储在数据库中
-                app.getDevice().setPower_start_time(startTime);
-                app.getDevice().setPower_end_time(endTime);
-                daoManager.getSession().getDeviceDao().update(app.getDevice());
-                Log.d(TAG,"this is startTime: " + startTime + "***" + "数据库中的startTime" + app.getDevice().getPower_start_time());
-                Log.d(TAG,"this is EndTime: " + endTime + "***" + "数据库中的startTime" + app.getDevice().getPower_end_time());
+                mDevice.setPower_start_time(startTime);
+                mDevice.setPower_end_time(endTime);
+                daoManager.getSession().getDeviceDao().update(mDevice);
+                Log.d(TAG,"this is startTime: " + startTime + "***" + "数据库中的startTime" + mDevice.getPower_start_time());
+                Log.d(TAG,"this is EndTime: " + endTime + "***" + "数据库中的startTime" + mDevice.getPower_end_time());
 
                 SystemUtil.setOnTimeAlarm(context,timeonArray);//带入修正后的开机时间；
                 Log.d(TAG,"this is 将timeon和timeoff的开关机时间通过广播发送出去");

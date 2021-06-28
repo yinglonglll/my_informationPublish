@@ -21,6 +21,7 @@ import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.ViewImportUtils;
 
 import static cn.ghzn.player.Constants.SINGLE_PLAYER_NAME;
+import static cn.ghzn.player.MyApplication.mSource;
 import static cn.ghzn.player.MyApplication.single;
 import static cn.ghzn.player.MyApplication.util;
 import static java.lang.Thread.sleep;
@@ -60,12 +61,12 @@ public class ImportActivity extends Activity {
             LogUtils.e(mMatch);//打印复制结果
             //todo：对单屏模式和多屏模式进行分类
             if(app.getMode_() == 0){
-                util.infoLog(TAG,"进入到单屏模式",null);
-                cancelPreviousPlayer();
-                Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
-                /*singleIntent.putExtra("singleView", "0");//分屏样式传递--作用:控制暂停播放上
-                singleIntent.putExtra("filesParent", mSinglePlayerFolders);//直接将ghzn文件夹地址传递过去，以获取父类file类型*/
-                startActivity(singleIntent);
+                if(single.getSingle_view()!=null && single.getSingle_Son_source()!=null){
+                    util.infoLog(TAG,"进入到单屏模式",null);
+                    cancelPreviousPlayer();
+                    Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
+                    startActivity(singleIntent);
+                }
             }else{
                 util.varyLog(TAG,mMatch,"是否找到有效ghznPlayer文件夹mMatch");
                 if (mMatch) {
@@ -78,7 +79,7 @@ public class ImportActivity extends Activity {
                 }
             }
         }else{
-            if(app.getSource() == null){
+            if(mSource == null){
                 app.setCreate_time(0);
                 util.infoLog(TAG,"此时处于非授权状态下，无法更新资源文件",null);
             }
@@ -466,6 +467,24 @@ public class ImportActivity extends Activity {
                 success = copyFiles(source, mTargetFolders);//通过打开输入/出通道，执行读写复制
                 if(success){//复制的动作执行成功
                     Log.d(TAG,"this is copy to:"+ mTargetFolders + " " + success);
+                    //todo:获取ghznPlayer的文件信息，保证模式切换时，能够使用split_view,son_Source;
+                    /*File f = new File(mTargetFolders);
+                    if (!f.exists()) {
+                        f.mkdirs();
+                    }
+                    File[] fs = f.listFiles();
+                    if(fs == null)return;
+                    String[] splits = fs[0].getName().split("\\-");//A-B-C
+                    app.setSplit_view(splits[0]);//A，存储于数据库
+                    app.setSplit_mode(splits[1]);//B
+                    Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode());
+
+                    for(File file : fs){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
+                        getMap1().put(file.getName(), file.getAbsolutePath());
+                    }
+                    String key = app.getSplit_view() + "-" + app.getSplit_mode();
+                    app.setSonSource(getMap1().get(key + "-1").toString() + "***" + getMap1().get(key + "-2").toString()
+                            + "***" + getMap1().get(key + "-3").toString() + "***" + getMap1().get(key + "-4").toString());*/
                 }else{
                     Log.d(TAG,"this is 复制失败，即将跳转主界面...");
                     try {
