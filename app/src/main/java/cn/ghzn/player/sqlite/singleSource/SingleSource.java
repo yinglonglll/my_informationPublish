@@ -25,12 +25,12 @@ public class SingleSource {
     /**
      * 单屏资源文件目录
      */
-    private String single_Son_source;
-    @Generated(hash = 383734104)
-    public SingleSource(Long id, String single_view, String single_Son_source) {
+    private String source;
+    @Generated(hash = 588330485)
+    public SingleSource(Long id, String single_view, String source) {
         this.id = id;
         this.single_view = single_view;
-        this.single_Son_source = single_Son_source;
+        this.source = source;
     }
     @Generated(hash = 1709481184)
     public SingleSource() {
@@ -41,11 +41,11 @@ public class SingleSource {
     public void setSingle_view(String single_view) {
         this.single_view = single_view;
     }
-    public String getSingle_Son_source() {
-        return this.single_Son_source;
+    public String getSource() {
+        return this.source;
     }
-    public void setSingle_Son_source(String single_Son_source) {
-        this.single_Son_source = single_Son_source;
+    public void setSource(String source) {
+        this.source = source;
     }
     public Long getId() {
         return this.id;

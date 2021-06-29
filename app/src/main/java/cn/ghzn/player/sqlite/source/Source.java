@@ -51,23 +51,14 @@ public class Source {
      */
     private long relative_time;
     /**
-     * 单屏分屏状态(有无单屏资源)
-     */
-    private String single_view;
-    /**
-     * 单屏资源文件目录
-     */
-    private String single_Son_source;
-
-    /**
      * 授权文件的绝对地址--无用处
      */
     private String license_dir;
-    @Generated(hash = 1221726857)
+    @Generated(hash = 537373540)
     public Source(Long id, String program_id, String split_view, String split_mode,
             String son_source, long create_time, long start_time, long end_time,
             long time_difference, long first_time, long relative_time,
-            String single_view, String single_Son_source, String license_dir) {
+            String license_dir) {
         this.id = id;
         this.program_id = program_id;
         this.split_view = split_view;
@@ -79,8 +70,6 @@ public class Source {
         this.time_difference = time_difference;
         this.first_time = first_time;
         this.relative_time = relative_time;
-        this.single_view = single_view;
-        this.single_Son_source = single_Son_source;
         this.license_dir = license_dir;
     }
     @Generated(hash = 615387317)
@@ -158,18 +147,5 @@ public class Source {
     public void setRelative_time(long relative_time) {
         this.relative_time = relative_time;
     }
-    public String getSingle_view() {
-        return this.single_view;
-    }
-    public void setSingle_view(String single_view) {
-        this.single_view = single_view;
-    }
-    public String getSingle_Son_source() {
-        return this.single_Son_source;
-    }
-    public void setSingle_Son_source(String single_Son_source) {
-        this.single_Son_source = single_Son_source;
-    }
-
 
 }

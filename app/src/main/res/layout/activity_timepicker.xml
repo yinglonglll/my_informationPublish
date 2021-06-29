@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="开始日期" />
+            android:text="开机时间" />
 
         <TimePicker
             android:id="@+id/tp_Start"
@@ -39,7 +39,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="结束日期" />
+            android:text="关机时间" />
 
         <TimePicker
             android:id="@+id/tp_End"

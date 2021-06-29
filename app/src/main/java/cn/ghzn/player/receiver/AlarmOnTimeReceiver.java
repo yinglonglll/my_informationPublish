@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.amitshekhar.utils.Utils;
+/*import com.amitshekhar.utils.Utils;*/
 import com.apkfuns.logutils.LogUtils;
 
 import cn.ghzn.player.MainActivity;

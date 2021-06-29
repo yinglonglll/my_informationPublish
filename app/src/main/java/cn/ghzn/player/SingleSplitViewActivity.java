@@ -28,7 +28,6 @@ import java.util.ArrayList;
 
 import cn.ghzn.player.layout.CustomVideoView;
 import cn.ghzn.player.receiver.VarReceiver;
-import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
 
 import static cn.ghzn.player.Constants.GHZNPLAYER_NAME;
@@ -69,7 +68,7 @@ public class SingleSplitViewActivity extends Activity {
         Log.d(TAG, "this is 跳转成功");
         if (app.isImportState()) {
             /*if(single.getSingle_Son_source()!=null){*/
-                File f = new File(single.getSingle_Son_source());
+                File f = new File(single.getSource());
                 if (!f.exists()) {
                     f.mkdirs();
                 }
@@ -108,7 +107,7 @@ public class SingleSplitViewActivity extends Activity {
         } else {
             util.infoLog(TAG,"无U盘接入，执行资源播放",null);
             initWidget(single.getSingle_view());
-            File f = new File(single.getSingle_Son_source());
+            File f = new File(single.getSource());
             if (!f.exists()) {
                 f.mkdirs();
             }

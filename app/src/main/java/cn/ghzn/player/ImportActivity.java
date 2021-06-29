@@ -61,7 +61,7 @@ public class ImportActivity extends Activity {
             LogUtils.e(mMatch);
             /*对单屏模式和多屏模式进行分类*/
             if(app.getMode_() == 0){
-                if(single.getSingle_view()!=null && single.getSingle_Son_source()!=null){
+                if(single.getSingle_view()!=null && single.getSource()!=null){
                     util.infoLog(TAG,"进入到单屏模式",null);
                     cancelPreviousPlayer();
                     Intent singleIntent = new Intent(this, SingleSplitViewActivity.class);
@@ -429,7 +429,7 @@ public class ImportActivity extends Activity {
                             }
                             if(arrayList.size()!= 0){//说明存在单屏资源，则创建单屏文件夹
                                 mSinglePlayerFolders = FileUtils.getFilePath(this,Constants.STOREPATH) + "/" + SINGLE_PLAYER_NAME;
-                                single.setSingle_Son_source(mSinglePlayerFolders);
+                                single.setSource(mSinglePlayerFolders);
                                 single.setSingle_view("0");
                                 daoManager.getSession().getSingleSourceDao().update(single);
                                 util.infoLog(TAG,"更新single表",null);

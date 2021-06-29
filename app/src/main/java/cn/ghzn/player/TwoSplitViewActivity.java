@@ -29,11 +29,9 @@ import java.util.ArrayList;
 
 import cn.ghzn.player.layout.CustomVideoView;
 import cn.ghzn.player.receiver.VarReceiver;
-import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
 
 import static cn.ghzn.player.Constants.SINGLE_PLAYER_NAME;
-import static cn.ghzn.player.ImportActivity.getMap1;
 import static cn.ghzn.player.MainActivity.app;
 import static cn.ghzn.player.MainActivity.daoManager;
 import static cn.ghzn.player.MyApplication.mSource;
@@ -78,7 +76,7 @@ public class TwoSplitViewActivity extends Activity {
                 }
                 util.infoLog(TAG,"存在单屏资源，进行存储",null);
                 single.setSingle_view("0");
-                single.setSingle_Son_source(f1.getAbsolutePath());
+                single.setSource(f1.getAbsolutePath());
             }else{
                 util.infoLog(TAG,"本地singlePlayer文件夹不存在，即根目录无单屏资源",null);
             }

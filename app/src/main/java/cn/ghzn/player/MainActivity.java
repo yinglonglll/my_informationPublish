@@ -264,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
         util.varyLog(TAG,app.getLicenceDir(),"自动生成的本地目录为LicenceDir");
 
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
-        if ((mSource.getSplit_view()!=null && mSource.getSon_source()!=null) ||(single.getSingle_Son_source()!=null && single.getSingle_view()!=null)) {//1.判断授权文件；2.判断资源文件
+        if ((mSource.getSplit_view()!=null && mSource.getSon_source()!=null) ||(single.getSource()!=null && single.getSingle_view()!=null)) {//1.判断授权文件；2.判断资源文件
             initImportSource(mSource);//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(mSource);
@@ -699,8 +699,8 @@ public class MainActivity extends AppCompatActivity {
             mDevice.setMode(0);
             app.setMode_(0);
             stopBtn(view);
-            LogUtils.e(single.getSingle_Son_source());
-            if(single.getSingle_Son_source()!=null){
+            LogUtils.e(single.getSource());
+            if(single.getSource()!=null){
                 playBtn(view);
             }
         }
@@ -839,7 +839,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"this is playBtn");
         Log.d(TAG,"this is spilt_view: " + mSource.getSplit_view());
 
-        if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
+        if(app.getMode_() == 0 && (single.getSource()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){
                 case "0"://一分屏时，三种状态下触发对对应控件进行操作
                     if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
@@ -1108,7 +1108,7 @@ public class MainActivity extends AppCompatActivity {
     public void suspendBtn(View view) {//在播放时才为有效按钮，其他都无效
         Log.d(TAG,"this is suspendBtn");
         Toast.makeText(this,"实现界面的控件暂停状态",Toast.LENGTH_SHORT).show();//获取当前文件夹的命名格式中的分屏字符串，以此获得对应的控件，控件又分图片和视频子控件；即先判分屏名，再判类型
-        if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
+        if(app.getMode_() == 0 && (single.getSource()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){//单屏模式
                 case "0":
                     if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
