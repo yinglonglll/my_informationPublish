@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.apkfuns.logutils.LogUtils;
+
 import java.io.File;
 import java.util.Calendar;
 import java.util.Map;
@@ -18,6 +20,7 @@ import cn.ghzn.player.sqlite.DaoManager;
 import cn.ghzn.player.sqlite.device.Device;
 import cn.ghzn.player.sqlite.singleSource.SingleSource;
 import cn.ghzn.player.sqlite.source.Source;
+import cn.ghzn.player.util.FileUtils;
 import cn.ghzn.player.util.MyUtils;
 
 import static cn.ghzn.player.MainActivity.daoManager;
@@ -27,9 +30,6 @@ public class MyApplication extends Application {
     private static final String TAG = "MyApplication";
     //数据库数据初始化声明;
     private String program_id = "";
-    private String split_view = "";
-    private String split_mode = "";
-    private String son_source = "";//存数据库数据的变量
     private long create_time;//记录上一次节目导入的时间
     private String device_Name = "";
     private String device_Id = "";
@@ -58,13 +58,11 @@ public class MyApplication extends Application {
     private String sonSource;//存储所有子文件夹绝对地址
     private String licenceDir;//本地调用license文件的地址
     private String extraPath;
-    private String filesParent;
     private long startTime;
     private long endTime;
     private long timeDiff;
     private long delayMillis = 5000;//自定义图片循环播放时间
     private long createTime;//记录当前的本地时间，而create_time是成功播放资源才记录的本地时间，不成功则不记录
-    private int fileCounts;
     private int listNum1 = 0;
     private int listNum2 = 0;
     private int listNum3 = 0;
@@ -90,7 +88,6 @@ public class MyApplication extends Application {
     private int widgetAttribute3 = 0;
     private int widgetAttribute4 = 0;
     private boolean readDeviceState = false;//用于标志屏蔽UsbReceiver里对应readDevice方法产生额外的广播挂载，取消挂载操作
-    private boolean updateOnceSource;//用于避免接入U盘情况，单屏导入资源播放后切多屏播放和多屏导入资源播放时的冲突问题。
 
     //控件相关声明--分类优先级大于全局变量
     private String AuthorityName = "未连接";
@@ -129,20 +126,14 @@ public class MyApplication extends Application {
 
         single = DaoManager.getInstance().getSession().getSingleSourceDao().queryBuilder().unique();
         if(single == null){
-            single = new SingleSource();//表不存在则新建赋值
-            daoManager.getSession().getSingleSourceDao().insert(single);//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-        }else{//存在则直接修改
-            daoManager.getSession().getSingleSourceDao().update(single);
+            single = new SingleSource();
+            daoManager.getSession().getSingleSourceDao().insert(single);
         }
-
-    }
-
-    public boolean isUpdateOnceSource() {
-        return updateOnceSource;
-    }
-
-    public void setUpdateOnceSource(boolean updateOnceSource) {
-        this.updateOnceSource = updateOnceSource;
+        mSource = DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique();
+        if(mSource == null){
+            mSource = new Source();
+            daoManager.getSession().getSourceDao().insert(mSource);
+        }
     }
 
     public int getMode_() {
@@ -215,22 +206,6 @@ public class MyApplication extends Application {
 
     public void setAuthorityName(String authorityName) {
         AuthorityName = authorityName;
-    }
-
-    public int getFileCounts() {
-        return fileCounts;
-    }
-
-    public void setFileCounts(int fileCounts) {
-        this.fileCounts = fileCounts;
-    }
-
-    public String getFilesParent() {
-        return filesParent;
-    }
-
-    public void setFilesParent(String filesParent) {
-        this.filesParent = filesParent;
     }
 
     public long getRelative_time() {
@@ -648,30 +623,6 @@ public class MyApplication extends Application {
 
     public void setProgram_id(String program_id) {
         this.program_id = program_id;
-    }
-
-    public String getSplit_view() {
-        return split_view;
-    }
-
-    public void setSplit_view(String split_view) {
-        this.split_view = split_view;
-    }
-
-    public String getSplit_mode() {
-        return split_mode;
-    }
-
-    public void setSplit_mode(String split_mode) {
-        this.split_mode = split_mode;
-    }
-
-    public String getSon_source() {
-        return son_source;
-    }
-
-    public void setSon_source(String son_source) {
-        this.son_source = son_source;
     }
 
     public long getCreate_time() {

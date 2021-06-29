@@ -40,26 +40,26 @@ public class ImportActivity extends Activity {
     private ArrayList<File> arrayList =  new ArrayList<>();;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {//监听到U盘的插入，才会执行这个操作，否则和这所有功能等于没有
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (MyApplication)getApplication();//全局变量池：
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_progress);
 
-        //todo：经历一次分析授权刷新主界面信息。
+        /*刷新主界面授权信息*/
         Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
         sendBroadcast(RenovateIntent);
 
         Toast.makeText(this,"加载数据中，请稍等",Toast.LENGTH_LONG).show();
-        Intent intent = getIntent();//获取意图
+        Intent intent = getIntent();
         String extraPath = intent.getExtras().getString("extra_path");
         util.varyLog(TAG,extraPath,"extraPath的值为");
 
         /*授权状态下，逐个取消图片延迟线程，再finish()掉第一次分屏播放。即不会出现停止后的黑屏，不会出现第二次线程被取消*/
-        if(app.isAuthority_state()){//处于授权状态下才允许资源文件的更新
-            copyExtraFile(extraPath);//从U盘复制指定目标文件夹到U盘指定目录target；Intent.getdata()得到的uri为String型的filePath，现在将uri的前缀格式去除，则找到路径(用于new File(path))；
-            LogUtils.e(mMatch);//打印复制结果
-            //todo：对单屏模式和多屏模式进行分类
+        if(app.isAuthority_state()){
+            copyExtraFile(extraPath);
+            LogUtils.e(mMatch);
+            /*对单屏模式和多屏模式进行分类*/
             if(app.getMode_() == 0){
                 if(single.getSingle_view()!=null && single.getSingle_Son_source()!=null){
                     util.infoLog(TAG,"进入到单屏模式",null);
@@ -79,7 +79,7 @@ public class ImportActivity extends Activity {
                 }
             }
         }else{
-            if(mSource == null){
+            if(mSource.getSon_source() == null){
                 app.setCreate_time(0);
                 util.infoLog(TAG,"此时处于非授权状态下，无法更新资源文件",null);
             }
@@ -88,7 +88,7 @@ public class ImportActivity extends Activity {
     }
 
     private void cancelPreviousPlayer() {
-        util.infoLog(TAG,"关闭线程播放",null);
+        util.infoLog(TAG,"关闭图片线程播放，无效化视频监听执行方法",null);
         if (app.getRunnable1() != null) {
             app.getHandler().removeCallbacks(app.getRunnable1());
         }
@@ -104,10 +104,10 @@ public class ImportActivity extends Activity {
         app.setPlayFlag(0);//图片线程：导入新资源时优先触发onPause()，故避免取消线程导致未执行线程里的set true而带来playFlag一直为false的情况，一旦被暂停，即初始化该标志状态。永远保持true
         app.setMediaPlayState(false);//视频监听：不知如何取消视频监听，但通过状态量，使监听后执行无效功能
         /*关闭分屏播放*/
-        if (app.getCurrentActivity() != null) {//即导入分屏资源成功
+        if (app.getCurrentActivity() != null) {
             LogUtils.e(TAG,app.getCurrentActivity());
-            app.getCurrentActivity().finish();//关闭正在播放的资源，准备播放即将导入的资源
-            Log.d(TAG,"this is kill curActivity");
+            app.getCurrentActivity().finish();
+            Log.d(TAG,"this is cancelPreviousPlayer");
         }
     }
 
@@ -125,12 +125,11 @@ public class ImportActivity extends Activity {
                 filesCount = files.length;//循环次数
                 util.varyLog(TAG,filesCount,"filesCount");
             }else{
-                util.infoLog(TAG,"turnActivity--files:为null",null);
+                util.infoLog(TAG,"files:为null",null);
             }
             if (filesCount != 0 ) {
                 switch (filesCount) {
                     case 1:
-                        Log.d(TAG,"this is case1");
                         for (int i = 0; i < 1; i++) {
                             fileName = files[i].getName();
                             if (fileName.contains("1-")) {//通过检测A-前缀，判断是否符合分屏格式名，符合即累加符合分屏格式名文件数
@@ -146,7 +145,6 @@ public class ImportActivity extends Activity {
                             intent.putExtra("splitView", filesCount);//分屏样式传递
                             intent.putExtra("filesParent", mTarget);//直接将ghzn文件夹地址传递过去，以获取父类file类型
                             util.infoLog(TAG,"ghznPlayer内子文件数和分屏数相同，进入一分屏模式",null);
-                            //app.setExtraState(true);
                             startActivity(intent);
                         }
                         break;
@@ -468,23 +466,24 @@ public class ImportActivity extends Activity {
                 if(success){//复制的动作执行成功
                     Log.d(TAG,"this is copy to:"+ mTargetFolders + " " + success);
                     //todo:获取ghznPlayer的文件信息，保证模式切换时，能够使用split_view,son_Source;
-                    /*File f = new File(mTargetFolders);
+                    File f = new File(mTargetFolders);
                     if (!f.exists()) {
                         f.mkdirs();
                     }
                     File[] fs = f.listFiles();
                     if(fs == null)return;
                     String[] splits = fs[0].getName().split("\\-");//A-B-C
-                    app.setSplit_view(splits[0]);//A，存储于数据库
-                    app.setSplit_mode(splits[1]);//B
-                    Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode());
+                    mSource.setSplit_view(splits[0]);//A，存储于数据库
+                    mSource.setSplit_mode(splits[1]);//B
+                    Log.d(TAG,"this is split_view,split_mode,split_widget" + mSource.getSplit_view() +"***"+ mSource.getSplit_mode());
 
                     for(File file : fs){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
                         getMap1().put(file.getName(), file.getAbsolutePath());
                     }
-                    String key = app.getSplit_view() + "-" + app.getSplit_mode();
-                    app.setSonSource(getMap1().get(key + "-1").toString() + "***" + getMap1().get(key + "-2").toString()
-                            + "***" + getMap1().get(key + "-3").toString() + "***" + getMap1().get(key + "-4").toString());*/
+                    String key = mSource.getSplit_view() + "-" + mSource.getSplit_mode();
+                    mSource.setSon_source(getMap1().get(key + "-1")+ "***" + getMap1().get(key + "-2")
+                            + "***" + getMap1().get(key + "-3") + "***" + getMap1().get(key + "-4"));
+                    LogUtils.e(mSource);
                 }else{
                     Log.d(TAG,"this is 复制失败，即将跳转主界面...");
                     try {

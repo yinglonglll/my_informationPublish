@@ -71,21 +71,18 @@ public class UsbReceiver extends BroadcastReceiver {
                     if(!app.isReadDeviceState()){
                         //广播真正执行的地方
                         UsbUtils.checkUsbFileForm(context,path);//检查U盘存放的授权文件是否符合格式，符合则跳转
-                        app.setUpdateOnceSource(true);//U盘进来，恢复为可更新资源状态，更新一次资源或拔出后置false
                     }
                     app.setReadDeviceState(false);//恢复默认的非屏蔽状态
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_UNMOUNTED")) {//U盘拔出
                     if(!app.isReadDeviceState()){
                         //广播真正执行的地方
                         app.setImportState(false);
-                        app.setUpdateOnceSource(false);
                     }
                     util.infoLog(TAG,"U盘拔出",null);
                 }else if (intent.getAction().equals("android.intent.action.MEDIA_REMOVED")){ // 完全拔出
                     if(!app.isReadDeviceState()){
                         //广播真正执行的地方
                         app.setImportState(false);
-                        app.setUpdateOnceSource(false);
                     }
                     util.infoLog(TAG,"U盘完全拔出",null);
                 }

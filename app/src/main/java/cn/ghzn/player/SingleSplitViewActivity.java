@@ -67,28 +67,8 @@ public class SingleSplitViewActivity extends Activity {
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
         Log.d(TAG, "this is 跳转成功");
-        /*手动初始化数据*/
         if (app.isImportState()) {
-            //进行U盘读取--单屏播放
-            /*Intent intent = getIntent();
-            String filesParent = intent.getStringExtra("filesParent");
-            String singleView = intent.getStringExtra("singleView");
-            LogUtils.e(filesParent);
-            LogUtils.e(singleView);*/
-
-            /*if(app.isUpdateOnceSource()){
-                Log.d(TAG,"this is 进行U盘读取");
-
-                app.setUpdateOnceSource(false);
-            }else{
-                //app.getSingle_son_source()
-                app.setFilesParent(single.getSingle_Son_source());
-                //util.varyLog(TAG,app.getSingle_view(),"getSingle_view");
-                util.varyLog(TAG,single.getSingle_view(),"getSingle_view");
-            }*/
-            if(single.getSingle_Son_source()!=null){
-
-                app.setUpdateOnceSource(false);
+            /*if(single.getSingle_Son_source()!=null){*/
                 File f = new File(single.getSingle_Son_source());
                 if (!f.exists()) {
                     f.mkdirs();
@@ -101,34 +81,32 @@ public class SingleSplitViewActivity extends Activity {
                     arrayList.add(file.getAbsolutePath());
                 }
                 initWidget(single.getSingle_view());
-                //单屏播放同时判断是否ghznPlayer文件夹，有的话进行分析存储相关资源
+                /*若U盘中存在多屏资源ghznPlayer文件夹，则对本地ghznPlayer文件夹进行存储并分析*/
                 File f1 = new File(app.getLicenceDir() + GHZNPLAYER_NAME);
                 if(f1.exists()){
-                    util.infoLog(TAG,"ghznPlayer文件夹存在进行存储信息-->",null);
+                    util.infoLog(TAG,"本地ghznPlayer文件夹存在，对其进行分析存储",null);
                     File[] files1 = f1.listFiles();
                     if(files1.length==0){
                         return;//单屏模式下未导入导入多屏资源
                     }
-                    util.infoLog(TAG,"仅导入多屏资源存储",null);
-                    //单屏模式下已经导入多屏资源
-                    String[] splits = files1[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
-                    app.setSplit_view(splits[0]);//用于作为存储sonSonrce的判断依据
-                    app.setSplit_mode(splits[1]);//用于初始化控件
-                    Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode());
-                    for(File file : files1){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-                        getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
+                    util.infoLog(TAG,"存在多屏资源，进行存储",null);
+                    String[] splits = files1[0].getName().split("\\-");
+                    mSource.setSplit_view(splits[0]);
+                    mSource.setSplit_mode(splits[1]);
+                    Log.d(TAG,"this is split_view,split_mode,split_widget" + mSource.getSplit_view() +"***"+ mSource.getSplit_mode());
+                    for(File file : files1){
+                        getMap1().put(file.getName(), file.getAbsolutePath());
                         util.varyLog(TAG,file.getName(),"file.getName()");
                     }
                     LogUtils.e(getMap1());
-                    String key = app.getSplit_view() + "-" + app.getSplit_mode();
+                    String key = mSource.getSplit_view() + "-" + mSource.getSplit_mode();
                     saveSonSource(key);
                 }
-            }else{
+            /*}else{
                 return;//单屏模式下，进来但是无资源则退回去
-            }
+            }*/
         } else {
-            //进行数据库读取
-            Log.d(TAG,"this is 进行数据库读取");
+            util.infoLog(TAG,"无U盘接入，执行资源播放",null);
             initWidget(single.getSingle_view());
             File f = new File(single.getSingle_Son_source());
             if (!f.exists()) {
@@ -142,35 +120,24 @@ public class SingleSplitViewActivity extends Activity {
                 arrayList.add(file.getAbsolutePath());
             }
         }
-        if (single.getSingle_view() != null) {//该判断可有可无，命名规则跳转前已检查
+        if (single.getSingle_view() != null) {
             mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    Log.d(TAG,"this is varReceiver");
-                    Log.d(TAG,"why is mBroadcastReceiver:app.getListNum1()广播：" + app.getListNum1());
+                    Log.d(TAG,"this is 广播执行playSonImage()");
                     playSonImage();
                 }
             });
             IntentFilter filter = new IntentFilter();
             filter.addAction("0");
             registerReceiver(mBroadcastReceiver,filter);//注册广播
-
-            playSonImage();//参数arrayList是默认的，可含或不含参，结果都一样
+            //todo:资源播放程序在这儿
+            playSonImage();
             LogUtils.e(mSource);
             if (app.isImportState()) {
                 Log.d(TAG,"this is U盘接入、单屏模式状态下，进行资源的存储");
-                if(mSource == null){//这一步多余
-                    mSource = new Source();
-                    daoManager.getSession().getSourceDao().insert(getSource(mSource));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-                }else{//存在则直接修改
-                    daoManager.getSession().getSourceDao().update(getSource(mSource));
-                }
-                if(single == null){
-                    single = new SingleSource();
-                    daoManager.getSession().getSingleSourceDao().insert(single);
-                }else{
-                    daoManager.getSession().getSingleSourceDao().update(single);
-                }
+                daoManager.getSession().getSourceDao().update(getSource(mSource));
+                daoManager.getSession().getSingleSourceDao().update(single);
             }
         }
     }
@@ -180,7 +147,7 @@ public class SingleSplitViewActivity extends Activity {
      * @param key
      */
     private void saveSonSource(String key) {
-        switch (app.getSplit_view()){
+        switch (mSource.getSplit_view()){
             case "1":
                 app.setSonSource(getMap1().get(key + "-1"));//data：所有存储子文件夹的地址
                 break;
@@ -201,9 +168,9 @@ public class SingleSplitViewActivity extends Activity {
     private Source getSource(Source source) {
         //source.setSingle_view(app.getSingle_view());
         //source.setSingle_Son_source(app.getFilesParent());
-        if(app.getSon_source() != null){
-            source.setSplit_view(app.getSplit_view());
-            source.setSplit_mode(app.getSplit_mode());
+        if(mSource.getSon_source() != null){
+            source.setSplit_view(mSource.getSplit_view());
+            source.setSplit_mode(mSource.getSplit_mode());
             source.setSon_source(app.getSonSource());
         }
         source.setProgram_id(getRandomString(5));

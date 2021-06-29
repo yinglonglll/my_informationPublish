@@ -221,14 +221,14 @@ public class UsbUtils {
                                     app.setAuthority_expired("无");
                                 }else{
                                     //若成功则存储该授权信息，则此时为第一次授权成功，并跳转检查资源文件
-                                    if(mSource == null){
+                                    if(mSource.getSon_source() == null){
                                         util.infoLog(TAG,"成功则存储该授权信息，则此时为第一次授权成功",null);
-                                        mSource = new Source();
-                                        app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
+
+                                        //app.setFirst_time(System.currentTimeMillis());//记录第一次导入时本地的时间
                                         mSource.setRelative_time(app.getRelative_time());
-                                        mSource.setFirst_time(app.getFirst_time());
+                                        mSource.setFirst_time(System.currentTimeMillis());
                                         mSource.setTime_difference(app.getTime_difference());
-                                        daoManager.getSession().getSourceDao().insert(mSource);
+                                        daoManager.getSession().getSourceDao().update(mSource);
                                     }else{
                                         mSource.setRelative_time(app.getRelative_time());
                                         daoManager.getSession().getSourceDao().update(mSource);
@@ -269,8 +269,6 @@ public class UsbUtils {
                                     }
                                 }
                                 usbTurnActivity(context, path);
-
-
 
                                 /*if (((app.getCreateTime() - app.getFirst_time()) < app.getTime_difference())
                                         && app.getCreateTime() > app.getCreate_time()

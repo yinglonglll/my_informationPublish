@@ -62,96 +62,54 @@ public class TwoSplitViewActivity extends Activity {
         app.setMediaPlayState(true);
         app.setPlaySonImageFlag(true);
         Log.d(TAG,"this is 跳转成功");
-        if (app.isImportState()) {//若是U盘插入时，文件为不合规定，此时U盘也仍未插入状态true
-            if(app.isUpdateOnceSource()){
-                Intent intent = getIntent();
-                if (app.getFileCounts() == 0 && app.getFilesParent() == null) {
-                    app.setFileCounts(intent.getIntExtra("splitView",0));
-                    app.setFilesParent(intent.getStringExtra("filesParent"));
-                }
-                Log.d(TAG,"this is splitView" + app.getFileCounts());
-                Log.d(TAG,"this is filesParent" + app.getFilesParent());
-
-                File f = new File(app.getFilesParent());
-                if (!f.exists()) {
-                    f.mkdirs();//区分之二：创建多级目录和创建当前目录区别
-                }
-                File[] files = f.listFiles();//展开父类文件夹ghznPlayer
-
-                String[] splits = files[0].getName().split("\\-");//A-B-C；任取一文件夹，仅作为数据库存储信息的参考对象
-                app.setSplit_view(splits[0]);
-                app.setSplit_mode(splits[1]);
-                String split_widget = splits[2];
-                Log.d(TAG,"this is split_view,split_mode,split_widget" + app.getSplit_view() +"***"+ app.getSplit_mode() + "***" + split_widget);
-                Log.d(TAG,"this is initWidget(split_mode)");
-
-                for(File file : files){//将子类文件夹名与其绝对地址放入map集合中，不用管有多少个文件夹
-                    getMap1().put(file.getName(), file.getAbsolutePath());//形成键值对，方便取出作为资源导入
-                }
-                String key = app.getSplit_view() + "-" + app.getSplit_mode();//直接按分配类型取文件
-                arrayList1 = getSonImage(getMap1().get(key + "-1").toString());
-                arrayList2 = getSonImage(getMap1().get(key + "-2").toString());//获取到有效的资源信息
-                app.setSonSource(getMap1().get(key + "-1").toString() + "***" + getMap1().get(key + "-2").toString());//data：存储子文件夹的地址
-                app.setUpdateOnceSource(false);
-            }else{
-                util.infoLog(TAG,"无更新一次资源，已有资源信息",null);
-                String[] strings = app.getSon_source().split("\\*\\*\\*");
-                arrayList1 = getSonImage(strings[0]);
-                arrayList2 = getSonImage(strings[1]);
-            }
-            initWidget(app.getSplit_mode());
+        if (app.isImportState()) {
+            util.infoLog(TAG,"有U盘接入，执行资源播放",null);
+            initWidget(mSource.getSplit_mode());
+            String[] strings = mSource.getSon_source().split("\\*\\*\\*");
+            arrayList1 = getSonImage(strings[0]);
+            arrayList2 = getSonImage(strings[1]);
+            /*若U盘中存在单屏资源则进行存储并分析*/
             File f1 = new File(app.getLicenceDir() + SINGLE_PLAYER_NAME);
             if(f1.exists()){
-                util.infoLog(TAG,"singlePlayer文件夹存在，对其进行分析存储-->",null);
+                util.infoLog(TAG,"本地singlePlayer文件夹存在，对其进行分析存储-->",null);
                 File[] files1 = f1.listFiles();
                 if(files1.length==0){
                     return;//多屏模式下未导入导入多屏资源
                 }
-                util.infoLog(TAG,"仅导入单屏资源存储",null);
+                util.infoLog(TAG,"存在单屏资源，进行存储",null);
                 single.setSingle_view("0");
                 single.setSingle_Son_source(f1.getAbsolutePath());
             }else{
-                util.infoLog(TAG,"本地无单屏资源文件singlePlayer，故根目录无单屏资源",null);
+                util.infoLog(TAG,"本地singlePlayer文件夹不存在，即根目录无单屏资源",null);
             }
         }else {
-            initWidget(app.getSplit_mode());
-            String[] strings = app.getSon_source().split("\\*\\*\\*");
-            arrayList1 = getSonImage(strings[0]);//将子文件夹中的资源文件地址放到arrayList上，用于遍历读取
+            util.infoLog(TAG,"无U盘接入，执行资源播放",null);
+            initWidget(mSource.getSplit_mode());
+            String[] strings = mSource.getSon_source().split("\\*\\*\\*");
+            arrayList1 = getSonImage(strings[0]);
             arrayList2 = getSonImage(strings[1]);
         }
-        if (app.getSplit_view() != null) {
+        if (mSource.getSplit_view() != null) {
             mBroadcastReceiver = VarReceiver.getInstance().setBroadListener(new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    Log.d(TAG,"this is varReceiver");
+                    Log.d(TAG,"this is 广播执行playSonImage()");
                     playSonImage(arrayList1,arrayList2);
                 }
             });
             IntentFilter filter = new IntentFilter();
             filter.addAction("0");
-            registerReceiver(mBroadcastReceiver,filter);//注册广播
-
+            registerReceiver(mBroadcastReceiver, filter);
+            //todo:资源播放程序在这儿
             playSonImage(arrayList1,arrayList2);
             if (app.isImportState()) {
-//                app.setCreate_time(new Date());//new Date()出来的时间是本地时间
-                if(mSource == null){//这一步多余
-                    mSource = new Source();
-                    daoManager.getSession().getSourceDao().insert(getSource(mSource));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-                }else{//存在则直接修改
-                    daoManager.getSession().getSourceDao().update(getSource(mSource));
-                }
-                if(single == null){
-                    single = new SingleSource();
-                    daoManager.getSession().getSingleSourceDao().insert(single);
-                }else{
-                    daoManager.getSession().getSingleSourceDao().update(single);
-                }
+                daoManager.getSession().getSourceDao().update(getSource(mSource));
+                daoManager.getSession().getSingleSourceDao().update(single);
             }
         }else {
             Log.d(TAG,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作");
             Toast.makeText(this,"ghznPlayer文件夹内文件数量与分屏要求的文件数不同，请按照使用手册进行操作",Toast.LENGTH_LONG).show();
         }
-        //todo:3.成功执行，数据为有效数据，才把信息存储到数据库中，完成更新；以便没U盘插入时，直接执行另外一个activity，取出赋值{KEY:A,B,ghznPlayer内所有文件的绝对地址以寻资源的地址键值对，}
     }
 
     private void playSonImage(ArrayList arrayList1,ArrayList arrayList2){
@@ -294,9 +252,7 @@ public class TwoSplitViewActivity extends Activity {
             source.setSingle_Son_source(app.getSingle_son_source());
         }*/
         source.setProgram_id(getRandomString(5));
-        source.setSplit_view(app.getSplit_view());
-        source.setSplit_mode(app.getSplit_mode());
-        source.setSon_source(app.getSonSource());//存储的是子资源，但取出来用时需用来获取对象。
+
         source.setStart_time(app.getStart_time());
         source.setEnd_time(app.getEnd_time());
         source.setCreate_time(app.getCreate_time());

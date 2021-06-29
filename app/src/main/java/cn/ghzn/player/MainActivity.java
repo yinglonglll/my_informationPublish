@@ -108,30 +108,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWritePermission();//实现动态获取写入权限。避免静态获取权限失败
-        app = (MyApplication)getApplication();//实现获取Application对象，全局缓存调用
+        app = (MyApplication)getApplication();//全局缓存调用
         UsbUtils.checkUsb(this);//实现通过USB协议检查出USB是什么类型设备
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);//实现取消导航栏
         setContentView(R.layout.activity_main);
         AutoOutPutMachineCode();//方法内部取消了自动导出机器码，仅保留动态获取usbHelper的权限
-        if (app.getCurrentActivity() != null) {//实现返回主界面时，关闭先前播放的内容界面
+
+        /*保证返回主界面时一定关闭其他acitvity*/
+        if (app.getCurrentActivity() != null) {
             LogUtils.e(app.getCurrentActivity());
             app.getCurrentActivity().finish();
-            util.infoLog(TAG,"关闭了正在播放的分屏资源",null);
+            util.infoLog(TAG,"关闭正在播放的分屏资源",null);
         }
-
-        mSource = DaoManager.getInstance().getSession().getSourceDao().queryBuilder().unique();
-        if (mSource != null && mSource.getRelative_time() != 0) {
-            app.setRelative_time(mSource.getRelative_time());//initDevice()中需要用到此数据，故先提前初始化；main代码若优化应先初始化，展示main界面，再跳转。
-        }
-
-        initView();//找到layout控件，初始化主界面的信息
-        initBroadReceiver();//广播监听：保证资源播放activity被finish掉
+        initView();//初始化主界面的信息
+        initBroadReceiver();
         initDevice();
-        initSource();//资源初始化放在如上
-        initSingleSource();
+        initSource();
         setDialog();
-
-        if(mDevice != null && mDevice.getPower_end_time() != null){//不可去掉device != null，无数据库时其数据无法获取
+        /*应用启动自设定时任务*/
+        if(mDevice != null && mDevice.getPower_end_time() != null){
             YangYuOrder order = new YangYuOrder();
             order.startup_shutdow_off(this);
             order.startup_shutdow_on(this, mDevice.getPower_start_time(), mDevice.getPower_end_time());
@@ -141,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
         }else{
             util.infoLog(TAG,"定时任务无数据，无法进行定时",null);
         }
-
+        /*实现首次U盘导入资源时，U盘与软件打开顺序无关*/
         if (app.isImportState() && app.isSetSourcePlayer()) {//仅允许在初次资源导入时，U盘插入顺序与软件打开顺序无关；在已导入资源的情况下，必须在播放的情况下，再插入U盘进行资源变更。
             app.setStrings(UsbUtils.getVolumePaths(this));//通过获取U盘挂载状态检查所有存储的绝对地址，
             for(String str : app.getStrings()){
@@ -153,15 +148,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    private void initSingleSource() {
-        /*if(single == null){
-            single = new SingleSource();//表不存在则新建赋值
-            daoManager.getSession().getSingleSourceDao().insert(getSingleSource(single));//单例(操作库对象)-操作表对象-操作表实例.进行操作；
-        }else{//存在则直接修改
-            daoManager.getSession().getSingleSourceDao().update(getSingleSource(single));
-        }*/
     }
 
     public void initView() {
@@ -232,7 +218,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initDevice() {
-        util.infoLog(TAG,"初始化设备信息",null);
+        if (mSource != null && mSource.getRelative_time() != 0) {
+            app.setRelative_time(mSource.getRelative_time());//initImportDevice()中需要用到此数据，用于时间校对更新授权文本状态；
+        }
+
+        util.infoLog(TAG,"初始化设备信息--",null);
         mDevice = DaoManager.getInstance().getSession().getDeviceDao().queryBuilder().unique();
         if(mDevice == null){
             util.infoLog(TAG,"初始化设备信息--新建",null);
@@ -272,13 +262,9 @@ public class MainActivity extends AppCompatActivity {
             file.mkdirs();
         }
         util.varyLog(TAG,app.getLicenceDir(),"自动生成的本地目录为LicenceDir");
-//        mSource.setLicense_dir(app.getLicenceDir());//获得source表的setLicense_dir方法，把导出license文件时的地址存储在数据库对应数据中
-//        LogUtils.e(mSource);//未U盘导入资源时，表为空，不可调用赋值。
 
         //todo：授权期内过期(通过时间比较)，禁止资源初始化和跳转并提醒
-        LogUtils.e(app);
-        LogUtils.e(single);
-        if (mSource != null &&  (mSource.getSplit_view() != null || single!=null&&single.getSingle_Son_source()!=null)) {//1.判断授权文件；2.判断资源文件
+        if ((mSource.getSplit_view()!=null && mSource.getSon_source()!=null) ||(single.getSingle_Son_source()!=null && single.getSingle_view()!=null)) {//1.判断授权文件；2.判断资源文件
             initImportSource(mSource);//初始化数据库数据到全局变量池--含device与source表
             Log.d(TAG,"--------资源信息---------");
             LogUtils.e(mSource);
@@ -301,8 +287,8 @@ public class MainActivity extends AppCompatActivity {
                     turnActivity(single.getSingle_view());//0
                 }else if(app.getMode_() == 1){
                     util.infoLog(TAG,"进入到多屏模式",null);
-                    util.varyLog(TAG,app.getSplit_view(),"app.getSplit_view");
-                    turnActivity(app.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
+                    util.varyLog(TAG,mSource.getSplit_view(),"mSource.getSplit_view");
+                    turnActivity(mSource.getSplit_view());//1.保证导入时间只能向前；2.保证正常授权的时间段内(指定时间范围长度)；3.强制授权期内过期
                 }
             } else {
                 util.infoLog(TAG,"授权过期，进入无授权状态",null);
@@ -310,8 +296,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent RenovateIntent = new Intent("cn.ghzn.player.broadcast.RENOVATE_MAIN");
                 sendBroadcast(RenovateIntent);
             }
-            //daoManager.getSession().getDeviceDao().update(mDevice);
-            //daoManager.getSession().getSourceDao().update(mSource);//正常情况下，自动播放资源为正确，但非正常操作会导致异常，使得存储错误信息或修正后信息无法存储
         }
     }
 
@@ -705,7 +689,8 @@ public class MainActivity extends AppCompatActivity {
             mDevice.setMode(1);
             app.setMode_(1);
             stopBtn(view);
-            if(app.getSon_source()!=null){
+            LogUtils.e(mSource.getSon_source());
+            if(mSource.getSon_source()!=null){
                 playBtn(view);
             }
         } else if(app.getMode_() == 1){
@@ -714,8 +699,7 @@ public class MainActivity extends AppCompatActivity {
             mDevice.setMode(0);
             app.setMode_(0);
             stopBtn(view);
-            LogUtils.e(app);
-            LogUtils.e(single);
+            LogUtils.e(single.getSingle_Son_source());
             if(single.getSingle_Son_source()!=null){
                 playBtn(view);
             }
@@ -738,7 +722,7 @@ public class MainActivity extends AppCompatActivity {
      *以下为子方法
      */
     private void initImportSource(Source source) {
-        util.infoLog(TAG,"从数据库中导入资源信息到全局变量的资源信息中",null);
+        util.infoLog(TAG,"initImportSource",null);
         //app.setLicenceDir(source.getLicense_dir());//通用自动生成信息
         app.setCreate_time(source.getCreate_time());
         app.setStart_time(source.getStart_time());//U盘授权文件信息
@@ -746,16 +730,16 @@ public class MainActivity extends AppCompatActivity {
         app.setFirst_time(source.getFirst_time());
         app.setTime_difference(source.getTime_difference());
         app.setProgram_id(source.getProgram_id());//U盘文件获取信息
-        app.setSplit_view(source.getSplit_view());
+        mSource.setSplit_view(source.getSplit_view());
         //app.setSingle_view(source.getSingle_view());
         //app.setSingle_son_source(source.getSingle_Son_source());
-        app.setSplit_mode(source.getSplit_mode());
-        app.setSon_source(source.getSon_source());
+        mSource.setSplit_mode(source.getSplit_mode());
+        mSource.setSon_source(source.getSon_source());
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void initImportDevice(Device device) {
-        util.infoLog(TAG,"从数据库中导入设备信息到全局变量的设备信息中",null);
+        util.infoLog(TAG,"initImportDevice",null);
         app.setDevice_Name(device.getDevice_name());
         app.setDevice_Id(device.getDevice_id());
         LogUtils.e(app.isAuthority_state());
@@ -853,7 +837,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void playBtn(View view) {
         Log.d(TAG,"this is playBtn");
-        Log.d(TAG,"this is spilt_view: " + app.getSplit_view());
+        Log.d(TAG,"this is spilt_view: " + mSource.getSplit_view());
 
         if(app.getMode_() == 0 && (single.getSingle_Son_source()!=null&&single.getSingle_view()!=null)){
             switch (single.getSingle_view()){
@@ -899,8 +883,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }else{
-            if(app.getMode_() == 1 && app.getSon_source()!=null){
-                switch (app.getSplit_view()){//文件数就是分屏数
+            if(app.getMode_() == 1 && mSource.getSon_source()!=null){
+                switch (mSource.getSplit_view()){//文件数就是分屏数
                     case "1"://一分屏时，三种状态下触发对对应控件进行操作
                         if (app.getPlayFlag() == 0) {//播放状态:前缀状态播放为播放状态时，是重启功能，不需重置状态
 
@@ -1149,8 +1133,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }else{
-            if(app.getMode_() == 1 && app.getSon_source()!=null){
-                switch (app.getSplit_view()){//多屏模式
+            if(app.getMode_() == 1 && mSource.getSon_source()!=null){
+                switch (mSource.getSplit_view()){//多屏模式
                     case "1"://一分屏
                         if (app.getPlayFlag() == 0) {//播放状态，默认为0：U盘导入时，正常播放，即原状态为0；直接两控件设置暂停状态
                             switch (app.getWidgetAttribute1()){
@@ -1347,7 +1331,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
             }else{
-                switch (app.getSplit_view()){
+                switch (mSource.getSplit_view()){
                     case "1"://一分屏
                     case "2":
                     case "3":
